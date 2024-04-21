@@ -1,0 +1,19 @@
+:host {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: row;
+}
+
+.sidenav {
+  height: 100vh;
+  width: var(--sidenav-width);
+
+  box-sizing: border-box;
+}
+
+.content {
+  flex-grow: 1;
+
+  padding: 1rem;
+}
