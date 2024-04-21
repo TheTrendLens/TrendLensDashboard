@@ -1,0 +1,12 @@
+<a
+  [routerLink]="routerLink"
+  routerLinkActive="active"
+  [routerLinkActiveOptions]="routerLinkActiveOptions">
+
+  <span>
+    <ng-content select="[icon]"></ng-content>
+  </span>
+  <span class="text-container">
+    <ng-content></ng-content>
+  </span>
+</a>
