@@ -14,9 +14,7 @@ COPY . .
 RUN npm run build --prod
 # Define nginx for front-end server
 FROM nginx:1.15.8-alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d
 # Copy dist from ng build to nginx html folder
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
-# Expose port 80
-EXPOSE 80
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
