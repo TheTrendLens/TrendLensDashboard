@@ -20,10 +20,10 @@ import { FigureComponent } from './components/home/figure/figure.component';
 import {AgChartsAngularModule} from "ag-charts-angular";
 
 const routes: Routes = [
-  { path: 'dashboard', component: HomeComponent },
-  { path: 'analytics', component: AnalyticsComponent },
-  { path: 'listings', component: ListingsComponent },
-  { path: 'listing', component: ListingComponent },
+  { path: '', component: HomeComponent, canActivate: [AuthGuard]  },
+  { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard]  },
+  { path: 'listings', component: ListingsComponent, canActivate: [AuthGuard]  },
+  { path: 'listing', component: ListingComponent, canActivate: [AuthGuard]  },
   { path: 'account', component: AccountComponent, canActivate: [AuthGuard] }
 ]
 
