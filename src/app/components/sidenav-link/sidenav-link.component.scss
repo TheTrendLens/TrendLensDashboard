@@ -14,7 +14,7 @@ a {
   box-sizing: border-box;
 
   text-decoration: none;
-  color: #000;
+  color: white;
   border-radius: 4px;
 
   transition: background-color 75ms ease-out;
@@ -27,11 +27,11 @@ a {
   }
 
   &:hover {
-    background-color: #deebff;
+    background-color: rgba(255, 255, 255, 0.05);
   }
 
   &.active {
-    background-color: #c1daff;
+    background-color: rgba(255, 255, 255, 0.05);
     font-weight: bold;
     color: rgb(36, 82, 231);
   }

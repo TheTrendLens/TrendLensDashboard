@@ -8,78 +8,61 @@
 <div class="measures-grid">
   <div class="figure-grid">
     <app-figure class="item">
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Sales</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Sales</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Sales</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Cost</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Cost</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Cost</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Revenue</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Revenue</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Revenue</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Unknown</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Unknown</h2>
     </app-figure>
     <app-figure>
-      <h1>£1000</h1>
-      <h2>Profit</h2>
+      <h1 header>£1000</h1>
+      <h2 body>Unknown</h2>
     </app-figure>
   </div>
-  <ag-charts-angular style="height: 100%" [options]="chartOptions"></ag-charts-angular>
-  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>
+<!--  <ag-charts-angular style="height: 100%" [options]="chartOptions"></ag-charts-angular>-->
+<!--  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>-->
 </div>
 
 <ag-grid-angular
-  class="ag-theme-quartz"
+  class="ag-theme-quartz-dark"
   style="height: 500px;"
   [rowData]="rowData"
   [columnDefs]="colDefs">
 </ag-grid-angular>
-<ng-container *ngIf="user$ | async as user">
-  <div class="profile-grid">
-    <div class="profile__header">
-      <img [src]="user.picture" alt="Profile" class="profile__avatar" />
-      <div class="profile__headline">
-        <h2 class="profile__title">{{ user.name }}</h2>
-        <span class="profile__description">{{ user.email }}</span>
-        <span class="profile__description">{{ user }}</span>
-      </div>
-    </div>
-    <ng-container *ngIf="code$ | async as code">
-      <div class="profile__details">
-        <span class="profile__description">{{ code }}</span>
-      </div>
-    </ng-container>
-  </div>
-</ng-container>
