@@ -16,3 +16,9 @@ RUN npm run build --prod
 FROM nginx:1.15.8-alpine
 # Copy dist from ng build to nginx html folder
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 4200
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
