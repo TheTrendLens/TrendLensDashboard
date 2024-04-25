@@ -31,7 +31,7 @@ const config = {
   domain: 'trendlens.uk.auth0.com',
   clientId: '2XdQniwqeb0g3MPmnuv9w9BHbyprFXTn',
   authorizationParams: {
-    redirect_uri: window.location.origin + '/dashboard',
+    redirect_uri: window.location.origin,
     audience: 'https://www.trendlens.co.uk/api',
     scope: 'openid email profile',
   },
