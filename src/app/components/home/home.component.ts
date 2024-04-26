@@ -7,6 +7,7 @@ import {HttpClient} from "@angular/common/http";
 import {Listing} from "../../models/listing";
 import {map} from "rxjs"; // Column Definition Type Interface
 import { Auth0Lock } from 'auth0-lock';
+import {environment} from "../../../../environment";
 
 @Component({
   selector: 'app-home',
@@ -84,11 +85,8 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log(this.auth.user$.subscribe((user) => {
-      console.log(this.auth.isAuthenticated$);
-    }))
     this.user$.subscribe((user) => {
-      this.http.get<Listing[]>('api/listings/' + user?.email).subscribe((data: Listing[]) => {
+      this.http.get<Listing[]>(environment.backend.baseURL + '/api/sales/' + user?.email).subscribe((data: Listing[]) => {
         this.rowData = data;
       })
     });

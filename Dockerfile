@@ -9,7 +9,7 @@ RUN npm cache clean --force
 # Copy files from local machine to virtual directory in docker image
 COPY . .
 RUN npm install
-RUN npm run build --omit=dev
+RUN npm run build --configuration=production
 
 
 ### STAGE 2:RUN ###
