@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, enableProdMode, Inject, OnInit} from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
@@ -7,7 +7,7 @@ import {HttpClient} from "@angular/common/http";
 import {Listing} from "../../models/listing";
 import {map} from "rxjs"; // Column Definition Type Interface
 import { Auth0Lock } from 'auth0-lock';
-import {environment} from "../../../../environment";
+import {environment} from "../../../environments/environment";
 
 @Component({
   selector: 'app-home',
@@ -85,6 +85,7 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    enableProdMode();
     this.user$.subscribe((user) => {
       this.http.get<Listing[]>(environment.backend.baseURL + '/api/sales/' + user?.email).subscribe((data: Listing[]) => {
         this.rowData = data;
