@@ -4,6 +4,7 @@ import {Listing} from "../../../models/listing";
 import {HttpClient} from "@angular/common/http";
 import {AuthService} from "@auth0/auth0-angular";
 import {map} from "rxjs";
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-user-link-form',
@@ -32,7 +33,7 @@ export class UserLinkFormComponent implements OnInit {
           depop_id: form.value.depopUsername
         }
 
-        this.http.put<any>(`api/users/${user?.email}`, body).subscribe((data) => {
+        this.http.put<any>(`${environment.backend.baseURL}/api/users/${user?.email}`, body).subscribe((data) => {
           console.log(data);
         })
       });
