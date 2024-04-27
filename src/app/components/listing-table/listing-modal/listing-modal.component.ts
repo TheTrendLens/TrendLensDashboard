@@ -1,20 +1,17 @@
 import {Component, OnInit} from '@angular/core';
-import {Form, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {Listing} from "../../../models/listing";
-import {HttpClient} from "@angular/common/http";
+import {Sale} from "../../../models/sale";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {AuthService} from "@auth0/auth0-angular";
-import {map} from "rxjs";
-import { environment } from 'src/environments/environment';
 import {UserService} from "../../../services/user.service";
+import {map} from "rxjs";
 
 @Component({
-  selector: 'app-user-link-form',
-  templateUrl: './user-link-form.component.html',
-  styleUrls: ['./user-link-form.component.css']
+  selector: 'app-listing-modal',
+  templateUrl: './listing-modal.component.html',
+  styleUrls: ['./listing-modal.component.css']
 })
-export class UserLinkFormComponent implements OnInit {
+export class ListingModalComponent implements OnInit {
   myForm: FormGroup = new FormGroup<any>({});
-
   user$ = this.auth.user$;
   code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
 
@@ -35,7 +32,7 @@ export class UserLinkFormComponent implements OnInit {
             let body = {
               depop_id: form.value.depopUsername
             }
-            this.userService.update(user.sub, body).subscribe({
+            this.userService.update(user.email, body).subscribe({
               next: (data) => {
                 console.log(data)
               },
@@ -46,4 +43,5 @@ export class UserLinkFormComponent implements OnInit {
       });
     }
   }
+
 }

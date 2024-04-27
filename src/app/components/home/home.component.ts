@@ -1,16 +1,21 @@
 import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
-import { AsyncPipe, DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import {ColDef, GridOptions, RowValueChangedEvent} from 'ag-grid-community';
-import {HttpClient} from "@angular/common/http";
 import {Listing} from "../../models/listing";
 import {map} from "rxjs"; // Column Definition Type Interface
-import { Auth0Lock } from 'auth0-lock';
-import {environment} from "../../../environments/environment";
 import {SaleService} from "../../services/sale.service";
 import {Sale} from "../../models/sale";
 import {ListingService} from "../../services/listing.service";
+import {MatDialog} from "@angular/material/dialog";
+import {ListingModalComponent} from "../listing-table/listing-modal/listing-modal.component";
+import {TrendAuthService} from "../../services/trend-auth.service";
+import { StripeService, StripeCardComponent } from 'ngx-stripe';
+import {
+  StripeCardElementOptions,
+  StripeElementsOptions,
+} from '@stripe/stripe-js';
 
 @Component({
   selector: 'app-home',
@@ -19,6 +24,24 @@ import {ListingService} from "../../services/listing.service";
 })
 export class HomeComponent implements OnInit {
   @ViewChild('salesGrid') grid!: AgGridAngular;
+  @ViewChild(StripeCardComponent) card!: StripeCardComponent;
+  cardOptions: StripeCardElementOptions = {
+    style: {
+      base: {
+        iconColor: '#666EE8',
+        color: '#31325F',
+        fontWeight: '300',
+        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+        fontSize: '18px',
+        '::placeholder': {
+          color: '#CFD7E0',
+        },
+      },
+    },
+  };
+  elementsOptions: StripeElementsOptions = {
+  locale: 'en',
+  };
   // Row Data: The data to be displayed.
   rowData: Sale[] = [];
   listings: Listing[] = [];
@@ -50,7 +73,10 @@ export class HomeComponent implements OnInit {
   code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
   user_metadata = '';
 
-  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private saleService: SaleService, private listingService: ListingService) {
+
+
+  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private saleService: SaleService,
+              private listingService: ListingService, private trendAuthService: TrendAuthService, private matDialogRef: MatDialog) {
     this.chartOptions = {
       title: {
         text: "Sales by Month",
@@ -99,13 +125,21 @@ export class HomeComponent implements OnInit {
     this.user$.subscribe({
       next: (user) => {
         if (user?.email) {
-          this.saleService.findByUser(user.email).subscribe({
+        }
+      }
+    });
+
+    this.user$.subscribe({
+      next: (user) => {
+        if (user?.sub) {
+          this.trendAuthService.login(user.sub).subscribe();
+          this.saleService.findByUser(user.sub).subscribe({
             next: (data) => {
               this.rowData = data;
             },
             error: (err) => console.error(err)
           })
-          this.listingService.findByUser(user.email).subscribe({
+          this.listingService.findByUser(user.sub).subscribe({
             next: (data) => {
               this.listings = data;
               let oldDefs: any = this.grid.api.getColumnDefs();
@@ -147,5 +181,9 @@ export class HomeComponent implements OnInit {
         returnTo: this.doc.location.origin
       }
     });
+  }
+
+  openDialog() {
+    this.matDialogRef.open(ListingModalComponent);
   }
 }

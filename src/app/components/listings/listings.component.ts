@@ -39,8 +39,8 @@ export class ListingsComponent implements OnInit {
   ngOnInit(): void {
     this.user$.subscribe({
       next: (user) => {
-        if (user?.email) {
-          this.listingService.findByUser(user.email).subscribe({
+        if (user?.sub) {
+          this.listingService.findByUser(user.sub).subscribe({
             next: (data) => {
               this.rowData = data;
             },

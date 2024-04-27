@@ -1,0 +1,12 @@
+<form [formGroup]="myForm" (ngSubmit)="onSubmit(myForm)">
+  <div>
+    <label>
+      Depop Username:
+      <input formControlName="depopUsername" placeholder="Your Depop Username">
+    </label>
+    <div *ngIf="myForm.get('depopUsername')?.invalid && (myForm.get('depopUsername')?.dirty || myForm.get('depopUsername')?.touched)">
+      Please provide a name.
+    </div>
+  </div>
+  <button type="submit" [disabled]="myForm.invalid">Save</button>
+</form>

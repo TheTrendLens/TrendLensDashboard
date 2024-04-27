@@ -1,9 +1,13 @@
 export class User {
-  trendlens_id: string | null;
+  id: string | null;
+  email: string | null;
+  stripe_customer_id: string | null;
   depop_id: string | null;
 
   constructor(user: Partial<User> = {}) {
-    this.trendlens_id = user?.trendlens_id || null;
+    this.email = user?.email || null;
+    this.id = user?.id || null;
+    this.stripe_customer_id = user?.stripe_customer_id || null;
     this.depop_id = user?.depop_id || null;
   }
 

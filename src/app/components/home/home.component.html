@@ -60,9 +60,16 @@
 <!--  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>-->
 </div>
 
+<button (click)="openDialog()">Add Sale</button>
+
 <ag-grid-angular #salesGrid
   class="ag-theme-quartz-dark"
   style="height: 500px;"
   [rowData]="rowData"
   [gridOptions]="gridOptions">
 </ag-grid-angular>
+
+<div class="center">
+  <ngx-stripe-card class="stripe"[options]="cardOptions" [elementsOptions]="elementsOptions"></ngx-stripe-card>
+<!--  <button type="submit" (click)="createToken()"> Start Subscription       </button>-->
+</div>

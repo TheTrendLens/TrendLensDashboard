@@ -18,6 +18,10 @@ import { UserLinkFormComponent } from './components/account/user-link-form/user-
 import {ReactiveFormsModule} from "@angular/forms";
 import { FigureComponent } from './components/home/figure/figure.component';
 import {AgChartsAngularModule} from "ag-charts-angular";
+import {MatDialogModule} from "@angular/material/dialog";
+import { ListingModalComponent } from './components/listing-table/listing-modal/listing-modal.component';
+import {NgxStripeModule} from "ngx-stripe";
+import {environment} from "../environments/environment";
 
 const routes: Routes = [
   { path: '', component: HomeComponent, canActivate: [AuthGuard]  },
@@ -51,7 +55,8 @@ const config = {
     AccountComponent,
     HomeComponent,
     UserLinkFormComponent,
-    FigureComponent
+    FigureComponent,
+    ListingModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -61,7 +66,9 @@ const config = {
     AgGridModule,
     HttpClientModule,
     ReactiveFormsModule,
-    AgChartsAngularModule
+    AgChartsAngularModule,
+    MatDialogModule,
+    NgxStripeModule.forRoot(environment.STRIPE_KEY)
   ],
   providers: [
     provideHttpClient(withInterceptors([authHttpInterceptorFn])),
