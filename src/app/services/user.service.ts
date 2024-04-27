@@ -3,6 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {Listing} from "../models/listing";
 import {environment} from "../../environments/environment";
+import {User} from "../models/user";
 
 const endpoint = `${environment.backend.baseURL}/api/users`
 
@@ -13,15 +14,15 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(endpoint);
+  getAll(): Observable<User[]> {
+    return this.http.get<User[]>(endpoint);
   }
 
-  get(id: any): Observable<Listing> {
-    return this.http.get<Listing>(`${endpoint}/${id}`);
+  get(id: any): Observable<User> {
+    return this.http.get<User>(`${endpoint}/${id}`);
   }
 
-  create(listing: Listing): Observable<any> {
+  create(listing: User): Observable<any> {
     return this.http.post(endpoint, JSON.stringify(listing));
   }
 
