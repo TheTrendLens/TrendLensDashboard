@@ -5,6 +5,7 @@ import {HttpClient} from "@angular/common/http";
 import {AuthService} from "@auth0/auth0-angular";
 import {map} from "rxjs";
 import { environment } from 'src/environments/environment';
+import {UserService} from "../../../services/user.service";
 
 @Component({
   selector: 'app-user-link-form',
@@ -17,7 +18,7 @@ export class UserLinkFormComponent implements OnInit {
   user$ = this.auth.user$;
   code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
 
-  constructor(public auth: AuthService, private http: HttpClient) {
+  constructor(public auth: AuthService, private userService: UserService) {
   }
 
   ngOnInit() {
@@ -28,14 +29,20 @@ export class UserLinkFormComponent implements OnInit {
 
   onSubmit(form: FormGroup) {
     if (form.valid) {
-      this.user$.subscribe((user) => {
-        let body = {
-          depop_id: form.value.depopUsername
+      this.user$.subscribe({
+        next: (user) => {
+          if (user?.email) {
+            let body = {
+              depop_id: form.value.depopUsername
+            }
+            this.userService.update(user.email, body).subscribe({
+              next: (data) => {
+                console.log(data)
+              },
+              error: (err) => console.error(err)
+            })
+          }
         }
-
-        this.http.put<any>(`${environment.backend.baseURL}/api/users/${user?.email}`, body).subscribe((data) => {
-          console.log(data);
-        })
       });
     }
   }
