@@ -1,0 +1,35 @@
+import { Injectable } from '@angular/core';
+import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
+import {Listing} from "../models/listing";
+import {environment} from "../../environments/environment";
+
+const endpoint = `${environment.backend.baseURL}/api/listings`
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ListingService {
+
+  constructor(private http: HttpClient) { }
+
+  getAll(): Observable<Listing[]> {
+    return this.http.get<Listing[]>(endpoint);
+  }
+
+  get(id: any): Observable<Listing> {
+    return this.http.get<Listing>(`${endpoint}/${id}`);
+  }
+
+  findByUser(user: string): Observable<Listing[]> {
+    return this.http.get<Listing[]>(`${endpoint}/users/${user}`);
+  }
+
+  create(listing: Listing): Observable<any> {
+    return this.http.post(endpoint, JSON.stringify(listing));
+  }
+
+  update(id: any, data: any): Observable<any> {
+    return this.http.put(`${endpoint}/${id}`, data);
+  }
+}

@@ -6,6 +6,7 @@ import {AuthService} from "@auth0/auth0-angular";
 import {DOCUMENT} from "@angular/common";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../../environments/environment";
+import {ListingService} from "../../services/listing.service";
 
 @Component({
   selector: 'app-listings',
@@ -31,15 +32,22 @@ export class ListingsComponent implements OnInit {
 
   user$ = this.auth.user$;
 
-  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private http: HttpClient) {
+  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private listingService: ListingService) {
 
   }
 
   ngOnInit(): void {
-    this.user$.subscribe((user) => {
-      this.http.get<Listing[]>(environment.backend.baseURL + '/api/listings/' + user?.email).subscribe((data: Listing[]) => {
-        this.rowData = data;
-      })
+    this.user$.subscribe({
+      next: (user) => {
+        if (user?.email) {
+          this.listingService.findByUser(user.email).subscribe({
+            next: (data) => {
+              this.rowData = data;
+            },
+            error: (err) => console.error(err)
+          })
+        }
+      }
     });
   }
 
