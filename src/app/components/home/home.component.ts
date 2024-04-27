@@ -1,13 +1,16 @@
-import {Component, enableProdMode, Inject, OnInit} from '@angular/core';
+import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
-import { ColDef } from 'ag-grid-community';
+import {ColDef, GridOptions, RowValueChangedEvent} from 'ag-grid-community';
 import {HttpClient} from "@angular/common/http";
 import {Listing} from "../../models/listing";
 import {map} from "rxjs"; // Column Definition Type Interface
 import { Auth0Lock } from 'auth0-lock';
 import {environment} from "../../../environments/environment";
+import {SaleService} from "../../services/sale.service";
+import {Sale} from "../../models/sale";
+import {ListingService} from "../../services/listing.service";
 
 @Component({
   selector: 'app-home',
@@ -15,22 +18,30 @@ import {environment} from "../../../environments/environment";
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
+  @ViewChild('salesGrid') grid!: AgGridAngular;
   // Row Data: The data to be displayed.
-  rowData: Listing[] = [];
+  rowData: Sale[] = [];
+  listings: Listing[] = [];
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
-    { headerName: "Item Name", field: "name", filter: 'agTextColumnFilter', },
-    { headerName: "Listed Price", field: "listed_price", filter: 'agNumberColumnFilter' },
-    { headerName: "Sold Price", field: "sold_price", filter: 'agNumberColumnFilter' },
-    { headerName: "Sold", field: "sold" },
-    { headerName: "Listed Date", field: "listed_date", filter: 'agDateColumnFilter', },
-    { headerName: "Sold Date", field: "sold_date", editable: true, filter: 'agDateColumnFilter' },
-    { headerName: "Depop Fee", field: "depop_fee", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Payment Fee", field: "payments_fee", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Postage Cost", field: "postage_fee", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Item Cost", field: "item_cost", editable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "ID", field: "id", filter: 'agTextColumnFilter', },
+    { headerName: "Price", field: "price", editable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Unit Cost", field: "item_cost", filter: 'agNumberColumnFilter' },
+    { headerName: "Date Sold", field: "date_sold", editable: true, filter: 'agDateColumnFilter', cellEditor: 'agDateCellEditor' },
+    { headerName: "Depop Fee", field: "platform_fee", editable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Payment Fee", field: "payment_fee", editable: true, filter: 'agNumberColumnFilter' },
+    { headerName: "Postage Cost", field: "postage_cost", editable: true, filter: 'agNumberColumnFilter' },
   ];
+
+  gridOptions: GridOptions = {
+    columnDefs: this.colDefs,
+    editType: 'fullRow',
+    onRowValueChanged: (event) => {
+      this.onRowValueChanged(event);
+    }
+  }
+
 
   public chartOptions: any;
   public barChartOptions: any;
@@ -39,7 +50,7 @@ export class HomeComponent implements OnInit {
   code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
   user_metadata = '';
 
-  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private http: HttpClient) {
+  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private saleService: SaleService, private listingService: ListingService) {
     this.chartOptions = {
       title: {
         text: "Sales by Month",
@@ -85,12 +96,45 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    enableProdMode();
-    this.user$.subscribe((user) => {
-      this.http.get<Listing[]>(environment.backend.baseURL + '/api/sales/' + user?.email).subscribe((data: Listing[]) => {
-        this.rowData = data;
-      })
+    this.user$.subscribe({
+      next: (user) => {
+        if (user?.email) {
+          this.saleService.findByUser(user.email).subscribe({
+            next: (data) => {
+              this.rowData = data;
+            },
+            error: (err) => console.error(err)
+          })
+          this.listingService.findByUser(user.email).subscribe({
+            next: (data) => {
+              this.listings = data;
+              let oldDefs: any = this.grid.api.getColumnDefs();
+              let colDef: ColDef = {
+                headerName: "Item Name",
+                  field: "name",
+                editable: true,
+                filter: 'agTextColumnFilter',
+                cellEditor: 'agSelectCellEditor',
+                cellEditorParams: {
+                values: this.listings.map((listing) => listing.name)
+                }
+              }
+              oldDefs?.push(colDef)
+              this.grid.api.setColumnDefs(oldDefs);
+              // @ts-ignore
+              this.grid.api.moveColumnByIndex(oldDefs.length, 1)
+            },
+            error: (err) => console.error(err)
+          })
+        }
+      }
     });
+  }
+
+  onRowValueChanged(event: RowValueChangedEvent) {
+    let data = event.data;
+    console.log("onRowValueChanged: (" + JSON.stringify(data) + ")");
+    this.saleService.update(data.id, data).subscribe();
   }
 
   login(): void {

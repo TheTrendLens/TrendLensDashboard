@@ -60,9 +60,9 @@
 <!--  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>-->
 </div>
 
-<ag-grid-angular
+<ag-grid-angular #salesGrid
   class="ag-theme-quartz-dark"
   style="height: 500px;"
   [rowData]="rowData"
-  [columnDefs]="colDefs">
+  [gridOptions]="gridOptions">
 </ag-grid-angular>
