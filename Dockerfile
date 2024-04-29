@@ -7,11 +7,11 @@ ARG env=prod
 WORKDIR /dist/src/app
 # Copy files to virtual directory
 # COPY package.json package-lock.json ./
-# Run command in Virtual directory
-RUN npm cache clean --force
+# Install dependencies first, as they change less often than code.
+COPY package.json package-lock.json* ./
+RUN npm ci && npm cache clean --force
 # Copy files from local machine to virtual directory in docker image
 COPY . .
-RUN npm install
 RUN npm run build:$env
 
 
