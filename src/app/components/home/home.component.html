@@ -1,7 +1,8 @@
 <div>
   <button *ngIf="(auth.isAuthenticated$ | async) === false" (click)="login()" id="login">Login</button>
   <div *ngIf="auth.user$ | async as user">
-    <h2>Welcome, {{user?.email}}!</h2>
+    <h2>Welcome, {{user?.email}}! </h2>
+    <h2 *ngIf="subscription">You have the {{subscription}}!</h2>
   </div>
   <button *ngIf="auth.isAuthenticated$ | async" (click)="logout()" id="logout">Logout</button>
 </div>
@@ -60,9 +61,11 @@
 <!--  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>-->
 </div>
 
-<ag-grid-angular
+<button (click)="openDialog()">Add Sale</button>
+
+<ag-grid-angular #salesGrid
   class="ag-theme-quartz-dark"
   style="height: 500px;"
   [rowData]="rowData"
-  [columnDefs]="colDefs">
+  [gridOptions]="gridOptions">
 </ag-grid-angular>

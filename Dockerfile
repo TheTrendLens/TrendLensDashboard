@@ -1,5 +1,8 @@
 # Define node version
 FROM node:18.13.0-alpine as build
+
+ARG env=prod
+
 # Define container directory
 WORKDIR /dist/src/app
 # Copy files to virtual directory
@@ -9,7 +12,7 @@ RUN npm cache clean --force
 # Copy files from local machine to virtual directory in docker image
 COPY . .
 RUN npm install
-RUN npm run build --configuration=production
+RUN npm run build:$env
 
 
 ### STAGE 2:RUN ###

@@ -1,0 +1,7 @@
+<div *ngIf="auth.user$ | async as user" style="height: 100%; background-color: white">
+  <stripe-pricing-table pricing-table-id="prctbl_1PAZAfKU9ihQF2dqlWu8TUOb"
+                        publishable-key="pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm"
+                        [attr.client-reference-id]="user.sub"
+                        [attr.customer-session-client-secret]="customerSecret">
+  </stripe-pricing-table>
+</div>
