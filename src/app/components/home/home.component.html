@@ -1,7 +1,8 @@
 <div>
   <button *ngIf="(auth.isAuthenticated$ | async) === false" (click)="login()" id="login">Login</button>
   <div *ngIf="auth.user$ | async as user">
-    <h2>Welcome, {{user?.email}}!</h2>
+    <h2>Welcome, {{user?.email}}! </h2>
+    <h2 *ngIf="subscription">You have the {{subscription}}!</h2>
   </div>
   <button *ngIf="auth.isAuthenticated$ | async" (click)="logout()" id="logout">Logout</button>
 </div>
@@ -68,8 +69,3 @@
   [rowData]="rowData"
   [gridOptions]="gridOptions">
 </ag-grid-angular>
-
-<div class="center">
-  <ngx-stripe-card class="stripe"[options]="cardOptions" [elementsOptions]="elementsOptions"></ngx-stripe-card>
-<!--  <button type="submit" (click)="createToken()"> Start Subscription       </button>-->
-</div>

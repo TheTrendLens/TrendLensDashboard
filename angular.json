@@ -67,11 +67,11 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "trendlensbackend:build:production"
+              "buildTarget": "trendlensbackend:build:production"
             },
             "development": {
-              "browserTarget": "trendlensbackend:build:development",
-              "proxyConfig": "proxy.conf.json"
+              "proxyConfig": "proxy.conf.json",
+              "buildTarget": "trendlensbackend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -79,7 +79,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "trendlensbackend:build"
+            "buildTarget": "trendlensbackend:build"
           }
         },
         "test": {
