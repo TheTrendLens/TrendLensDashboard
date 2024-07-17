@@ -1,4 +1,9 @@
-<app-sidenav></app-sidenav>
-<div class="content">
-  <router-outlet></router-outlet>
-</div>
+<app-sidenav *ngIf="authService.isLoggedIn && authService.isSubscriber"></app-sidenav>
+  <div class="content">
+    <!--  <router-outlet></router-outlet>-->
+    <router-outlet></router-outlet>
+  </div>
+
+<ng-template #showLogin>
+
+</ng-template>

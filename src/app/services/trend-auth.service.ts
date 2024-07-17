@@ -4,7 +4,7 @@ import {Observable} from "rxjs";
 import {environment} from "../../environments/environment";
 import {User} from "../models/user";
 
-const endpoint = `${environment.backend.baseURL}/api/auth`
+const endpoint = `${environment.backend.baseURL}/auth`
 
 @Injectable({
   providedIn: 'root'

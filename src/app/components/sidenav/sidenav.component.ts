@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {SidenavService} from "./sidenav.service";
+import {AuthService} from "../../services/auth.service";
 
 @Component({
   selector: 'app-sidenav',
@@ -7,5 +8,5 @@ import {SidenavService} from "./sidenav.service";
   styleUrls: ['./sidenav.component.scss']
 })
 export class SidenavComponent {
-  constructor(public sidenavService: SidenavService) {}
+  constructor(public sidenavService: SidenavService, public authService: AuthService ) {}
 }

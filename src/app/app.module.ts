@@ -1,37 +1,59 @@
-import { BrowserModule } from '@angular/platform-browser';
+import {BrowserModule} from '@angular/platform-browser';
 
-import { AppComponent } from './app.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { SidenavComponent } from './components/sidenav/sidenav.component';
-import { SidenavLinkComponent } from './components/sidenav-link/sidenav-link.component';
+import {AppComponent} from './app.component';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import {SidenavComponent} from './components/sidenav/sidenav.component';
+import {SidenavLinkComponent} from './components/sidenav-link/sidenav-link.component';
 import {provideRouter, RouterModule, Routes} from "@angular/router";
-import { HomeComponent } from './components/home/home.component';
-import { AnalyticsComponent } from './components/analytics/analytics.component';
-import { ListingsComponent } from './components/listings/listings.component';
-import { ListingComponent } from './components/listing/listing.component';
-import { AccountComponent } from './components/account/account.component';
-import {HttpClientModule, provideHttpClient, withInterceptors} from "@angular/common/http";
-import {AuthGuard, authHttpInterceptorFn, provideAuth0} from "@auth0/auth0-angular";
+import {HomeComponent} from './components/home/home.component';
+import {AnalyticsComponent} from './components/analytics/analytics.component';
+import {ListingsComponent} from './components/listings/listings.component';
+import {ListingComponent} from './components/listing/listing.component';
+import {AccountComponent} from './components/account/account.component';
+import {HTTP_INTERCEPTORS, HttpClientModule, provideHttpClient} from "@angular/common/http";
 import {AgGridModule} from "ag-grid-angular";
-import { UserLinkFormComponent } from './components/account/user-link-form/user-link-form.component';
+import {UserLinkFormComponent} from './components/account/user-link-form/user-link-form.component';
 import {ReactiveFormsModule} from "@angular/forms";
-import { FigureComponent } from './components/home/figure/figure.component';
-import {AgChartsAngularModule} from "ag-charts-angular";
+import {AgChartsModule} from "ag-charts-angular";
 import {MatDialogModule} from "@angular/material/dialog";
-import { ListingModalComponent } from './components/listing-table/listing-modal/listing-modal.component';
-import {NgxStripeModule} from "ngx-stripe";
+import {ListingModalComponent} from './components/listing-table/listing-modal/listing-modal.component';
 import {environment} from "../environments/environment";
 import {CheckoutComponent} from "./components/checkout/checkout.component";
-import {CUSTOM_ELEMENTS_SCHEMA, NgModule} from "@angular/core";
-import {TestGuard} from "./utils/NoSubscriptionGuard";
+import {CUSTOM_ELEMENTS_SCHEMA, inject, NgModule} from "@angular/core";
+import {MatGridListModule} from "@angular/material/grid-list";
+
+import {AngularFireModule} from "@angular/fire/compat";
+import {AngularFireAuthModule} from "@angular/fire/compat/auth";
+import {SignInComponent} from "./components/sign-in/sign-in.component";
+import {AuthGuard} from "./utils/auth.guard";
+import {JwtInterceptor} from "./utils/jwt-interceptor";
+import {VerifyEmailComponent} from "./components/verify-email/verify-email.component";
+import {ForgotPasswordComponent} from "./components/forgot-password/forgot-password.component";
+import {SignUpComponent} from "./components/sign-up/sign-up.component";
+import {NgbModule} from "@ng-bootstrap/ng-bootstrap";
+import {StripeService} from "./services/stripe.service";
+import {SubscriberGuard} from "./utils/subscriber.guard";
+import {NoAuthGuard} from "./utils/no-auth.guard";
 
 const routes: Routes = [
-  { path: '', component: HomeComponent, canActivate: [AuthGuard]  },
-  { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard]  },
-  { path: 'listings', component: ListingsComponent, canActivate: [AuthGuard]  },
-  { path: 'listing', component: ListingComponent, canActivate: [AuthGuard]  },
-  { path: 'account', component: AccountComponent, canActivate: [AuthGuard] },
-  { path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard, TestGuard] }
+  {path: '', component: HomeComponent, pathMatch: 'full', canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'home', component: HomeComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'sign-in', component: SignInComponent, canActivate: [NoAuthGuard]},
+  {path: 'sign-up', component: SignUpComponent, canActivate: [NoAuthGuard]},
+  {path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [NoAuthGuard]},
+  {path: 'verify-email-address', component: VerifyEmailComponent, canActivate: [NoAuthGuard]},
+  {path: 'sales', component: HomeComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'listings', component: ListingsComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'listing', component: ListingComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'account', component: AccountComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {
+    path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard], resolve: {
+      resolvedData: () =>
+        inject(StripeService).createCustomerSession(JSON.parse(localStorage.getItem('user')!).uid)
+    }
+  },
+  {path: '**', redirectTo: 'home'}
 ]
 
 const config = {
@@ -58,28 +80,35 @@ const config = {
     AccountComponent,
     HomeComponent,
     UserLinkFormComponent,
-    FigureComponent,
     ListingModalComponent,
-    CheckoutComponent
+    CheckoutComponent,
+    SignInComponent,
+    VerifyEmailComponent,
+    ForgotPasswordComponent,
+    SignUpComponent
   ],
   imports: [
     BrowserModule,
+    NgbModule,
     BrowserAnimationsModule,
     RouterModule,
     RouterModule.forRoot(routes),
     AgGridModule,
     HttpClientModule,
     ReactiveFormsModule,
-    AgChartsAngularModule,
+    AgChartsModule,
     MatDialogModule,
-    NgxStripeModule.forRoot(environment.STRIPE_KEY)
+    AngularFireModule.initializeApp(environment.firebaseConfig),
+    AngularFireAuthModule,
+    MatGridListModule
   ],
   providers: [
-    provideHttpClient(withInterceptors([authHttpInterceptorFn])),
     provideRouter(routes),
-    provideAuth0(config)
+    provideHttpClient(),
+    {provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true}
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class AppModule { }
+export class AppModule {
+}
