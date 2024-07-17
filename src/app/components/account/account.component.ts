@@ -16,5 +16,6 @@ export class AccountComponent {
   ];
 
   constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document) {
+
   }
 }
