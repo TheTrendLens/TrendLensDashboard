@@ -1,12 +1,12 @@
+<div class="form-background justify-content-center">
+<h1 style="font-weight: 800; font-size: 32px; text-align: center; font-family: Inter,serif; color: #FFFFFF; text-shadow: 4px 9px 4px rgba(0,0,0,0.25); padding-bottom: 2rem">Shop Details</h1>
 <form [formGroup]="myForm" (ngSubmit)="onSubmit(myForm)">
-  <div>
-    <label>
-      Depop Username:
-      <input formControlName="depopUsername" placeholder="Your Depop Username">
-    </label>
+  <div class="d-flex flex-column justify-content-center formGroup">
+    <input formControlName="depopUsername" class="shop-input form-control" style="margin-top: 10px;" required placeholder="Your Depop Username" minlength="6" />
     <div *ngIf="myForm.get('depopUsername')?.invalid && (myForm.get('depopUsername')?.dirty || myForm.get('depopUsername')?.touched)">
       Please provide a name.
     </div>
+    <button id="submit-id-submit" class="btn btn-primary btn-block box-shadow" type="submit" style="background: #e45d5d; margin: 10px 20px;" [disabled]="myForm.invalid">Save</button>
   </div>
-  <button type="submit" [disabled]="myForm.invalid">Save</button>
 </form>
+</div>

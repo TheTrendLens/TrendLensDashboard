@@ -1,26 +1,21 @@
 import {Component, Inject, OnInit, ViewChild} from '@angular/core';
-import { AuthService } from '@auth0/auth0-angular';
-import { DOCUMENT } from '@angular/common';
-import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
-import {ColDef, GridOptions, RowValueChangedEvent} from 'ag-grid-community';
+import {DOCUMENT} from '@angular/common';
+import {AgGridAngular} from 'ag-grid-angular'; // AG Grid Component
+import {CellValueChangedEvent, ColDef, GridOptions, RowValueChangedEvent} from 'ag-grid-community';
 import {Listing} from "../../models/listing";
-import {map, Observable} from "rxjs"; // Column Definition Type Interface
+// Column Definition Type Interface
 import {SaleService} from "../../services/sale.service";
 import {Sale} from "../../models/sale";
 import {ListingService} from "../../services/listing.service";
 import {MatDialog} from "@angular/material/dialog";
 import {ListingModalComponent} from "../listing-table/listing-modal/listing-modal.component";
-import {TrendAuthService} from "../../services/trend-auth.service";
-import {
-  StripeCardElementOptions,
-  StripeElementsOptions,
-} from '@stripe/stripe-js';
-import {HttpClient} from "@angular/common/http";
 import {environment} from "../../../environments/environment";
-import {Subscription} from "../../models/subscription";
 import {StripeService} from "../../services/stripe.service";
+import {AuthService} from "../../services/auth.service";
+import {UserService} from "../../services/user.service";
+import {AgCharts} from "ag-charts-angular";
 
-const endpoint = `${environment.backend.baseURL}/api`
+const endpoint = `${environment.backend.baseURL}`
 
 @Component({
   selector: 'app-home',
@@ -29,148 +24,304 @@ const endpoint = `${environment.backend.baseURL}/api`
 })
 export class HomeComponent implements OnInit {
   @ViewChild('salesGrid') grid!: AgGridAngular;
+  @ViewChild('profitGraph') profitGraph!: AgCharts;
   // Row Data: The data to be displayed.
   rowData: Sale[] = [];
   listings: Listing[] = [];
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
-    { headerName: "ID", field: "id", filter: 'agTextColumnFilter', },
-    { headerName: "Price", field: "price", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Unit Cost", field: "item_cost", filter: 'agNumberColumnFilter' },
-    { headerName: "Date Sold", field: "date_sold", editable: true, filter: 'agDateColumnFilter', cellEditor: 'agDateCellEditor' },
-    { headerName: "Depop Fee", field: "platform_fee", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Payment Fee", field: "payment_fee", editable: true, filter: 'agNumberColumnFilter' },
-    { headerName: "Postage Cost", field: "postage_cost", editable: true, filter: 'agNumberColumnFilter' },
+    {
+      headerName: "Item Name",
+      field: "listing.slug",
+      valueFormatter: this.itemNameFormatter,
+      filter: 'agTextColumnFilter',
+      filterParams: {
+        valueFormatter: this.itemNameFormatter,
+      },
+    },
+    {
+      headerName: "Sold Price", field: "sold_price", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.sold_price, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+          return {backgroundColor: 'pink'};
+        } else {
+          return {backgroundColor: 'white'}
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your sold price here'
+        } else {
+          return null;
+        }
+      }
+    },
+    {headerName: "Listed Date", field: "listing.date_listed", filter: 'agDateColumnFilter'},
+    {
+      headerName: "Date Sold",
+      field: "date_sold",
+      editable: true,
+      filter: 'agDateColumnFilter',
+      cellEditor: 'agDateCellEditor'
+    },
+    {
+      headerName: "Depop Fee", field: "platform_fee", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.platform_fee, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+          return {backgroundColor: 'pink'};
+        } else {
+          return {backgroundColor: 'white'}
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your depop fees here'
+        } else {
+          return null;
+        }
+      }
+    },
+    {
+      headerName: "Payment Fee", field: "payment_fee", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.payment_fee, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+          return {backgroundColor: 'pink'};
+        } else {
+          return {backgroundColor: 'white'}
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your payment fees here'
+        } else {
+          return null;
+        }
+      }
+    },
+    {
+      headerName: "Postage Cost", field: "postage_cost", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.postage_cost, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+
+          if (params.node.isHovered()) {
+            return {
+             backgroundColor: 'light_red'
+            }
+          } else {
+            return {backgroundColor: 'pink'};
+          }
+        } else {
+
+          if (params.node.isHovered()) {
+            return {
+              backgroundColor: 'light_blue'
+            }
+          } else {
+            return {backgroundColor: 'white'};
+          }
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your postage costs here'
+        } else {
+          return null;
+        }
+      }
+    },
   ];
 
   gridOptions: GridOptions = {
     columnDefs: this.colDefs,
-    editType: 'fullRow',
     onRowValueChanged: (event) => {
       this.onRowValueChanged(event);
+    },
+    onCellValueChanged: (event) => {
+      this.onCellValueChanged(event);
     }
   }
 
 
-  public chartOptions: any;
-  public barChartOptions: any;
+  public options: any;
 
-  user$ = this.auth.user$;
-  code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
   subscription?: string;
 
 
+  constructor(@Inject(DOCUMENT) private doc: Document, private saleService: SaleService,
+              private listingService: ListingService, private authService: AuthService,
+              private matDialogRef: MatDialog, private stripeService: StripeService,
+              private userService: UserService) {
 
-  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private saleService: SaleService,
-              private listingService: ListingService, private trendAuthService: TrendAuthService, private matDialogRef: MatDialog, private stripeService: StripeService) {
-    this.chartOptions = {
+    this.options = {
+      theme: 'ag-material',
       title: {
-        text: "Sales by Month",
+        text: "Profit Week to Date",
       },
-      data: [
-        { month: 'Jan', avgTemp: 2.3, iceCreamSales: 162000 },
-        { month: 'Mar', avgTemp: 6.3, iceCreamSales: 302000 },
-        { month: 'May', avgTemp: 16.2, iceCreamSales: 800000 },
-        { month: 'Jul', avgTemp: 22.8, iceCreamSales: 1254000 },
-        { month: 'Sep', avgTemp: 14.5, iceCreamSales: 950000 },
-        { month: 'Nov', avgTemp: 8.9, iceCreamSales: 200000 },
-      ],
       series: [
         {
-          type: "area",
-          xKey: "month",
-          yKey: "iceCreamSales",
-          yName: "iceCreamSales",
-          stacked: true,
+          type: "line",
+          xKey: "date",
+          yKey: "profit",
+          yName: "Profit",
+          marker: {
+            enabled: true
+          },
+        }
+      ],
+      data: [],
+      axes: [
+        {
+          type: "time",
+          position: "bottom",
+          label: {
+            enabled: false
+          },
+          line: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
         },
         {
-          type: "area",
-          xKey: "month",
-          yKey: "avgTemp",
-          yName: "avgTemp",
-          stacked: true,
+          type: "number",
+          position: "left",
+          label: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
         },
       ],
-    };
-    this.barChartOptions = {
-      // Data: Data to be displayed in the chart
-      data: [
-        { month: 'Jan', avgTemp: 2.3, iceCreamSales: 162000 },
-        { month: 'Mar', avgTemp: 6.3, iceCreamSales: 302000 },
-        { month: 'May', avgTemp: 16.2, iceCreamSales: 800000 },
-        { month: 'Jul', avgTemp: 22.8, iceCreamSales: 1254000 },
-        { month: 'Sep', avgTemp: 14.5, iceCreamSales: 950000 },
-        { month: 'Nov', avgTemp: 8.9, iceCreamSales: 200000 },
-      ],
-      // Series: Defines which chart type and data to use
-      series: [{ type: 'bar', xKey: 'month', yKey: 'iceCreamSales' }]
     };
   }
 
   ngOnInit(): void {
+    this.getRecentSalesWithMissingData();
 
-    this.user$.subscribe({
-      next: (user) => {
-        if (user?.sub) {
-          this.trendAuthService.login(user.sub).subscribe();
-          this.saleService.findByUser(user.sub).subscribe({
-            next: (data) => {
-              this.rowData = data;
-            },
-            error: (err) => console.error(err)
-          })
-          this.listingService.findByUser(user.sub).subscribe({
-            next: (data) => {
-              this.listings = data;
-              let oldDefs: any = this.grid.api.getColumnDefs();
-              let colDef: ColDef = {
-                headerName: "Item Name",
-                  field: "name",
-                editable: true,
-                filter: 'agTextColumnFilter',
-                cellEditor: 'agSelectCellEditor',
-                cellEditorParams: {
-                values: this.listings.map((listing) => listing.name)
-                }
-              }
-              oldDefs?.push(colDef)
-              this.grid.api.setColumnDefs(oldDefs);
-              // @ts-ignore
-              this.grid.api.moveColumnByIndex(oldDefs.length, 1)
-            },
-            error: (err) => console.error(err)
-          })
-          this.stripeService.getSubscriptionStatus(user.sub).subscribe( {
-            next: (data) => {
-              if (data.product)
-                this.subscription = data.product
-            }
-          });
-        }
-      }
+    this.getWeeklyProfit();
+  }
+
+  private getRecentSalesWithMissingData() {
+    this.userService.getSalesWithMissingData().subscribe({
+      next: (data) => {
+        data.forEach((sale) => {
+          sale.date_sold = new Date(Date.parse(sale.date_sold!.toString()));
+          sale.listing.date_listed = new Date(Date.parse(sale.listing.date_listed!.toString()));
+        })
+
+        this.rowData = data;
+      },
+      error: (err) => console.error(err)
     });
+  }
+
+  updateCharts() {
+  }
+
+  getWeeklyProfit() {
+    let today = new Date();
+    for (let i = -6; i <= 0; i++) {
+      let date = new Date();
+      date.setDate(today.getDate() + i)
+      this.userService.getProfitForDate(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getDate()).subscribe({
+          next: ({date, profit}) => {
+            let newDate = new Date(date);
+            newDate.setMonth(newDate.getMonth() - 1);
+            let dataPoint = {
+              date: newDate,
+              profit: profit
+            };
+
+            console.log(dataPoint);
+
+            this.options.data?.push(dataPoint);
+            this.options.data = this.options.data.sort((a: {date: Date, profit: number}, b: {date: Date, profit: number}) => {
+              if (a.date < b.date)
+                return -1
+              else if (a.date > b.date)
+                return 1;
+
+              return 0;
+            });
+            console.log(this.options.data);
+            this.profitGraph.chart?.update(this.options);
+          },
+          error: (err) => console.error(err)
+        }
+      )
+    }
   }
 
   onRowValueChanged(event: RowValueChangedEvent) {
     let data = event.data;
     console.log("onRowValueChanged: (" + JSON.stringify(data) + ")");
     this.saleService.update(data.id, data).subscribe();
+    event.api.refreshCells();
   }
 
-  login(): void {
-    this.auth.loginWithRedirect();
-  }
-
-  logout(): void {
-    this.auth.logout({
-      logoutParams: {
-        returnTo: this.doc.location.origin
-      }
-    });
+  onCellValueChanged(event: CellValueChangedEvent) {
+    let data = event.data;
+    console.log("onCellValueChanged: (" + JSON.stringify(data) + ")");
+    this.saleService.update(data.id, data).subscribe();
+    event.api.refreshCells();
   }
 
   openDialog() {
     this.matDialogRef.open(ListingModalComponent);
+  }
+
+  itemNameFormatter(params: any) {
+    let splits: string[] = params.value.split('-');
+
+    splits.reverse().pop();
+    splits.reverse();
+
+    splits = splits.map((split) => split.charAt(0).toUpperCase() + split.slice(1));
+
+    return splits.join(' ');
+  }
+
+  currencyFormatter(currency: number, sign: string) {
+    if (typeof currency !== "number") {
+      currency = Number.parseInt(currency);
+    }
+    if (currency) {
+        const sansDec = currency.toFixed(2);
+        const formatted = sansDec.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return sign + `${formatted}`;
+    }
+
+    return '£0.00';
   }
 }

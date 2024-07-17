@@ -1,28 +1,30 @@
-export class Listing {
-  id: number | null;
-  name: string | null;
-  price: number;
-  currency: string;
-  likes: number;
-  bag_count: number;
-  date_listed: string;
-  category: string;
+export interface Listing {
+  id:                 number;
+  name:               string;
+  brand:              null | string;
+  category:           string;
+  listed_price:       string;
+  date_updated:       Date;
+  date_listed:        Date;
+  status:             string;
+  like_count:         number;
+  condition:          string;
+  colour:             string[] | null;
+  age:                string[] | null;
+  source:             string[] | null;
+  style:              string[] | null;
+  sub_category:       string | null;
+  attributes:         { [key: string]: string[] };
+  gender:             string | null;
+  is_kids:            boolean;
+  sizes:              Size[];
+  slug:               string;
+  sold:               boolean;
+  item_cost:          string | null;
+  date_last_gathered: Date;
+}
+
+export interface Size {
+  name: string;
   quantity: number;
-  item_cost: number;
-  depop_id: string;
-
-  constructor(listing: Partial<Listing> = {}) {
-    this.id = listing?.id || null;
-    this.name = listing?.name || null;
-    this.price = listing?.price || 0;
-    this.currency = listing?.currency || "";
-    this.likes = listing?.likes || 0;
-    this.bag_count = listing?.bag_count || 0;
-    this.date_listed = listing?.date_listed || "";
-    this.category = listing?.category || "";
-    this.quantity = listing?.quantity || 0;
-    this.item_cost = listing?.item_cost || 0;
-    this.depop_id = listing?.depop_id || "";
-  }
-
 }

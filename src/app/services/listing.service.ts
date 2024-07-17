@@ -4,7 +4,7 @@ import {Observable} from "rxjs";
 import {Listing} from "../models/listing";
 import {environment} from "../../environments/environment";
 
-const endpoint = `${environment.backend.baseURL}/api/listings`
+const endpoint = `${environment.backend.baseURL}/api/listing`
 
 @Injectable({
   providedIn: 'root'
@@ -22,14 +22,10 @@ export class ListingService {
   }
 
   findByUser(user: string): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${endpoint}/users/${user}`);
+    return this.http.get<Listing[]>(`${endpoint}/user/${user}`);
   }
 
-  create(listing: Listing): Observable<any> {
+  save(listing: Listing): Observable<any> {
     return this.http.post(endpoint, JSON.stringify(listing));
-  }
-
-  update(id: any, data: any): Observable<any> {
-    return this.http.put(`${endpoint}/${id}`, data);
   }
 }
