@@ -1,71 +1,100 @@
-<div>
-  <button *ngIf="(auth.isAuthenticated$ | async) === false" (click)="login()" id="login">Login</button>
-  <div *ngIf="auth.user$ | async as user">
-    <h2>Welcome, {{user?.email}}! </h2>
-    <h2 *ngIf="subscription">You have the {{subscription}}!</h2>
+<div class="grid">
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
   </div>
-  <button *ngIf="auth.isAuthenticated$ | async" (click)="logout()" id="logout">Logout</button>
-</div>
-<div class="measures-grid">
-  <div class="figure-grid">
-    <app-figure class="item">
-      <h1 header>£1000</h1>
-      <h2 body>Sales</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Sales</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Sales</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Cost</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Cost</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Cost</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Revenue</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Revenue</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Revenue</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Unknown</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Unknown</h2>
-    </app-figure>
-    <app-figure>
-      <h1 header>£1000</h1>
-      <h2 body>Unknown</h2>
-    </app-figure>
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
   </div>
-<!--  <ag-charts-angular style="height: 100%" [options]="chartOptions"></ag-charts-angular>-->
-<!--  <ag-charts-angular style="height: 100%" [options]="barChartOptions"></ag-charts-angular>-->
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-4 g-col-xl-2">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div style="box-sizing: border-box">
+        <h3 class="m-0 mb-1 text-500">Sales</h3>
+        <h1 class="m-0 text-500">23</h1>
+      </div>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-6 g-col-xl-3">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
+      <ag-charts #profitGraph [options]="options" style="height: 150px"></ag-charts>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-6 g-col-xl-3">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
+      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-6 g-col-xl-3">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
+      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+    </div>
+  </div>
+  <div class="g-col-12 g-col-md-6 g-col-xl-3">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
+      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+    </div>
+  </div>
+
+  <div class="g-col-12 g-col-xxl-8">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div class="flex justify-content-center align-items-center">
+        <h1 class="m-0 mb-1 text-500 text-center">Recent Sales</h1>
+        <span class="badge rounded-pill bg-warning text-dark">Action Required</span>
+      </div>
+      <ag-grid-angular #salesGrid
+                       class="ag-theme-quartz"
+                       style="height: 500px;"
+                       [rowData]="rowData"
+                       [gridOptions]="gridOptions">
+      </ag-grid-angular>
+    </div>
+  </div>
+
+  <div class="g-col-12 g-col-xxl-4">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
+      <div class="flex justify-content-center align-items-center">
+        <h1 class="m-0 mb-1 text-500 text-center">Recent Listings</h1>
+        <span class="badge rounded-pill bg-warning text-dark">Action Required</span>
+      </div>
+      <ag-grid-angular #salesGrid
+                       class="ag-theme-quartz"
+                       style="height: 500px;"
+                       [rowData]="rowData"
+                       [gridOptions]="gridOptions">
+      </ag-grid-angular>
+    </div>
+  </div>
 </div>
-
-<button (click)="openDialog()">Add Sale</button>
-
-<ag-grid-angular #salesGrid
-  class="ag-theme-quartz-dark"
-  style="height: 500px;"
-  [rowData]="rowData"
-  [gridOptions]="gridOptions">
-</ag-grid-angular>

@@ -1,7 +1,18 @@
-<div *ngIf="auth.user$ | async as user" style="height: 100%; background-color: white">
-  <stripe-pricing-table pricing-table-id="prctbl_1PAZAfKU9ihQF2dqlWu8TUOb"
-                        publishable-key="pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm"
-                        [attr.client-reference-id]="user.sub"
-                        [attr.customer-session-client-secret]="customerSecret">
-  </stripe-pricing-table>
+<div class="checkout-body">
+  <div class="checkout-background">
+    <h1 class="title-text" style="font-weight: 800; font-size: 160px; text-align: center; font-family: Inter,serif; color: #FFFFFF; text-shadow: 4px 9px 4px rgba(0,0,0,0.25)">TrendLens</h1>
+
+    <div *ngIf="authService.afAuth.authState | async as user" >
+      <div *ngIf="customerSecret$ | async as customerSecret" class="stripe-pricing-table">
+        <stripe-pricing-table pricing-table-id="prctbl_1PAZAfKU9ihQF2dqlWu8TUOb"
+                              publishable-key="pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm"
+                              [attr.client-reference-id]="user.uid"
+                              [attr.customer-session-client-secret]="customerSecret">
+        </stripe-pricing-table>
+      </div>
+    </div>
+  </div>
 </div>
+
+
+

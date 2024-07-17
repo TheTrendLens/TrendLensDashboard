@@ -1,12 +1,10 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {Listing} from "../../models/listing";
 import {ColDef} from "ag-grid-community";
-import {map} from "rxjs";
-import {AuthService} from "@auth0/auth0-angular";
 import {DOCUMENT} from "@angular/common";
-import {HttpClient} from "@angular/common/http";
-import {environment} from "../../../environments/environment";
 import {ListingService} from "../../services/listing.service";
+import {AuthService} from "../../services/auth.service";
+import {UserService} from "../../services/user.service";
 
 @Component({
   selector: 'app-listings',
@@ -30,24 +28,23 @@ export class ListingsComponent implements OnInit {
     { headerName: "Quantity", field: "quantity", editable: true, filter: 'agNumberColumnFilter' },
   ];
 
-  user$ = this.auth.user$;
-
-  constructor(public auth: AuthService, @Inject(DOCUMENT) private doc: Document, private listingService: ListingService) {
+  constructor(public authService: AuthService, @Inject(DOCUMENT) private doc: Document, private userService: UserService) {
 
   }
 
   ngOnInit(): void {
-    this.user$.subscribe({
-      next: (user) => {
-        if (user?.sub) {
-          this.listingService.findByUser(user.sub).subscribe({
-            next: (data) => {
-              this.rowData = data;
-            },
-            error: (err) => console.error(err)
-          })
-        }
-      }
+    this.userService.getListings().subscribe({
+      next: (data) => {
+        data.forEach(listing => {
+          let splits = listing.slug.split('-');
+          splits.pop();
+          splits[0] = '';
+          let name = splits[1];
+          splits[1] = '';
+        })
+        this.rowData = data;
+      },
+      error: (err) => console.error(err)
     });
   }
 

@@ -1,0 +1,40 @@
+@import '~bootstrap/dist/css/bootstrap.min.css';
+
+.form-background {
+  background-color: #e45d5d;
+  padding: 5rem;
+  box-shadow: 6px 6px 30px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  width: 100%;
+}
+
+.shop-input {
+  border-radius: 5px;
+  color: #29303b;
+  font-size: 18px;
+  height: auto;
+  padding: 11px 10px 12px 40px;
+}
+
+#submit-id-submit {
+  margin-top: 0px;
+  height: 46px;
+  background-color: rgb(26,138,111);
+  border: 0;
+  color: rgb(255,255,255);
+  margin-bottom: 8px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+#login-box {
+  max-width: 500px;
+  margin: 0 auto;
+  margin-top: 25px !important;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  -webkit-box-shadow: 0px 6px 30px rgba(0,0,0,0.2);
+  -moz-box-shadow: 0px 6px 30px rgba(0,0,0,0.2);
+  box-shadow: 0px 6px 30px rgba(0,0,0,0.2);
+}

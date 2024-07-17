@@ -1,9 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {Sale} from "../../../models/sale";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
-import {AuthService} from "@auth0/auth0-angular";
 import {UserService} from "../../../services/user.service";
 import {map} from "rxjs";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-listing-modal',
@@ -12,8 +12,6 @@ import {map} from "rxjs";
 })
 export class ListingModalComponent implements OnInit {
   myForm: FormGroup = new FormGroup<any>({});
-  user$ = this.auth.user$;
-  code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
 
   constructor(public auth: AuthService, private userService: UserService) {
   }
@@ -26,21 +24,21 @@ export class ListingModalComponent implements OnInit {
 
   onSubmit(form: FormGroup) {
     if (form.valid) {
-      this.user$.subscribe({
-        next: (user) => {
-          if (user?.email) {
-            let body = {
-              depop_id: form.value.depopUsername
-            }
-            this.userService.update(user.email, body).subscribe({
-              next: (data) => {
-                console.log(data)
-              },
-              error: (err) => console.error(err)
-            })
-          }
-        }
-      });
+      // this.user$.subscribe({
+      //   next: (user) => {
+      //     if (user?.email) {
+      //       let body = {
+      //         depop_id: form.value.depopUsername
+      //       }
+      //       this.userService.update(user.email, body).subscribe({
+      //         next: (data) => {
+      //           console.log(data)
+      //         },
+      //         error: (err) => console.error(err)
+      //       })
+      //     }
+      //   }
+      // });
     }
   }
 

@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import {AngularFireAuth} from "@angular/fire/compat/auth";
+import {AuthService} from "./services/auth.service";
+import {UserService} from "./services/user.service";
 
 @Component({
   selector: 'app-root',
@@ -7,4 +10,7 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'trendlensbackend';
+
+  constructor(public authService: AuthService, public userService: UserService) {
+  }
 }

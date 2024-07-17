@@ -1,0 +1,25 @@
+<div style="background-color: #e04848; height: 100%; align-content: center">
+<h1 style="font-weight: 800; font-size: 160px; text-align: center; font-family: Inter,serif; color: #FFFFFF; text-shadow: 4px 9px 4px rgba(0,0,0,0.25)">TrendLens</h1>
+<div id="login-box" class="d-flex flex-column justify-content-center formGroup" style="background: #ffffff;">
+  <button id="submit-id-submit" class="btn btn-primary btn-block box-shadow" type="submit" style="color: #ffffff; background: #e45d5d; margin: 20px 20px;" (click)="authService.googleAuth()">Login With Google</button>
+  <div class="d-flex flex-row align-items-center login-box-seperator-container">
+    <div class="login-box-seperator"></div>
+    <div class="login-box-seperator-text">
+      <p style="margin-bottom: 0px;padding-left: 10px;padding-right: 10px;font-weight: 400;color: rgb(0,0,0);">or</p>
+    </div>
+    <div class="login-box-seperator"></div>
+  </div>
+  <div class="email-login">
+    <input class="email-imput form-control" type="email" style="margin-top: 10px;" required placeholder="Email" minlength="6" #userName/>
+    <input class="password-input form-control" type="password" style="margin-top: 10px;" required placeholder="Password" minlength="6" #userPassword/></div>
+  <button id="submit-id-submit" class="btn btn-primary btn-block box-shadow" type="submit" style="background: #e45d5d; margin: 10px 20px;" (click)="authService.login(userName.value, userPassword.value)">Login</button>
+  <div class="submit-row" style="margin-bottom: 8px;padding-top: 0px;">
+    <div class="d-flex justify-content-between">
+      <div id="form-check-rememberMe" class="form-check form-check-inline"><input id="formCheck-1" class="form-check-input" type="checkbox" for="remember" style="cursor: pointer;" name="check" /><label class="form-check-label" for="formCheck-1"><span class="label-text" style="color: rgb(0,0,0);">Remember Me</span></label></div><a id="forgot-password-link" href="#" style="color: #e45d5d">Forgot Password?</a>
+    </div>
+  </div>
+  <div id="login-box-footer" style="padding: 10px 20px;padding-bottom: 23px;padding-top: 18px;">
+    <p style="margin-bottom: 0;color: rgb(0,0,0);">Don&#39;t have an account?<a id="register-link" href="/sign-up" style="color: #e45d5d">Sign Up!</a></p>
+  </div>
+</div>
+</div>

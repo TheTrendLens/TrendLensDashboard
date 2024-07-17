@@ -3,9 +3,45 @@
 @import '../node_modules/ag-grid-community/styles/ag-grid.css';
 /* Quartz Theme Specific CSS */
 @import '../node_modules/ag-grid-community/styles/ag-theme-quartz.css';
+@import '../node_modules/bootstrap/dist/css/bootstrap.css';
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: Inter, "Helvetica Neue", sans-serif; }
 :root {
   --sidenav-width: 300px;
 }
+
+@font-face {
+  font-family: Inter;
+  src: url("assets/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+.box-shadow {
+  box-shadow: 0 3px 3px 0 rgba(41,48,59,.24), 0 0 2px 0 rgba(41,48,59,.12);
+  border-radius: 5px;
+}
+
+.flex {
+  display: flex !important;
+}
+
+.h-full {
+  height: 100% !important;
+}
+
+.card {
+  padding: 2rem;
+}
+
+.row {
+  padding-top: 1rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 1.5rem 0 1rem;
+  font-family: Inter, serif;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+

@@ -1,11 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {Form, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {Listing} from "../../../models/listing";
-import {HttpClient} from "@angular/common/http";
-import {AuthService} from "@auth0/auth0-angular";
-import {map} from "rxjs";
-import { environment } from 'src/environments/environment';
 import {UserService} from "../../../services/user.service";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-user-link-form',
@@ -15,10 +11,7 @@ import {UserService} from "../../../services/user.service";
 export class UserLinkFormComponent implements OnInit {
   myForm: FormGroup = new FormGroup<any>({});
 
-  user$ = this.auth.user$;
-  code$ = this.user$.pipe(map((user) => JSON.stringify(user, null, 2)));
-
-  constructor(public auth: AuthService, private userService: UserService) {
+  constructor(public authService: AuthService, private userService: UserService) {
   }
 
   ngOnInit() {
@@ -29,13 +22,13 @@ export class UserLinkFormComponent implements OnInit {
 
   onSubmit(form: FormGroup) {
     if (form.valid) {
-      this.user$.subscribe({
+      this.authService.afAuth.authState.subscribe({
         next: (user) => {
-          if (user?.email) {
+          if (user) {
             let body = {
               depop_id: form.value.depopUsername
             }
-            this.userService.update(user.sub, body).subscribe({
+            this.userService.update(user.uid, body).subscribe({
               next: (data) => {
                 console.log(data)
               },
