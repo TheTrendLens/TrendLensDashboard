@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://localhost:3000/api",
+    "target": "https://api.thetrendlens.co.uk/api",
     "secure": false,
     "logLevel": "debug",
     "pathRewrite": { "^/api": "" }
