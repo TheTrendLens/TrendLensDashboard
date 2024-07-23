@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  trendlens_dashboard:
+    container_name: trendlens_dashboard
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - '.:/dist'
+    ports:
+      - "80:80"
+    networks:
+      - dockernet
+networks:
+  dockernet:
+    driver: bridge

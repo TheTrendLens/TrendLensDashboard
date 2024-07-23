@@ -1,0 +1,32 @@
+name: EC2 Deployment
+
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build docker_compose
+        run: docker-compose up -d --build
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy application
+        env:
+          PRIVATE_KEY: ${{ secrets.CERTIFICATE }}
+          HOSTNAME : ${{ secrets.HOSTNAME }}
+          USERNAME : ${{ secrets.USERNAME }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USERNAME}@${HOSTNAME} '
+
+          cd TrendLensDashboard &&
+          git checkout main &&
+          git fetch --all &&
+          git reset --hard origin/main &&
+          git pull origin main &&
+          docker compose up -d --build'
