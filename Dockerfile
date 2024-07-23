@@ -1,5 +1,5 @@
 # Define node version
-FROM node:18.13.0-alpine as build
+FROM node:18 as build
 
 ARG env=prod
 
