@@ -37,4 +37,4 @@ jobs:
           docker build -t trendlens_dashboard .
           docker tag trendlens_dashboard:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker tag trendlens_dashboard:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push --all-tage $ECR_REGISTRY/$ECR_REPOSITORY
+          docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
