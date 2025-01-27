@@ -7,7 +7,7 @@
     "build": "ng build --configuration production  --build-optimizer",
     "prod": "ng build --configuration production",
     "prestart:prod": "ng build --configuration production --build-optimizer",
-    "postinstall": "ng build --configuration production --aot -prod",
+    "postinstall": "ng build --configuration production --build-optimizer",
     "build:dev": "ng build --configuration development  --build-optimizer",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
