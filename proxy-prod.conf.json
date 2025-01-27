@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "https://api.thetrendlens.co.uk",
+    "target": "https://api.thetrendlens.co.uk/api",
     "secure": true,
     "logLevel": "debug",
     "pathRewrite": { "^/api": "" }
