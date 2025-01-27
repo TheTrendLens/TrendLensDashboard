@@ -8,7 +8,6 @@ import {provideRouter, RouterModule, Routes} from "@angular/router";
 import {HomeComponent} from './components/home/home.component';
 import {AnalyticsComponent} from './components/analytics/analytics.component';
 import {ListingsComponent} from './components/listings/listings.component';
-import {ListingComponent} from './components/listing/listing.component';
 import {AccountComponent} from './components/account/account.component';
 import {HTTP_INTERCEPTORS, HttpClientModule, provideHttpClient} from "@angular/common/http";
 import {AgGridModule} from "ag-grid-angular";
@@ -34,6 +33,7 @@ import {NgbModule} from "@ng-bootstrap/ng-bootstrap";
 import {StripeService} from "./services/stripe.service";
 import {SubscriberGuard} from "./utils/subscriber.guard";
 import {NoAuthGuard} from "./utils/no-auth.guard";
+import {SalesComponent} from "./components/sales/sales.component";
 
 const routes: Routes = [
   {path: '', component: HomeComponent, pathMatch: 'full', canActivate: [AuthGuard, SubscriberGuard]},
@@ -42,10 +42,9 @@ const routes: Routes = [
   {path: 'sign-up', component: SignUpComponent, canActivate: [NoAuthGuard]},
   {path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [NoAuthGuard]},
   {path: 'verify-email-address', component: VerifyEmailComponent, canActivate: [NoAuthGuard]},
-  {path: 'sales', component: HomeComponent, canActivate: [AuthGuard, SubscriberGuard]},
+  {path: 'sales', component: SalesComponent, canActivate: [AuthGuard, SubscriberGuard]},
   {path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard, SubscriberGuard]},
   {path: 'listings', component: ListingsComponent, canActivate: [AuthGuard, SubscriberGuard]},
-  {path: 'listing', component: ListingComponent, canActivate: [AuthGuard, SubscriberGuard]},
   {path: 'account', component: AccountComponent, canActivate: [AuthGuard, SubscriberGuard]},
   {
     path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard], resolve: {
@@ -76,7 +75,7 @@ const config = {
     SidenavLinkComponent,
     AnalyticsComponent,
     ListingsComponent,
-    ListingComponent,
+    SalesComponent,
     AccountComponent,
     HomeComponent,
     UserLinkFormComponent,

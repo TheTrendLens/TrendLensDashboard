@@ -49,22 +49,22 @@
   </div>
   <div class="g-col-12 g-col-md-6 g-col-xl-3">
     <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts #profitGraph [options]="options" style="height: 150px"></ag-charts>
+      <ag-charts #profitGraph [options]="profitGraphOptions" style="height: 150px"></ag-charts>
     </div>
   </div>
   <div class="g-col-12 g-col-md-6 g-col-xl-3">
     <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+      <ag-charts #salesGraph [options]="salesGraphOptions" style="height: 150px"></ag-charts>
     </div>
   </div>
   <div class="g-col-12 g-col-md-6 g-col-xl-3">
     <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+      <ag-charts #costsGraph [options]="costsGraphOptions" style="height: 150px"></ag-charts>
     </div>
   </div>
   <div class="g-col-12 g-col-md-6 g-col-xl-3">
     <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts [options]="options" style="height: 150px"></ag-charts>
+      <ag-charts #revenueGraph [options]="revenueGraphOptions" style="height: 150px"></ag-charts>
     </div>
   </div>
 
@@ -77,8 +77,8 @@
       <ag-grid-angular #salesGrid
                        class="ag-theme-quartz"
                        style="height: 500px;"
-                       [rowData]="rowData"
-                       [gridOptions]="gridOptions">
+                       [rowData]="salesData"
+                       [gridOptions]="salesGridOptions">
       </ag-grid-angular>
     </div>
   </div>
@@ -89,11 +89,11 @@
         <h1 class="m-0 mb-1 text-500 text-center">Recent Listings</h1>
         <span class="badge rounded-pill bg-warning text-dark">Action Required</span>
       </div>
-      <ag-grid-angular #salesGrid
+      <ag-grid-angular #listingsGrid
                        class="ag-theme-quartz"
                        style="height: 500px;"
-                       [rowData]="rowData"
-                       [gridOptions]="gridOptions">
+                       [rowData]="listingsData"
+                       [gridOptions]="listingsGridOptions">
       </ag-grid-angular>
     </div>
   </div>

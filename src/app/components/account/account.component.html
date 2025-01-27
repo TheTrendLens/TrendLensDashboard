@@ -1,20 +1,56 @@
-<div style="background-color: #e45d5d; width: fit-content; margin: 100px; padding: 20px; text-align: center; color: #FFFFFF;
-box-shadow: 6px 6px 30px rgba(0,0,0,0.2); border-radius: 12px; font-family: Inter, serif">
-  <h1>Account Details</h1>
-  <div style="display: flex; flex-direction: column">
-    <div style="display: flex">
-      <div style="display: flex; flex-direction: column; padding: 20px; text-align: left">
-        <span>Current Package</span>
-        <span>Renewal Date</span>
-      </div>
-      <div style="display: flex; flex-direction: column; padding: 20px; text-align: right">
-        <span>Basic Package</span>
-        <span>13/02/1998</span>
+<div class="grid">
+  <div class="g-col-12 g-col-xl-6">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow align-items-center">
+      <h1>Subscription Details</h1>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex">
+            <div style="display: flex; flex-direction: column; padding: 20px; text-align: left">
+              <span>Current Package</span>
+              <span>Renewal Date</span>
+            </div>
+            <div style="display: flex; flex-direction: column; padding: 20px; text-align: right">
+              <span>Basic Package</span>
+              <span>13/02/1998</span>
+            </div>
+          </div>
+          <button class="manage-subscription-button btn btn-primary btn-block box-shadow">Manage Subscription</button>
       </div>
     </div>
-    <div>
-      <button class="manage-subscription-button btn btn-primary btn-block box-shadow">Manage Subscription</button>
+  </div>
+
+  <div class="g-col-12 g-col-xl-6">
+    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow align-items-center">
+      <h1>Preferences</h1>
+      <span>Currency</span>
+      <select name="currencySelector" id="currencySelector" formControlName="currencySelector" class="form-control">
+        <option value="{{currency}}" *ngFor="let currency of CurrencyList">{{currency}}</option>
+      </select>
+      <span>End of Tax Year Month</span>
+      <select name="endOfTaxYearSelector" id="endOfTaxYearSelector" formControlName="endOfTaxYearSelector" class="form-control">
+        <option value="{{month}}" *ngFor="let month of MonthList">{{month}}</option>
+      </select>
+      <button class="manage-subscription-button btn btn-primary btn-block box-shadow">Save</button>
+    </div>
+  </div>
+
+  <div class="g-col-6">
+    <div class="card surface-card text-500 flex pt-4 h-100 box-shadow align-items-center">
+      <h1>Create Support Ticket</h1>
+      <div class="row">
+      <div class="col-12 col-xl-6">
+        <label class="form-label">Name</label>
+        <input type="text" formControlName="name" class="form-control" />
+      </div>
+      <div class="col-12 col-xl-6">
+        <label class="form-label">Email</label>
+        <input type="text" formControlName="email" class="form-control" />
+      </div>
+      <div class="col-12 align-content">
+        <label class="form-label">Issue</label>
+        <textarea formControlName="issue" class="form-control"></textarea>
+      </div>
+        <button class="manage-subscription-button btn btn-primary box-shadow">Submit</button>
+    </div>
     </div>
   </div>
 </div>
-

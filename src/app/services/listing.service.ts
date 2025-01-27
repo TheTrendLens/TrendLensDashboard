@@ -28,4 +28,9 @@ export class ListingService {
   save(listing: Listing): Observable<any> {
     return this.http.post(endpoint, JSON.stringify(listing));
   }
+
+  update(id: any, data: any): Observable<any> {
+    console.log(data);
+    return this.http.put(`${endpoint}/${id}`, data);
+  }
 }

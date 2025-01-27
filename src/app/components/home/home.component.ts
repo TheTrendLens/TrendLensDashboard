@@ -23,14 +23,19 @@ const endpoint = `${environment.backend.baseURL}`
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  @ViewChild('salesGrid') grid!: AgGridAngular;
+  @ViewChild('salesGrid') salesGrid!: AgGridAngular;
+  @ViewChild('listingsGrid') listingsGrid!: AgGridAngular;
   @ViewChild('profitGraph') profitGraph!: AgCharts;
+  @ViewChild('salesGraph') salesGraph!: AgCharts;
+  @ViewChild('costsGraph') costsGraph!: AgCharts;
+  @ViewChild('revenueGraph') revenueGraph!: AgCharts;
   // Row Data: The data to be displayed.
-  rowData: Sale[] = [];
+  salesData: Sale[] = [];
+  listingsData: Listing[] = [];
   listings: Listing[] = [];
 
   // Column Definitions: Defines the columns to be displayed.
-  colDefs: ColDef[] = [
+  salesColumnDefs: ColDef[] = [
     {
       headerName: "Item Name",
       field: "listing.slug",
@@ -134,7 +139,7 @@ export class HomeComponent implements OnInit {
 
           if (params.node.isHovered()) {
             return {
-             backgroundColor: 'light_red'
+              backgroundColor: 'light_red'
             }
           } else {
             return {backgroundColor: 'pink'};
@@ -159,19 +164,92 @@ export class HomeComponent implements OnInit {
       }
     },
   ];
+  listingsColumnDefs: ColDef[] = [
+    {
+      headerName: "Item Name",
+      field: "slug",
+      valueFormatter: this.itemNameFormatter,
+      filter: 'agTextColumnFilter',
+      filterParams: {
+        valueFormatter: this.itemNameFormatter,
+      },
+    },
+    {
+      headerName: "Listed Price", field: "listed_price", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.listed_price, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+          return {backgroundColor: 'pink'};
+        } else {
+          return {backgroundColor: 'white'}
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your listed price here'
+        } else {
+          return null;
+        }
+      }
+    },
+    {
+      headerName: "Item Cost", field: "item_cost", editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data.item_cost, '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
+      },
+      cellStyle: params => {
+        if (!params.value && params.value !== 0) {
+          //mark police cells as red
+          return {backgroundColor: 'pink'};
+        } else {
+          return {backgroundColor: 'white'}
+        }
+      },
+      tooltipValueGetter: (params) => {
+        if (!params.value && params.value !== 0) {
+          return 'Please enter your item price here'
+        } else {
+          return null;
+        }
+      }
+    },
+    {headerName: "Listed Date", field: "date_listed", filter: 'agDateColumnFilter'},
+  ];
 
-  gridOptions: GridOptions = {
-    columnDefs: this.colDefs,
+  salesGridOptions: GridOptions = {
+    columnDefs: this.salesColumnDefs,
     onRowValueChanged: (event) => {
-      this.onRowValueChanged(event);
+      this.onSalesRowValueChanged(event);
     },
     onCellValueChanged: (event) => {
-      this.onCellValueChanged(event);
+      this.onSalesCellValueChanged(event);
+    }
+  }
+
+  listingsGridOptions: GridOptions = {
+    columnDefs: this.listingsColumnDefs,
+    onRowValueChanged: (event) => {
+      this.onListingsRowValueChanged(event);
+    },
+    onCellValueChanged: (event) => {
+      this.onListingsCellValueChanged(event);
     }
   }
 
 
-  public options: any;
+  public profitGraphOptions: any;
+  public salesGraphOptions: any;
+  public revenueGraphOptions: any;
+  public costsGraphOptions: any;
 
   subscription?: string;
 
@@ -181,7 +259,7 @@ export class HomeComponent implements OnInit {
               private matDialogRef: MatDialog, private stripeService: StripeService,
               private userService: UserService) {
 
-    this.options = {
+    this.profitGraphOptions = {
       theme: 'ag-material',
       title: {
         text: "Profit Week to Date",
@@ -224,12 +302,149 @@ export class HomeComponent implements OnInit {
         },
       ],
     };
+    this.salesGraphOptions = {
+      theme: 'ag-material',
+      title: {
+        text: "Sales Week to Date",
+      },
+      series: [
+        {
+          type: "line",
+          xKey: "date",
+          yKey: "sales",
+          yName: "Sales",
+          marker: {
+            enabled: true
+          },
+        }
+      ],
+      data: [],
+      axes: [
+        {
+          type: "time",
+          position: "bottom",
+          label: {
+            enabled: false
+          },
+          line: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+        {
+          type: "number",
+          position: "left",
+          label: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+      ],
+    };
+    this.revenueGraphOptions = {
+      theme: 'ag-material',
+      title: {
+        text: "Revenue Week to Date",
+      },
+      series: [
+        {
+          type: "line",
+          xKey: "date",
+          yKey: "revenue",
+          yName: "Revenue",
+          marker: {
+            enabled: true
+          },
+        }
+      ],
+      data: [],
+      axes: [
+        {
+          type: "time",
+          position: "bottom",
+          label: {
+            enabled: false
+          },
+          line: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+        {
+          type: "number",
+          position: "left",
+          label: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+      ],
+    };
+    this.costsGraphOptions = {
+      theme: 'ag-material',
+      title: {
+        text: "Costs Week to Date",
+      },
+      series: [
+        {
+          type: "line",
+          xKey: "date",
+          yKey: "costs",
+          yName: "Costs",
+          marker: {
+            enabled: true
+          },
+        }
+      ],
+      data: [],
+      axes: [
+        {
+          type: "time",
+          position: "bottom",
+          label: {
+            enabled: false
+          },
+          line: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+        {
+          type: "number",
+          position: "left",
+          label: {
+            enabled: false
+          },
+          gridLine: {
+            enabled: false,
+          },
+        },
+      ],
+    };
   }
 
   ngOnInit(): void {
-    this.getRecentSalesWithMissingData();
+    this.updateCharts();
 
-    this.getWeeklyProfit();
+    this.getRecentSalesWithMissingData();
+    this.getRecentListingsWithMissingData();
+  }
+
+  private updateCharts() {
+    this.getYearlyProfit();
+    this.getYearlyRevenue();
+    this.getYearlyCosts();
+    this.getYearlySalesCount();
   }
 
   private getRecentSalesWithMissingData() {
@@ -240,21 +455,29 @@ export class HomeComponent implements OnInit {
           sale.listing.date_listed = new Date(Date.parse(sale.listing.date_listed!.toString()));
         })
 
-        this.rowData = data;
+        this.salesData = data;
       },
       error: (err) => console.error(err)
     });
   }
 
-  updateCharts() {
+  private getRecentListingsWithMissingData() {
+    this.userService.getListingsWithMissingData().subscribe({
+      next: (data) => {
+        this.listingsData = data;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
-  getWeeklyProfit() {
+  getYearlyProfit() {
+    this.profitGraphOptions.data = new Array<any>();
     let today = new Date();
-    for (let i = -6; i <= 0; i++) {
+    for (let i = -11; i <= 0; i++) {
       let date = new Date();
-      date.setDate(today.getDate() + i)
-      this.userService.getProfitForDate(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getDate()).subscribe({
+      date.setDate(1);
+      date.setMonth(today.getMonth() + i);
+      this.userService.getProfitForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
           next: ({date, profit}) => {
             let newDate = new Date(date);
             newDate.setMonth(newDate.getMonth() - 1);
@@ -263,10 +486,8 @@ export class HomeComponent implements OnInit {
               profit: profit
             };
 
-            console.log(dataPoint);
-
-            this.options.data?.push(dataPoint);
-            this.options.data = this.options.data.sort((a: {date: Date, profit: number}, b: {date: Date, profit: number}) => {
+            this.profitGraphOptions.data?.push(dataPoint);
+            this.profitGraphOptions.data = this.profitGraphOptions.data.sort((a: {date: Date, profit: number}, b: {date: Date, profit: number}) => {
               if (a.date < b.date)
                 return -1
               else if (a.date > b.date)
@@ -274,8 +495,7 @@ export class HomeComponent implements OnInit {
 
               return 0;
             });
-            console.log(this.options.data);
-            this.profitGraph.chart?.update(this.options);
+            this.profitGraph.chart?.update(this.profitGraphOptions);
           },
           error: (err) => console.error(err)
         }
@@ -283,18 +503,139 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  onRowValueChanged(event: RowValueChangedEvent) {
+  getYearlyCosts() {
+    this.costsGraphOptions.data = new Array<any>();
+    let today = new Date();
+    for (let i = -11; i <= 0; i++) {
+      let date = new Date();
+      date.setDate(1);
+      date.setMonth(today.getMonth() + i);
+      this.userService.getCostsForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+          next: ({date, costs}) => {
+            let newDate = new Date(date);
+            newDate.setMonth(newDate.getMonth() - 1);
+            let dataPoint = {
+              date: newDate,
+              costs: costs
+            };
+
+            this.costsGraphOptions.data?.push(dataPoint);
+            this.costsGraphOptions.data = this.costsGraphOptions.data.sort((a: {date: Date, costs: number}, b: {date: Date, costs: number}) => {
+              if (a.date < b.date)
+                return -1
+              else if (a.date > b.date)
+                return 1;
+
+              return 0;
+            });
+            this.costsGraph.chart?.update(this.costsGraphOptions);
+          },
+          error: (err) => console.error(err)
+        }
+      )
+    }
+  }
+
+  getYearlyRevenue() {
+    this.revenueGraphOptions.data = new Array<any>();
+    let today = new Date();
+    for (let i = -11; i <= 0; i++) {
+      let date = new Date();
+      date.setDate(1);
+      date.setMonth(today.getMonth() + i);
+      this.userService.getRevenueForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+          next: ({date, revenue}) => {
+            let newDate = new Date(date);
+            newDate.setMonth(newDate.getMonth() - 1);
+            let dataPoint = {
+              date: newDate,
+              revenue: revenue
+            };
+
+            this.revenueGraphOptions.data?.push(dataPoint);
+            this.revenueGraphOptions.data = this.revenueGraphOptions.data.sort((a: {date: Date, revenue: number}, b: {date: Date, revenue: number}) => {
+              if (a.date < b.date)
+                return -1
+              else if (a.date > b.date)
+                return 1;
+
+              return 0;
+            });
+            this.revenueGraph.chart?.update(this.revenueGraphOptions);
+          },
+          error: (err) => console.error(err)
+        }
+      )
+    }
+  }
+
+  getYearlySalesCount() {
+    this.salesGraphOptions.data = new Array<any>();
+    let today = new Date();
+    for (let i = -11; i <= 0; i++) {
+      let date = new Date();
+      date.setDate(1);
+      date.setMonth(today.getMonth() + i);
+      this.userService.getSalesCountForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+          next: ({date, sales}) => {
+            let newDate = new Date(date);
+            newDate.setMonth(newDate.getMonth() - 1);
+            let dataPoint = {
+              date: newDate,
+              sales: sales
+            };
+
+            this.salesGraphOptions.data?.push(dataPoint);
+            this.salesGraphOptions.data = this.salesGraphOptions.data.sort((a: {date: Date, sales: number}, b: {date: Date, sales: number}) => {
+              if (a.date < b.date)
+                return -1
+              else if (a.date > b.date)
+                return 1;
+
+              return 0;
+            });
+            this.salesGraph.chart?.update(this.salesGraphOptions);
+          },
+          error: (err) => console.error(err)
+        }
+      )
+    }
+  }
+
+  onSalesRowValueChanged(event: RowValueChangedEvent) {
     let data = event.data;
     console.log("onRowValueChanged: (" + JSON.stringify(data) + ")");
     this.saleService.update(data.id, data).subscribe();
     event.api.refreshCells();
+
+    this.updateCharts();
   }
 
-  onCellValueChanged(event: CellValueChangedEvent) {
+  onListingsRowValueChanged(event: RowValueChangedEvent) {
+    let data = event.data;
+    console.log("onRowValueChanged: (" + JSON.stringify(data) + ")");
+    this.listingService.update(data.id, data).subscribe();
+    event.api.refreshCells();
+
+    this.updateCharts();
+  }
+
+  onSalesCellValueChanged(event: CellValueChangedEvent) {
     let data = event.data;
     console.log("onCellValueChanged: (" + JSON.stringify(data) + ")");
     this.saleService.update(data.id, data).subscribe();
     event.api.refreshCells();
+
+    this.updateCharts();
+  }
+
+  onListingsCellValueChanged(event: CellValueChangedEvent) {
+    let data = event.data;
+    console.log("onCellValueChanged: (" + JSON.stringify(data) + ")");
+    this.listingService.update(data.id, data).subscribe();
+    event.api.refreshCells();
+
+    this.updateCharts();
   }
 
   openDialog() {
@@ -317,7 +658,7 @@ export class HomeComponent implements OnInit {
       currency = Number.parseInt(currency);
     }
     if (currency) {
-        const sansDec = currency.toFixed(2);
+        const sansDec = currency.toFixed(0);
         const formatted = sansDec.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return sign + `${formatted}`;
     }

@@ -36,6 +36,10 @@ export class UserService {
     return this.http.get<Sale[]>(`${endpoint}/sales?missingData=true`);
   }
 
+  getListingsWithMissingData(): Observable<Listing[]> {
+    return this.http.get<Listing[]>(`${endpoint}/listings?missingData=true`);
+  }
+
   getReports(): Observable<Report[]> {
     return this.http.get<Report[]>(`${endpoint}/reports`);
   }
@@ -49,8 +53,35 @@ export class UserService {
   }
 
   getProfitForDate(year: number, month: number, day: number): Observable<{date: string, profit: number}> {
-    console.log(year, month, day);
     return this.http.get<{ date: string, profit: number }>(`${endpoint}/stats/profit/${year}/${month}/${day}`);
+  }
+
+  getProfitForMonth(year: number, month: number): Observable<{date: string, profit: number}> {
+    return this.http.get<{ date: string, profit: number }>(`${endpoint}/stats/profit/${year}/${month}`);
+  }
+
+  getCostsForDate(year: number, month: number, day: number): Observable<{date: string, costs: number}> {
+    return this.http.get<{ date: string, costs: number }>(`${endpoint}/stats/costs/${year}/${month}/${day}`);
+  }
+
+  getCostsForMonth(year: number, month: number): Observable<{date: string, costs: number}> {
+    return this.http.get<{ date: string, costs: number }>(`${endpoint}/stats/costs/${year}/${month}`);
+  }
+
+  getRevenueForDate(year: number, month: number, day: number): Observable<{date: string, revenue: number}> {
+    return this.http.get<{ date: string, revenue: number }>(`${endpoint}/stats/revenue/${year}/${month}/${day}`);
+  }
+
+  getRevenueForMonth(year: number, month: number): Observable<{date: string, revenue: number}> {
+    return this.http.get<{ date: string, revenue: number }>(`${endpoint}/stats/revenue/${year}/${month}`);
+  }
+
+  getSalesCountForDate(year: number, month: number, day: number): Observable<{date: string, sales: number}> {
+    return this.http.get<{ date: string, sales: number }>(`${endpoint}/stats/sales/${year}/${month}/${day}`);
+  }
+
+  getSalesCountForMonth(year: number, month: number): Observable<{date: string, sales: number}> {
+    return this.http.get<{ date: string, sales: number }>(`${endpoint}/stats/sales/${year}/${month}`);
   }
 
   isAdmin(): Observable<boolean> {
