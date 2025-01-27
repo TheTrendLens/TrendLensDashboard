@@ -20,12 +20,12 @@ export class AuthService {
         this.userData = user;
         localStorage.setItem('user', JSON.stringify(this.userData));
 
-        this.userService.isAdmin().subscribe({
-          next: (data) => {
-            localStorage.setItem('admin', data.toString());
-          },
-          error: (err) => console.error(err)
-        });
+        // this.userService.isAdmin().subscribe({
+        //   next: (data) => {
+        //     localStorage.setItem('admin', data.toString());
+        //   },
+        //   error: (err) => console.error(err)
+        // });
 
         this.userService.get().subscribe({
           next: (data) => {

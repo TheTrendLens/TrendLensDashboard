@@ -17,7 +17,7 @@ export class AdminGuard {
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | UrlTree | boolean {
-    if (!this.authService.isLoggedIn || !this.authService.isAdmin) {
+    if (!this.authService.isLoggedIn) {
       this.router.navigate(['sign-in']);
     }
     return true;
