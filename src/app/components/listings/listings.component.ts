@@ -15,7 +15,6 @@ import {AgGridAngular} from "ag-grid-angular";
 export class ListingsComponent implements OnInit {
   // Row Data: The data to be displayed.
   listingsData: Listing[] = [];
-  listings: Listing[] = [];
   @ViewChild('listingsGrid') listingsGrid!: AgGridAngular;
 
   // Column Definitions: Defines the columns to be displayed.
@@ -158,7 +157,6 @@ export class ListingsComponent implements OnInit {
     console.log("onCellValueChanged: (" + JSON.stringify(data) + ")");
     this.listingService.update(data.id, data).subscribe();
     event.api.refreshCells();
-
   }
 
 }

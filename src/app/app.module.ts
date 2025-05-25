@@ -34,6 +34,9 @@ import {StripeService} from "./services/stripe.service";
 import {SubscriberGuard} from "./utils/subscriber.guard";
 import {NoAuthGuard} from "./utils/no-auth.guard";
 import {SalesComponent} from "./components/sales/sales.component";
+import {StatsCardComponent} from "./components/stats-card/stats-card.component";
+import {ChartCardComponent} from "./components/chart-card/chart-card.component";
+import {GridCardComponent} from "./components/grid-card/grid-card.component";
 
 const routes: Routes = [
   {path: '', component: HomeComponent, pathMatch: 'full', canActivate: [AuthGuard, SubscriberGuard]},
@@ -99,7 +102,10 @@ const config = {
     MatDialogModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFireAuthModule,
-    MatGridListModule
+    MatGridListModule,
+    StatsCardComponent,
+    ChartCardComponent,
+    GridCardComponent
   ],
   providers: [
     provideRouter(routes),

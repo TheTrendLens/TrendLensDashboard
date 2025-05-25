@@ -7,96 +7,97 @@ import {User} from "../models/user";
 import {Sale} from "../models/sale";
 import {Report} from "../models/report";
 
-const endpoint = `${environment.backend.baseURL}/api/user`
+
+interface StatsResponse {
+  date: string;
+  [key: string]: string | number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
+  private readonly BASE_URL = `${environment.backend.baseURL}`;
+  private readonly API_ENDPOINTS = {
+    users: `${this.BASE_URL}/users`,
+    listings: `${this.BASE_URL}/users/listings`,
+    sales: `${this.BASE_URL}/users/sales`,
+    reports: `${this.BASE_URL}/users/reports`,
+    stats: `${this.BASE_URL}/users/stats`,
+    admin: `${this.BASE_URL}/is-admin`
+  };
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
+  // User-related methods
   getAll(): Observable<User[]> {
-    return this.http.get<User[]>(`${endpoint}/all`);
+    return this.http.get<User[]>(`${this.API_ENDPOINTS.users}/all`);
   }
 
   get(): Observable<User> {
-    return this.http.get<User>(`${endpoint}`);
+    return this.http.get<User>(this.API_ENDPOINTS.users);
   }
 
-  getListings(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${endpoint}/listings`)
+  create(id: string, email: string): Observable<User> {
+    return this.http.post<User>(this.API_ENDPOINTS.users, { id, email });
   }
 
-  getSales(): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${endpoint}/sales`)
+  update(userId: string, data: Partial<User>): Observable<User> {
+    return this.http.put<User>(`${this.API_ENDPOINTS.users}/${userId}`, data);
   }
 
-  getSalesWithMissingData(): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${endpoint}/sales?missingData=true`);
+  getActivePackage(userId: string): Observable<Object> {
+    return this.http.get(`${this.API_ENDPOINTS.users}/${userId}/subscription`);
   }
 
-  getListingsWithMissingData(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${endpoint}/listings?missingData=true`);
+  // Listings related methods
+  getListings(withMissingData = false): Observable<Listing[]> {
+    return this.http.get<Listing[]>(
+      this.buildUrl(this.API_ENDPOINTS.listings, { missingData: withMissingData })
+    );
   }
 
+  // Sales-related methods
+  getSales(withMissingData = false): Observable<Sale[]> {
+    return this.http.get<Sale[]>(
+      this.buildUrl(this.API_ENDPOINTS.sales, { missingData: withMissingData })
+    );
+  }
+
+  // Reports related methods
   getReports(): Observable<Report[]> {
-    return this.http.get<Report[]>(`${endpoint}/reports`);
+    return this.http.get<Report[]>(this.API_ENDPOINTS.reports);
   }
 
   getReportsByDate(year: number, month: number): Observable<Report[]> {
-    return this.http.get<Report[]>(`${endpoint}/reports/${year}/${month}`);
+    return this.http.get<Report[]>(`${this.API_ENDPOINTS.reports}/${year}/${month}`);
   }
 
   getReportByDateAndType(year: number, month: number, type: string): Observable<Report> {
-    return this.http.get<Report>(`${endpoint}/reports/${year}/${month}/${type}`);
+    return this.http.get<Report>(`${this.API_ENDPOINTS.reports}/${year}/${month}/${type}`);
   }
 
-  getProfitForDate(year: number, month: number, day: number): Observable<{date: string, profit: number}> {
-    return this.http.get<{ date: string, profit: number }>(`${endpoint}/stats/profit/${year}/${month}/${day}`);
+  // Statistics methods
+  getStats(metric: 'profit' | 'costs' | 'revenue' | 'sales', year: number, month: number, day?: number): Observable<StatsResponse> {
+    const path = day
+      ? `${metric}/${year}/${month}/${day}`
+      : `${metric}/${year}/${month}`;
+    return this.http.get<StatsResponse>(`${this.API_ENDPOINTS.stats}/${path}`);
   }
 
-  getProfitForMonth(year: number, month: number): Observable<{date: string, profit: number}> {
-    return this.http.get<{ date: string, profit: number }>(`${endpoint}/stats/profit/${year}/${month}`);
-  }
-
-  getCostsForDate(year: number, month: number, day: number): Observable<{date: string, costs: number}> {
-    return this.http.get<{ date: string, costs: number }>(`${endpoint}/stats/costs/${year}/${month}/${day}`);
-  }
-
-  getCostsForMonth(year: number, month: number): Observable<{date: string, costs: number}> {
-    return this.http.get<{ date: string, costs: number }>(`${endpoint}/stats/costs/${year}/${month}`);
-  }
-
-  getRevenueForDate(year: number, month: number, day: number): Observable<{date: string, revenue: number}> {
-    return this.http.get<{ date: string, revenue: number }>(`${endpoint}/stats/revenue/${year}/${month}/${day}`);
-  }
-
-  getRevenueForMonth(year: number, month: number): Observable<{date: string, revenue: number}> {
-    return this.http.get<{ date: string, revenue: number }>(`${endpoint}/stats/revenue/${year}/${month}`);
-  }
-
-  getSalesCountForDate(year: number, month: number, day: number): Observable<{date: string, sales: number}> {
-    return this.http.get<{ date: string, sales: number }>(`${endpoint}/stats/sales/${year}/${month}/${day}`);
-  }
-
-  getSalesCountForMonth(year: number, month: number): Observable<{date: string, sales: number}> {
-    return this.http.get<{ date: string, sales: number }>(`${endpoint}/stats/sales/${year}/${month}`);
-  }
-
+  // Authorization methods
   isAdmin(): Observable<boolean> {
-    return this.http.get<boolean>(`${environment.backend.baseURL}/is-admin`);
+    return this.http.get<boolean>(this.API_ENDPOINTS.admin);
   }
 
-  create(id: string, email: string): Observable<any> {
-    return this.http.post(endpoint, {id: id, email: email});
-  }
-
-  update(id: any, data: any): Observable<any> {
-    return this.http.put(`${endpoint}/${id}`, data);
-  }
-
-  getActivePackage(id: any): Observable<Object> {
-    return this.http.get(`${endpoint}/${id}/subscription`);
+  private buildUrl(baseUrl: string, params?: Record<string, boolean | string | number>): string {
+    if (!params) return baseUrl;
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+    return `${baseUrl}?${queryParams.toString()}`;
   }
 }

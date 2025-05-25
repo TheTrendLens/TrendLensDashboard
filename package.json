@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "node server.js",
-    "build": "ng build --configuration production  --build-optimizer",
+    "build": "ng build --configuration production --build-optimizer",
     "prod": "ng build --configuration production",
     "prestart:prod": "ng build --configuration production --build-optimizer",
     "postinstall": "ng build --configuration production --build-optimizer",

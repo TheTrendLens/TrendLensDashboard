@@ -208,7 +208,6 @@ export class HomeComponent implements OnInit {
       },
       cellStyle: params => {
         if (!params.value && params.value !== 0) {
-          //mark police cells as red
           return {backgroundColor: 'pink'};
         } else {
           return {backgroundColor: 'white'}
@@ -246,191 +245,202 @@ export class HomeComponent implements OnInit {
   }
 
 
-  public profitGraphOptions: any;
-  public salesGraphOptions: any;
-  public revenueGraphOptions: any;
-  public costsGraphOptions: any;
+  public profitGraphOptions: any = {
+    theme: 'ag-material',
+    title: {
+      text: "Profit Week to Date",
+    },
+    series: [
+      {
+        type: "line",
+        xKey: "date",
+        yKey: "profit",
+        yName: "Profit",
+        marker: {
+          enabled: true
+        },
+      }
+    ],
+    data: [],
+    axes: [
+      {
+        type: "time",
+        position: "bottom",
+        label: {
+          enabled: false
+        },
+        line: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+      {
+        type: "number",
+        position: "left",
+        label: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+    ],
+  };
+  public salesGraphOptions: any = {
+    theme: 'ag-material',
+    title: {
+      text: "Sales Week to Date",
+    },
+    series: [
+      {
+        type: "line",
+        xKey: "date",
+        yKey: "sales",
+        yName: "Sales",
+        marker: {
+          enabled: true
+        },
+      }
+    ],
+    data: [],
+    axes: [
+      {
+        type: "time",
+        position: "bottom",
+        label: {
+          enabled: false
+        },
+        line: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+      {
+        type: "number",
+        position: "left",
+        label: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+    ],
+  };
+  public revenueGraphOptions: any = {
+    theme: 'ag-material',
+    title: {
+      text: "Revenue Week to Date",
+    },
+    series: [
+      {
+        type: "line",
+        xKey: "date",
+        yKey: "revenue",
+        yName: "Revenue",
+        marker: {
+          enabled: true
+        },
+      }
+    ],
+    data: [],
+    axes: [
+      {
+        type: "time",
+        position: "bottom",
+        label: {
+          enabled: false
+        },
+        line: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+      {
+        type: "number",
+        position: "left",
+        label: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+    ],
+  };
+  public costsGraphOptions: any = {
+    theme: 'ag-material',
+    title: {
+      text: "Costs Week to Date",
+    },
+    series: [
+      {
+        type: "line",
+        xKey: "date",
+        yKey: "costs",
+        yName: "Costs",
+        marker: {
+          enabled: true
+        },
+      }
+    ],
+    data: [],
+    axes: [
+      {
+        type: "time",
+        position: "bottom",
+        label: {
+          enabled: false
+        },
+        line: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+      {
+        type: "number",
+        position: "left",
+        label: {
+          enabled: false
+        },
+        gridLine: {
+          enabled: false,
+        },
+      },
+    ],
+  };
 
   subscription?: string;
 
+  statsData = [
+    { title: 'Sales', value: '23' },
+    { title: 'Sales', value: '23' },
+    { title: 'Sales', value: '23' },
+    { title: 'Sales', value: '23' },
+    { title: 'Sales', value: '23' },
+    { title: 'Sales', value: '23' },
+  ];
+
+  chartConfigs = [
+    { options: this.profitGraphOptions },
+    { options: this.salesGraphOptions },
+    { options: this.costsGraphOptions },
+    { options: this.revenueGraphOptions }
+  ];
 
   constructor(@Inject(DOCUMENT) private doc: Document, private saleService: SaleService,
               private listingService: ListingService, private authService: AuthService,
               private matDialogRef: MatDialog, private stripeService: StripeService,
               private userService: UserService) {
 
-    this.profitGraphOptions = {
-      theme: 'ag-material',
-      title: {
-        text: "Profit Week to Date",
-      },
-      series: [
-        {
-          type: "line",
-          xKey: "date",
-          yKey: "profit",
-          yName: "Profit",
-          marker: {
-            enabled: true
-          },
-        }
-      ],
-      data: [],
-      axes: [
-        {
-          type: "time",
-          position: "bottom",
-          label: {
-            enabled: false
-          },
-          line: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-        {
-          type: "number",
-          position: "left",
-          label: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-      ],
-    };
-    this.salesGraphOptions = {
-      theme: 'ag-material',
-      title: {
-        text: "Sales Week to Date",
-      },
-      series: [
-        {
-          type: "line",
-          xKey: "date",
-          yKey: "sales",
-          yName: "Sales",
-          marker: {
-            enabled: true
-          },
-        }
-      ],
-      data: [],
-      axes: [
-        {
-          type: "time",
-          position: "bottom",
-          label: {
-            enabled: false
-          },
-          line: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-        {
-          type: "number",
-          position: "left",
-          label: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-      ],
-    };
-    this.revenueGraphOptions = {
-      theme: 'ag-material',
-      title: {
-        text: "Revenue Week to Date",
-      },
-      series: [
-        {
-          type: "line",
-          xKey: "date",
-          yKey: "revenue",
-          yName: "Revenue",
-          marker: {
-            enabled: true
-          },
-        }
-      ],
-      data: [],
-      axes: [
-        {
-          type: "time",
-          position: "bottom",
-          label: {
-            enabled: false
-          },
-          line: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-        {
-          type: "number",
-          position: "left",
-          label: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-      ],
-    };
-    this.costsGraphOptions = {
-      theme: 'ag-material',
-      title: {
-        text: "Costs Week to Date",
-      },
-      series: [
-        {
-          type: "line",
-          xKey: "date",
-          yKey: "costs",
-          yName: "Costs",
-          marker: {
-            enabled: true
-          },
-        }
-      ],
-      data: [],
-      axes: [
-        {
-          type: "time",
-          position: "bottom",
-          label: {
-            enabled: false
-          },
-          line: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-        {
-          type: "number",
-          position: "left",
-          label: {
-            enabled: false
-          },
-          gridLine: {
-            enabled: false,
-          },
-        },
-      ],
-    };
   }
 
   ngOnInit(): void {
@@ -448,7 +458,7 @@ export class HomeComponent implements OnInit {
   }
 
   private getRecentSalesWithMissingData() {
-    this.userService.getSalesWithMissingData().subscribe({
+    this.userService.getSales(true).subscribe({
       next: (data) => {
         data.forEach((sale) => {
           sale.date_sold = new Date(Date.parse(sale.date_sold!.toString()));
@@ -462,7 +472,7 @@ export class HomeComponent implements OnInit {
   }
 
   private getRecentListingsWithMissingData() {
-    this.userService.getListingsWithMissingData().subscribe({
+    this.userService.getListings(true).subscribe({
       next: (data) => {
         this.listingsData = data;
       },
@@ -477,7 +487,7 @@ export class HomeComponent implements OnInit {
       let date = new Date();
       date.setDate(1);
       date.setMonth(today.getMonth() + i);
-      this.userService.getProfitForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+      this.userService.getStats('profit', date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
           next: ({date, profit}) => {
             let newDate = new Date(date);
             newDate.setMonth(newDate.getMonth() - 1);
@@ -510,7 +520,7 @@ export class HomeComponent implements OnInit {
       let date = new Date();
       date.setDate(1);
       date.setMonth(today.getMonth() + i);
-      this.userService.getCostsForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+      this.userService.getStats('costs', date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
           next: ({date, costs}) => {
             let newDate = new Date(date);
             newDate.setMonth(newDate.getMonth() - 1);
@@ -543,7 +553,7 @@ export class HomeComponent implements OnInit {
       let date = new Date();
       date.setDate(1);
       date.setMonth(today.getMonth() + i);
-      this.userService.getRevenueForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+      this.userService.getStats('revenue', date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
           next: ({date, revenue}) => {
             let newDate = new Date(date);
             newDate.setMonth(newDate.getMonth() - 1);
@@ -576,7 +586,7 @@ export class HomeComponent implements OnInit {
       let date = new Date();
       date.setDate(1);
       date.setMonth(today.getMonth() + i);
-      this.userService.getSalesCountForMonth(date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
+      this.userService.getStats('sales', date.getUTCFullYear(), date.getUTCMonth() + 1).subscribe({
           next: ({date, sales}) => {
             let newDate = new Date(date);
             newDate.setMonth(newDate.getMonth() - 1);

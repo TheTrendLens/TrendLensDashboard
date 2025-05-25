@@ -1,12 +1,9 @@
 import {Component, Inject, OnInit, ViewChild} from '@angular/core';
-import {Listing} from "../../models/listing";
+import {Sale} from "../../models/sale";
 import {CellValueChangedEvent, ColDef, GridOptions, RowValueChangedEvent} from "ag-grid-community";
-import {DOCUMENT} from "@angular/common";
-import {ListingService} from "../../services/listing.service";
 import {AuthService} from "../../services/auth.service";
 import {UserService} from "../../services/user.service";
 import {AgGridAngular} from "ag-grid-angular";
-import {Sale} from "../../models/sale";
 import {SaleService} from "../../services/sale.service";
 
 @Component({
@@ -15,24 +12,26 @@ import {SaleService} from "../../services/sale.service";
   styleUrls: ['./sales.component.css']
 })
 export class SalesComponent implements OnInit {
-  // Row Data: The data to be displayed.
+  // ========== Component Properties ==========
   salesData: Sale[] = [];
   @ViewChild('salesGrid') salesGrid!: AgGridAngular;
 
-  constructor(public authService: AuthService, @Inject(DOCUMENT) private doc: Document, private userService: UserService, private saleService: SaleService) {
-
-  }
-
-  ngOnInit(): void {
-    this.userService.getSales().subscribe({
-      next: (data) => {
-        this.salesData = data;
+  // ========== Grid Configuration ==========
+  private createEditableNumberColumn(headerName: string, field: string, tooltipFieldName: string): ColDef {
+    return {
+      headerName: headerName,
+      field: field,
+      editable: true,
+      valueFormatter: params => this.currencyFormatter(params.data[field], '£'),
+      filter: 'agNumberColumnFilter',
+      filterParams: {
+        suppressAndOrCondition: true,
+        filterOptions: ['greaterThan'],
       },
-      error: (err) => console.error(err)
-    });
+      cellStyle: this.getCellStyle,
+      tooltipValueGetter: params => this.getMissingValueTooltip(params, tooltipFieldName)
+    };
   }
-
-
 
   salesColumnDefs: ColDef[] = [
     {
@@ -44,31 +43,12 @@ export class SalesComponent implements OnInit {
         valueFormatter: this.itemNameFormatter,
       },
     },
+    this.createEditableNumberColumn("Sold Price", "sold_price", "sold price"),
     {
-      headerName: "Sold Price", field: "sold_price", editable: true,
-      valueFormatter: params => this.currencyFormatter(params.data.sold_price, '£'),
-      filter: 'agNumberColumnFilter',
-      filterParams: {
-        suppressAndOrCondition: true,
-        filterOptions: ['greaterThan'],
-      },
-      cellStyle: params => {
-        if (!params.value && params.value !== 0) {
-          //mark police cells as red
-          return {backgroundColor: 'pink'};
-        } else {
-          return {backgroundColor: 'white'}
-        }
-      },
-      tooltipValueGetter: (params) => {
-        if (!params.value && params.value !== 0) {
-          return 'Please enter your sold price here'
-        } else {
-          return null;
-        }
-      }
+      headerName: "Listed Date",
+      field: "listing.date_listed",
+      filter: 'agDateColumnFilter'
     },
-    {headerName: "Listed Date", field: "listing.date_listed", filter: 'agDateColumnFilter'},
     {
       headerName: "Date Sold",
       field: "date_sold",
@@ -76,119 +56,59 @@ export class SalesComponent implements OnInit {
       filter: 'agDateColumnFilter',
       cellEditor: 'agDateCellEditor'
     },
+    this.createEditableNumberColumn("Depop Fee", "platform_fee", "depop fees"),
+    this.createEditableNumberColumn("Payment Fee", "payment_fee", "payment fees"),
+    this.createEditableNumberColumn("Postage Cost", "postage_cost", "postage costs"),
     {
-      headerName: "Depop Fee", field: "platform_fee", editable: true,
-      valueFormatter: params => this.currencyFormatter(params.data.platform_fee, '£'),
-      filter: 'agNumberColumnFilter',
-      filterParams: {
-        suppressAndOrCondition: true,
-        filterOptions: ['greaterThan'],
-      },
-      cellStyle: params => {
-        if (!params.value && params.value !== 0) {
-          //mark police cells as red
-          return {backgroundColor: 'pink'};
-        } else {
-          return {backgroundColor: 'white'}
-        }
-      },
-      tooltipValueGetter: (params) => {
-        if (!params.value && params.value !== 0) {
-          return 'Please enter your depop fees here'
-        } else {
-          return null;
-        }
-      }
+      headerName: "Size",
+      field: "size",
+      filter: 'agTextColumnFilter'
     },
     {
-      headerName: "Payment Fee", field: "payment_fee", editable: true,
-      valueFormatter: params => this.currencyFormatter(params.data.payment_fee, '£'),
-      filter: 'agNumberColumnFilter',
-      filterParams: {
-        suppressAndOrCondition: true,
-        filterOptions: ['greaterThan'],
-      },
-      cellStyle: params => {
-        if (!params.value && params.value !== 0) {
-          //mark police cells as red
-          return {backgroundColor: 'pink'};
-        } else {
-          return {backgroundColor: 'white'}
-        }
-      },
-      tooltipValueGetter: (params) => {
-        if (!params.value && params.value !== 0) {
-          return 'Please enter your payment fees here'
-        } else {
-          return null;
-        }
-      }
+      headerName: "Shipping Status",
+      field: "shipping_status",
+      filter: 'agTextColumnFilter',
+      editable: true
     },
-    {
-      headerName: "Postage Cost", field: "postage_cost", editable: true,
-      valueFormatter: params => this.currencyFormatter(params.data.postage_cost, '£'),
-      filter: 'agNumberColumnFilter',
-      filterParams: {
-        suppressAndOrCondition: true,
-        filterOptions: ['greaterThan'],
-      },
-      cellStyle: params => {
-        if (!params.value && params.value !== 0) {
-          //mark police cells as red
-
-          if (params.node.isHovered()) {
-            return {
-              backgroundColor: 'light_red'
-            }
-          } else {
-            return {backgroundColor: 'pink'};
-          }
-        } else {
-
-          if (params.node.isHovered()) {
-            return {
-              backgroundColor: 'light_blue'
-            }
-          } else {
-            return {backgroundColor: 'white'};
-          }
-        }
-      },
-      tooltipValueGetter: (params) => {
-        if (!params.value && params.value !== 0) {
-          return 'Please enter your postage costs here'
-        } else {
-          return null;
-        }
-      }
-    },
-    {headerName: "Size", field: "size", filter: 'agTextColumnFilter'},
-    // {headerName: "Offer", field: "offer", filter: 'agTextColumnFilter'},
-    {headerName: "Shipping Status", field: "shipping_status", filter: 'agTextColumnFilter', editable: true},
   ];
 
   salesGridOptions: GridOptions = {
     columnDefs: this.salesColumnDefs,
-    onRowValueChanged: (event) => {
-      this.onListingsRowValueChanged(event);
-    },
-    onCellValueChanged: (event) => {
-      this.onListingsCellValueChanged(event);
-    }
+    onRowValueChanged: (event) => this.handleRowValueChanged(event),
+    onCellValueChanged: (event) => this.handleCellValueChanged(event)
+  };
+
+  // ========== Constructor & Lifecycle Methods ==========
+  constructor(
+    public authService: AuthService,
+    private userService: UserService,
+    private saleService: SaleService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadSalesData();
   }
 
-  itemNameFormatter(params: any) {
-    let splits: string[] = params.value.split('-');
+  // ========== Data Loading Methods ==========
+  private loadSalesData(): void {
+    this.userService.getSales().subscribe({
+      next: (data) => {
+        this.salesData = data;
+      },
+      error: (err) => console.error('Error loading sales data:', err)
+    });
+  }
 
+  // ========== Formatting Helpers ==========
+  private itemNameFormatter(params: any): string {
+    let splits: string[] = params.value.split('-');
     splits.reverse().pop();
     splits.reverse();
-
     splits = splits.map((split) => split.charAt(0).toUpperCase() + split.slice(1));
-
     return splits.join(' ');
   }
 
-  currencyFormatter(currency: number, sign: string) {
+  private currencyFormatter(currency: number, sign: string): string {
     if (typeof currency !== "number") {
       currency = Number.parseInt(currency);
     }
@@ -197,23 +117,44 @@ export class SalesComponent implements OnInit {
       const formatted = sansDec.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       return sign + `${formatted}`;
     }
-
     return '£0.00';
   }
 
-  onListingsRowValueChanged(event: RowValueChangedEvent) {
-    let data = event.data;
-    console.log("onRowValueChanged: (" + JSON.stringify(data) + ")");
+  // ========== Cell Styling Helpers ==========
+  private getCellStyle(params: any): any {
+    const hasValue = params.value !== undefined && params.value !== null && params.value !== '';
+    const isHovered = params.node.isHovered();
+
+    if (!hasValue) {
+      return {
+        backgroundColor: isHovered ? 'light_red' : 'pink'
+      };
+    } else {
+      return {
+        backgroundColor: isHovered ? 'light_blue' : 'white'
+      };
+    }
+  }
+
+  private getMissingValueTooltip(params: any, fieldName: string): string | null {
+    if (!params.value && params.value !== 0) {
+      return `Please enter your ${fieldName} here`;
+    }
+    return null;
+  }
+
+  // ========== Event Handlers ==========
+  private handleRowValueChanged(event: RowValueChangedEvent): void {
+    const data = event.data;
+    console.log("Row value changed: " + JSON.stringify(data));
     this.saleService.update(data.id, data).subscribe();
     event.api.refreshCells();
   }
 
-  onListingsCellValueChanged(event: CellValueChangedEvent) {
-    let data = event.data;
-    console.log("onCellValueChanged: (" + JSON.stringify(data) + ")");
+  private handleCellValueChanged(event: CellValueChangedEvent): void {
+    const data = event.data;
+    console.log("Cell value changed: " + JSON.stringify(data));
     this.saleService.update(data.id, data).subscribe();
     event.api.refreshCells();
-
   }
-
 }

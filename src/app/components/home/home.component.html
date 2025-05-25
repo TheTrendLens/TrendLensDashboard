@@ -1,100 +1,34 @@
 <div class="grid">
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
+  <!-- Stats Cards -->
+  <ng-container *ngFor="let stat of statsData">
+    <div class="g-col-12 g-col-md-4 g-col-xl-2">
+      <app-stats-card [title]="stat.title" [value]="stat.value"></app-stats-card>
     </div>
-  </div>
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-4 g-col-xl-2">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div style="box-sizing: border-box">
-        <h3 class="m-0 mb-1 text-500">Sales</h3>
-        <h1 class="m-0 text-500">23</h1>
-      </div>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-6 g-col-xl-3">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts #profitGraph [options]="profitGraphOptions" style="height: 150px"></ag-charts>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-6 g-col-xl-3">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts #salesGraph [options]="salesGraphOptions" style="height: 150px"></ag-charts>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-6 g-col-xl-3">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts #costsGraph [options]="costsGraphOptions" style="height: 150px"></ag-charts>
-    </div>
-  </div>
-  <div class="g-col-12 g-col-md-6 g-col-xl-3">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 box-shadow">
-      <ag-charts #revenueGraph [options]="revenueGraphOptions" style="height: 150px"></ag-charts>
-    </div>
-  </div>
+  </ng-container>
 
-  <div class="g-col-12 g-col-xxl-8">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div class="flex justify-content-center align-items-center">
-        <h1 class="m-0 mb-1 text-500 text-center">Recent Sales</h1>
-        <span class="badge rounded-pill bg-warning text-dark">Action Required</span>
-      </div>
-      <ag-grid-angular #salesGrid
-                       class="ag-theme-quartz"
-                       style="height: 500px;"
-                       [rowData]="salesData"
-                       [gridOptions]="salesGridOptions">
-      </ag-grid-angular>
+  <!-- Chart Cards -->
+  <ng-container *ngFor="let chart of chartConfigs">
+    <div class="g-col-12 g-col-md-6 g-col-xl-3">
+      <app-chart-card [options]="chart.options"></app-chart-card>
     </div>
+  </ng-container>
+
+  <!-- Data Grid Cards -->
+  <div class="g-col-12 g-col-xxl-8">
+    <app-grid-card
+      title="Recent Sales"
+      [showActionBadge]="true"
+      [gridOptions]="salesGridOptions"
+      [rowData]="salesData">
+    </app-grid-card>
   </div>
 
   <div class="g-col-12 g-col-xxl-4">
-    <div class="card surface-card text-500 flex justify-content-between pt-4 h-100 box-shadow">
-      <div class="flex justify-content-center align-items-center">
-        <h1 class="m-0 mb-1 text-500 text-center">Recent Listings</h1>
-        <span class="badge rounded-pill bg-warning text-dark">Action Required</span>
-      </div>
-      <ag-grid-angular #listingsGrid
-                       class="ag-theme-quartz"
-                       style="height: 500px;"
-                       [rowData]="listingsData"
-                       [gridOptions]="listingsGridOptions">
-      </ag-grid-angular>
-    </div>
+    <app-grid-card
+      title="Recent Listings"
+      [showActionBadge]="true"
+      [gridOptions]="listingsGridOptions"
+      [rowData]="listingsData">
+    </app-grid-card>
   </div>
 </div>
