@@ -1,0 +1,39 @@
+<div class="space-x-4 border-b border-gray-100 mt-6 grid grid-cols-1">
+  <h2 class="text-xl text-red-500 border-red-400 font-semibold mb-4">Action Required</h2>
+  <h2 class="text-sm text-gray-500 font-semibold mb-4">Please make sure all sales have a Platform fee, Payment Fee, Postage Cost, and Item Cost.</h2>
+</div>
+
+<div>
+  <dl class="mt-5 grid grid-cols-1">
+    <table mat-table class="min-w-full border-separate border-spacing-0" [dataSource]="salesData">
+      <ng-container [matColumnDef]="col.nestedKey ? col.nestedKey : col.key" *ngFor="let col of salesColumnsSchema">
+        <th mat-header-cell *matHeaderCellDef class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter sm:pl-6 lg:pl-8">{{col.label}}</th>
+        <td mat-cell *matCellDef="let element" class="hidden whitespace-nowrap border-b border-gray-200 px-3 py-4 text-sm text-gray-500 sm:table-cell">
+          <div *ngIf="!element.isEdit">
+            <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
+              <button mat-button (click)="openEditSaleDialog(element)">Edit</button>
+            </div>
+            <ng-template #dataField>
+        <span>
+          {{ getValue(element, col) ? (col.type === 'number' ? '£' : '') + getValue(element, col) : '' }}
+        </span>
+            </ng-template>
+          </div>
+          <div *ngIf="element.isEdit">
+            <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
+              <button mat-button (click)="openEditSaleDialog(element)">Done</button>
+            </div>
+            <ng-template #dataField>
+              <mat-form-field>
+<!--                <input [type]="col.type" matInput [(ngModel)]="">-->
+              </mat-form-field>
+            </ng-template>
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="salesDisplayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: salesDisplayedColumns;"></tr>
+    </table>
+    <mat-paginator #salesPaginator [length]="salesTotalRows" [pageIndex]="salesCurrentPage" [pageSize]="salesPageSize" (page)="pageChanged($event)" aria-label="Select page"></mat-paginator>
+  </dl>
+</div>

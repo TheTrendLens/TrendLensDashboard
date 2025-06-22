@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Add New Listing</h2>
+<mat-dialog-content>
+  <form [formGroup]="listingForm">
+    <div class="grid grid-cols-2 gap-4">
+      <mat-form-field>
+        <input matInput placeholder="Name" formControlName="name" required>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Brand" formControlName="brand">
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Category" formControlName="category" required>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Listed Price" formControlName="listed_price" required>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Condition" formControlName="condition" required>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Gender" formControlName="gender">
+      </mat-form-field>
+      <mat-checkbox formControlName="is_kids">Is Kids</mat-checkbox>
+      <mat-form-field>
+        <input matInput placeholder="Slug" formControlName="slug" required>
+      </mat-form-field>
+      <mat-checkbox formControlName="sold">Sold</mat-checkbox>
+      <mat-form-field>
+        <input matInput placeholder="Item Cost" formControlName="item_cost">
+      </mat-form-field>
+      <!-- Add more fields as needed -->
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSave()" [disabled]="listingForm.invalid">Save</button>
+</mat-dialog-actions>

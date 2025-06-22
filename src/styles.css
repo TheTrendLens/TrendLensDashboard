@@ -1,1 +1,45 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/rose-red.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --color-midnight: #121063;
+  --color-tahiti: #3ab7bf;
+  --color-bermuda: #78dcca;
+}
+
+.sidebar-desktop-container {
+  @apply flex grow flex-col gap-y-5 overflow-y-auto px-6;
+  background-color: #E45D5D;
+}
+
+.company-logo {
+  @apply flex h-16 shrink-0 items-center;
+}
+
+.sidebar-desktop {
+  @apply flex flex-1 flex-col;
+}
+
+.nav-content {
+  @apply flex flex-1 flex-col gap-y-7;
+}
+
+.page-list {
+  @apply -mx-2 space-y-12;
+}
+
+.nav-link {
+  @apply flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-white hover:text-white;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  font-weight: bold;
+}

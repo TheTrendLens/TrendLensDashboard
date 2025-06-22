@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>Edit Sale Details</h2>
+<mat-dialog-content>
+  <form [formGroup]="salesForm">
+    <div class="grid grid-cols-2 gap-4">
+      <mat-form-field>
+        <mat-label>Listing</mat-label>
+        <input matInput placeholder="Listing" formControlName="listing">
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Date Sold</mat-label>
+        <input matInput [matDatepicker]="dateSoldDatePicker" formControlName="dateSold" required>
+        <mat-datepicker-toggle matSuffix [for]="dateSoldDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #dateSoldDatePicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Date Listed</mat-label>
+        <input matInput [matDatepicker]="dateListedDatePicker" formControlName="dateListed" required>
+        <mat-datepicker-toggle matSuffix [for]="dateListedDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #dateListedDatePicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Listed Price</mat-label>
+        <input matInput placeholder="Listed Price" formControlName="listedPrice">
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Sold Price</mat-label>
+        <input matInput placeholder="Sold Price" formControlName="soldPrice" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Size</mat-label>
+        <input matInput placeholder="Size" formControlName="size">
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Platform Fee</mat-label>
+        <input matInput placeholder="Platform Fee" formControlName="platformFee" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Payment Fee</mat-label>
+        <input matInput placeholder="Payment Fee" formControlName="paymentFee" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Postage Cost</mat-label>
+        <input matInput placeholder="Postage Cost" formControlName="postageCost" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Item Cost</mat-label>
+        <input matInput placeholder="Item Cost" formControlName="itemCost" required>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSave()" [disabled]="salesForm.invalid">Save</button>
+</mat-dialog-actions>

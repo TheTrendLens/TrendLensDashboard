@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>Upload CSV File</h2>
+<mat-dialog-content>
+  <form [formGroup]="uploadForm">
+    <div class="grid grid-cols-1 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Select CSV File</mat-label>
+        <input matInput readonly [value]="selectedFileName || 'No file selected'">
+        <button mat-stroked-button matSuffix type="button" (click)="fileInput.click()">
+          Select File
+        </button>
+      </mat-form-field>
+
+      <input type="file" hidden #fileInput accept=".csv" (change)="onFileSelected($event)">
+      <div *ngIf="selectedFileName" class="file-info">
+        <p>Selected file: {{ selectedFileName }}</p>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button color="primary" [disabled]="!selectedFile || uploadInProgress" (click)="onUpload()">
+    <span *ngIf="!uploadInProgress">Upload</span>
+    <span *ngIf="uploadInProgress">Uploading...</span>
+  </button>
+</mat-dialog-actions>
