@@ -38,7 +38,7 @@ export class StatCardsComponent implements OnInit {
   timeframeOptions = [
     { label: 'This Year', value: 'year' },
     { label: 'This Month', value: 'month' },
-    { label: 'Last 30 Days', value: '30days' },
+    // { label: 'Last 30 Days', value: '30days' },
     { label: 'Last Year', value: 'lastyear' },
     { label: 'Last Month', value: 'lastmonth' },
   ];

@@ -53,7 +53,7 @@ export class EditSaleDialogComponent {
       size: [data.size],
       platformFee: [data.platform_fee || ''],
       paymentFee: [data.payment_fee || '', Validators.required],
-      postageCost: [data.postage_cost || '', Validators.required],
+      postageCost: [data.buyer_postage_cost || '', Validators.required],
       itemCost: [data.item_cost || '', Validators.required],
     })
 
@@ -71,12 +71,12 @@ export class EditSaleDialogComponent {
     if (this.salesForm.valid) {
       const sale: Sale = this.data;
 
-      sale.date_sold = this.salesForm.value['dateSold'];
-      sale.sold_price = this.salesForm.value['soldPrice'];
-      sale.platform_fee = this.salesForm.value['platformFee'];
-      sale.payment_fee = this.salesForm.value['paymentFee'];
-      sale.postage_cost = this.salesForm.value['postageCost'];
-      sale.item_cost = this.salesForm.value['itemCost'];
+      sale.date_sold = new Date(this.salesForm.value['dateSold']);
+      sale.sold_price = +this.salesForm.value['soldPrice'];
+      sale.platform_fee = +this.salesForm.value['platformFee'];
+      sale.payment_fee = +this.salesForm.value['paymentFee'];
+      sale.buyer_postage_cost = +this.salesForm.value['postageCost'];
+      sale.item_cost = +this.salesForm.value['itemCost'];
 
       this.salesService.update(sale).pipe(take(1)).subscribe(result => {
         console.log(result);

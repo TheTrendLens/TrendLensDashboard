@@ -68,7 +68,7 @@ const SALES_COLUMNS_SCHEMA = [
     label: 'Payment Fee'
   },
   {
-    key: 'postage_cost',
+    key: 'buyer_postage_cost',
     type: 'number',
     label: 'Postage Cost'
   },

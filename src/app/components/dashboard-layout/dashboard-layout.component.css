@@ -1,0 +1,56 @@
+/* Mobile sidebar animations */
+@keyframes sidebar-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes sidebar-slide-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* Overlay animation */
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Animation classes */
+.sidebar-enter-active {
+  animation: sidebar-slide-in 0.3s ease-out;
+}
+
+.sidebar-leave-active {
+  animation: sidebar-slide-out 0.3s ease-in;
+}
+
+.overlay-enter-active {
+  animation: overlay-fade-in 0.3s ease-out;
+}
+
+/* Touch-specific optimizations */
+@media (hover: none) {
+  .nav-link {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Add some spacing for mobile navigation */
+.page-list {
+  @apply space-y-2 lg:space-y-12;
+}
+
+/* Make sure the sidebar takes full height on mobile */
+.sidebar-desktop-container {
+  min-height: 100vh;
+}
+
+/* Match the mobile top bar color with the sidebar */
+.mobile-top-bar {
+  background-color: #E45D5D;
+}
+
+/* Also ensure consistent coloring in the mobile sidebar */
+.sidebar-desktop-container {
+  background-color: #E45D5D;
+}

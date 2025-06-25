@@ -3,7 +3,7 @@ export interface Listing {
   name:               string;
   brand:              null | string;
   category:           string;
-  listed_price:       string;
+  listed_price:       string | number;
   date_updated:       Date;
   date_listed:        Date;
   status:             string;
