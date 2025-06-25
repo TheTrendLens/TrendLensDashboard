@@ -142,7 +142,7 @@ export class ActionRequiredTablesComponent implements OnInit {
   loadData() {
     this.salesIsLoading = true;
 
-    this.userService.getSalesCount().pipe(take(1)).subscribe({
+    this.userService.getSalesWithMissingDataCount().pipe(take(1)).subscribe({
       next: (count) => {
         this.salesTotalRows = count;
       }

@@ -52,6 +52,10 @@ export class UserService {
     return this.http.get<number>(`${endpoint}/salescount?q=${query}`);
   }
 
+  getSalesWithMissingDataCount(): Observable<number> {
+    return this.http.get<number>(`${endpoint}/salescount?missingData=true`);
+  }
+
   getListingsWithMissingData(): Observable<Listing[]> {
     return this.http.get<Listing[]>(`${endpoint}/listings?missingData=true`);
   }
