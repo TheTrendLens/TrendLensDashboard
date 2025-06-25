@@ -10,10 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist/trendlens-frontend')));
+app.use(express.static(path.join(__dirname, 'dist/trendlens-frontend/')));
 
 // Send all requests to index.html
-app.get('/*', (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist/trendlens-frontend/index.html'));
 });
 
