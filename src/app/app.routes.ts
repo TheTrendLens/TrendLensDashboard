@@ -20,6 +20,7 @@ import {SubscriberGuard} from './utils/subscriber.guard';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
 import {ListingsComponent} from './components/listings/listings.component';
 import {SalesComponent} from './components/sales/sales.component';
+import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
@@ -137,6 +138,7 @@ const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
+  { path: 'forgot-password',  component: ForgotPasswordComponent,  canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
   { path: 'signup', component: SignupFlowComponent, children: [
       {
         path: '',

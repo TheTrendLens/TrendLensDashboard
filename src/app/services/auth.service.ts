@@ -6,7 +6,7 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   UserCredential,
-  signInWithEmailAndPassword, User, signOut
+  signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
 import {User as DbUser} from '../models/user';
@@ -98,6 +98,15 @@ export class AuthService {
       // Auth state listener will handle clearing localStorage
     } catch (error) {
       console.error('Logout failed:', error);
+      throw error;
+    }
+  }
+  
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(this.auth, email);
+    } catch (error) {
+      console.error('Password reset email failed:', error);
       throw error;
     }
   }
