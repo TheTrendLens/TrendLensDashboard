@@ -19,7 +19,11 @@ export class LoginComponent {
 
   async onSubmit() {
     if (this.form.value.email && this.form.value.password) {
-      this.authService.loginWithEmailAndPassword(this.form.value.email, this.form.value.password);
+      await this.authService.loginWithEmailAndPassword(this.form.value.email, this.form.value.password);
     }
+  }
+
+  async onGoogleButton() {
+    await this.authService.loginWithGoogle();
   }
 }

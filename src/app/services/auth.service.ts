@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   UserCredential,
-  signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail
+  GoogleAuthProvider,
+  signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail, signInWithPopup
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
 import {User as DbUser} from '../models/user';
@@ -92,6 +93,18 @@ export class AuthService {
     }
   }
 
+  async loginWithGoogle(): Promise<void> {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(this.auth, provider);
+      await this.fetchUserData();
+      this.router.navigate(['home']);
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  }
+
   async logout(): Promise<void> {
     try {
       await signOut(this.auth);
@@ -101,7 +114,7 @@ export class AuthService {
       throw error;
     }
   }
-  
+
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(this.auth, email);
