@@ -24,6 +24,7 @@ import {ResetPasswordComponent} from './components/reset-password/reset-password
 import {AccountComponent} from './components/account/account.component';
 import {SalesComponent} from './components/sales/sales.component';
 import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
+import {AnalyticsComponent} from './components/analytics/analytics.component';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
@@ -184,6 +185,10 @@ export const routes: Routes = [
       {
         path: 'sales/:id',
         component: SaleDetailComponent
+      },
+      {
+        path: 'analytics',
+        component: AnalyticsComponent
       },
       {
         path: 'account',

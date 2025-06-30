@@ -1,0 +1,160 @@
+<!-- Date Filter Controls -->
+<div class="mb-6 bg-white rounded-lg shadow p-4">
+  <h2 class="text-xl font-semibold mb-4">Sales Analytics</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Start Date -->
+    <div>
+      <label for="startDate" class="block mb-2 text-sm font-medium text-gray-900">Start Date</label>
+      <input
+        type="date"
+        id="startDate"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        [ngModel]="startDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="startDate = $event">
+    </div>
+
+    <!-- End Date -->
+    <div>
+      <label for="endDate" class="block mb-2 text-sm font-medium text-gray-900">End Date</label>
+      <input
+        type="date"
+        id="endDate"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        [ngModel]="endDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="endDate = $event">
+    </div>
+
+    <!-- Apply Button -->
+    <div class="flex items-end">
+      <button
+        (click)="applyDateFilter()"
+        class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
+        Apply Filter
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Indicator -->
+<div *ngIf="isLoading" class="flex justify-center items-center my-8">
+  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+</div>
+
+<!-- Analytics Content -->
+<div *ngIf="!isLoading && analyticsData">
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <!-- Total Sales Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-sm font-medium text-gray-500">Total Sales</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalSales }}</p>
+    </div>
+
+    <!-- Total Revenue Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-sm font-medium text-gray-500">Total Revenue</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalRevenue) }}</p>
+    </div>
+
+    <!-- Total Fees Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-sm font-medium text-gray-500">Total Fees</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalFees) }}</p>
+    </div>
+
+    <!-- Total Profit Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-sm font-medium text-gray-500">Total Profit</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalProfit) }}</p>
+    </div>
+
+    <!-- Average Sale Price Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-sm font-medium text-gray-500">Average Sale Price</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.averageSalePrice) }}</p>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Sales Over Time Chart -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-4">Sales Over Time</h3>
+      <div class="h-80">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Top Categories Chart -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-4">Top Categories</h3>
+      <div class="h-80">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand Chart -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Top Brands by Revenue</h3>
+    <div class="h-80">
+      <canvas id="brandChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Detailed Tables Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Categories Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <h3 class="text-lg font-semibold p-4 border-b">Categories Breakdown</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let category of analyticsData.categories">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ category.category }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ category.count }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatCurrency(category.revenue) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Brands Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <h3 class="text-lg font-semibold p-4 border-b">Brands Breakdown</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let brand of analyticsData.brands">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ brand.brand }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ brand.count }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatCurrency(brand.revenue) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Data Message -->
+<div *ngIf="!isLoading && !analyticsData" class="bg-white rounded-lg shadow p-8 text-center">
+  <h3 class="text-lg font-medium text-gray-900 mb-2">No Analytics Data Available</h3>
+  <p class="text-gray-500">Try adjusting your date range or check back later.</p>
+</div>
