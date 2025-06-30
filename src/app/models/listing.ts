@@ -1,5 +1,5 @@
 export interface Listing {
-  id:                 number;
+  id:                 string;
   name:               string;
   brand:              null | string;
   category:           string;

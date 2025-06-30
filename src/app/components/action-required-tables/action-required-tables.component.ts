@@ -10,16 +10,13 @@ import {
   MatRowDef, MatTable
 } from "@angular/material/table";
 import {MatFormField} from "@angular/material/form-field";
-import {MatInput} from "@angular/material/input";
 import {NgForOf, NgIf} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {Listing} from '../../models/listing';
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
 import {UserService} from '../../services/user.service';
 import {MatDialog} from '@angular/material/dialog';
-import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {StatCardsComponent} from '../stat-cards/stat-cards.component';
 
@@ -48,9 +45,9 @@ const SALES_COLUMNS_SCHEMA = [
     label: 'Listed Price'
   },
   {
-    key: 'sold_price',
+    key: 'total',
     type: 'number',
-    label: 'Sold Price'
+    label: 'Total'
   },
   {
     key: 'size',
@@ -68,7 +65,7 @@ const SALES_COLUMNS_SCHEMA = [
     label: 'Payment Fee'
   },
   {
-    key: 'buyer_postage_cost',
+    key: 'seller_postage_cost',
     type: 'number',
     label: 'Postage Cost'
   },
@@ -94,7 +91,6 @@ const SALES_COLUMNS_SCHEMA = [
     MatHeaderCell,
     MatHeaderRow,
     MatHeaderRowDef,
-    MatInput,
     MatRow,
     MatRowDef,
     MatTable,

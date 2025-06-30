@@ -1,15 +1,21 @@
-import {Listing} from "./listing";
+import { User } from './user';
+import { Product } from './product';
 
 export interface Sale {
-  id:              number;
-  date_sold:       Date;
-  shipping_status: string;
-  platform_fee:    string | number;
-  buyer_postage_cost:    string | number;
-  payment_fee:     string | number;
-  size:            string;
-  sold_price:      string | number;
-  item_cost:       string | number | null;
-  offer:           string;
-  listing:         Listing;
+  id: string;
+  date_sold: Date;
+  time_sold: string;
+  buyer: string;
+  platform_fee: number;
+  seller_postage_cost: number;
+  total: number;
+  payment_fee: number;
+  boosting_fee: number;
+  total_fee: number;
+  payment_type: string;
+  refunded_to_buyer: number;
+  refunded_to_seller: number;
+  offer: boolean;
+  products: Product[];
+  user: User;
 }

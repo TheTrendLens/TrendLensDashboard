@@ -3,6 +3,8 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } fro
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { filter } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog.component';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -17,7 +19,8 @@ export class DashboardLayoutComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -50,5 +53,20 @@ export class DashboardLayoutComponent implements OnInit {
 
   closeMobileSidebar() {
     this.isMobileSidebarOpen = false;
+  }
+
+  openUploadSalesDialog() {
+    const dialogRef = this.dialog.open(UploadCsvDialogComponent, {
+      width: '90%',
+      maxWidth: '600px',
+      panelClass: 'responsive-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        // Optionally refresh data or show a success message
+        console.log('Upload successful:', result.data);
+      }
+    });
   }
 }

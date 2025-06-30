@@ -19,8 +19,9 @@ import {StripeService} from './services/stripe.service';
 import {SubscriberGuard} from './utils/subscriber.guard';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
 import {ListingsComponent} from './components/listings/listings.component';
-import {SalesComponent} from './components/sales/sales.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
+import {SalesComponent} from './components/sales/sales.component';
+import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
@@ -176,6 +177,10 @@ export const routes: Routes = [
       {
         path: 'sales',
         component: SalesComponent
+      },
+      {
+        path: 'sales/:id',
+        component: SaleDetailComponent
       }
     ] },
   { path: '**', redirectTo: '', },

@@ -1,136 +1,169 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
-import {Listing} from '../../models/listing';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import {NgForOf, NgIf, NgSwitch} from '@angular/common';
-import {MatFormField, MatFormFieldModule} from '@angular/material/form-field';
+import {MatTableModule} from '@angular/material/table';
+import {DatePipe, NgForOf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginator, MatPaginatorModule, PageEvent} from '@angular/material/paginator';
-import {fakeAsync} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
-import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
-import {MatButton} from '@angular/material/button';
+import {MatButton, MatIconButton} from '@angular/material/button';
 import {TableSearchBarComponent} from '../table-search-bar/table-search-bar.component';
 import {Sale} from '../../models/sale';
 import {UploadCsvDialogComponent} from '../upload-csv-dialog/upload-csv-dialog.component';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
-
-
-const COLUMNS_SCHEMA = [
-  {
-    key: 'listing',
-    nestedKey: 'slug',
-    type: 'test',
-    label: 'Listing'
-  },
-  {
-    key: 'date_sold',
-    type: 'text',
-    label: 'Date Sold'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'date_listed',
-    type: 'text',
-    label: 'Date Listed'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'listed_price',
-    type: 'number',
-    label: 'Listed Price'
-  },
-  {
-    key: 'sold_price',
-    type: 'number',
-    label: 'Sold Price'
-  },
-  {
-    key: 'platform_fee',
-    type: 'number',
-    label: 'Platform Fee'
-  },
-  {
-    key: 'payment_fee',
-    type: 'number',
-    label: 'Payment Fee'
-  },
-  {
-    key: 'buyer_postage_cost',
-    type: 'number',
-    label: 'Postage Cost'
-  },
-  {
-    key: 'item_cost',
-    type: 'number',
-    label: 'Item Cost'
-  },
-  {
-    key: 'isEdit',
-    type: 'isEdit',
-    label: ''
-  }
-]
+import {Router} from '@angular/router';
+import {BundleService} from '../../services/bundle.service';
+import {MatIcon} from '@angular/material/icon';
+import {SalesService} from '../../services/sales.service';
+import {ProductService} from '../../services/product.service';
+import {Product} from '../../models/product';
 
 @Component({
   selector: 'app-sales',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, NgSwitch, NgIf, MatPaginatorModule, MatButton, TableSearchBarComponent],
+  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, DatePipe, MatIcon, MatIconButton],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.css'
 })
 export class SalesComponent implements AfterViewInit, OnInit {
   public salesData: Sale[] = [];
-  displayedColumns: string[] = COLUMNS_SCHEMA.map((col) => col.nestedKey ? col.nestedKey : col.key);
-  columnsSchema: any = COLUMNS_SCHEMA;
+  saleItemCounts: { [bundleId: string]: number } = {};
   console = console;
   searchQuery: string = '';
+  totalPages: number = 0;
+
+  // New properties for filtering and sorting
+  dateFilter: string = 'all';
+  sortBy: string = 'date_desc';
+  itemsFilter: string = 'all';
+  Math = Math; // Make Math available to the template
 
   isLoading: boolean = false;
-  totalRows = 250;
-  pageSize = 100;
-  currentPage = 0;
+  totalRows = 7;
+  pageSize = 32;
+  currentPage = 1;
   pageSizeOptions: number[] = [5, 10, 25, 100];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(public userService: UserService, public dialog: MatDialog) {
+  constructor(public userService: UserService, public salesService: SalesService, public productService: ProductService, public dialog: MatDialog, private router: Router) {
 
   }
 
   ngOnInit(): void {
     this.loadData();
-    this.userService.getSalesCount().pipe(take(1)).subscribe({
+    this.userService.getSalesCount(this.searchQuery, this.dateFilter).pipe(take(1)).subscribe({
       next: (count) => {
         this.totalRows = count;
+        this.calculateTotalPages();
       }
-    })
+    });
   }
+
+  calculateTotalPages(): void {
+    this.totalPages = Math.ceil(this.totalRows / this.pageSize);
+  }
+
+  // Add these navigation methods
+  goToPreviousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadData();
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadData();
+    }
+  }
+
+
 
   ngAfterViewInit(): void {
     // this.listingsData.paginator = this.paginator;
   }
 
+  navigateToBundle(saleId: string): void {
+    this.router.navigate(['/sales', saleId]);
+  }
+
   loadData() {
     this.isLoading = true;
 
-    this.userService.searchSales(this.searchQuery, this.pageSize, this.currentPage + 1).pipe(take(1)).subscribe({
+    // Pass filters to the service
+    this.userService.getSales(
+      this.pageSize,
+      this.currentPage,
+      this.searchQuery,
+      this.dateFilter,
+      this.sortBy
+    ).pipe(take(1)).subscribe({
       next: (sales) => {
         this.salesData = sales;
-        this.paginator.pageIndex = this.currentPage;
+        this.loadSaleItemCounts();
+
+        // Apply client-side filtering for items count if needed
+        if (this.itemsFilter !== 'all') {
+          this.applyItemsFilter();
+        }
+
+        if (this.paginator) {
+          this.paginator.pageIndex = this.currentPage;
+        }
         this.isLoading = false;
       },
       error: (error) => {
         console.error(error);
         this.isLoading = false;
       }
-    })
+    });
   }
 
-  pageChanged(event: PageEvent) {
-    this.pageSize = event.pageSize;
+  /**
+   * Apply all filters and reload data
+   */
+  applyFilters() {
+    this.currentPage = 1; // Reset to first page when filters change
+    this.loadData();
+  }
+
+  /**
+   * Apply client-side filtering for items count
+   * This is done client-side since we already have the item counts loaded
+   */
+  applyItemsFilter() {
+    if (this.itemsFilter === 'single') {
+      this.salesData = this.salesData.filter(sale =>
+        this.saleItemCounts[sale.id] === 1
+      );
+    } else if (this.itemsFilter === 'multiple') {
+      this.salesData = this.salesData.filter(sale =>
+        this.saleItemCounts[sale.id] > 1
+      );
+    }
+  }
+
+  loadSaleItemCounts(): void {
+    this.salesData.forEach(sale => {
+      this.productService.getProductsBySale(sale.id).subscribe({
+        next: (products: Product[]) => {
+          this.saleItemCounts[sale.id] = products.length;
+        },
+        error: (error) => {
+          console.error(`Error fetching sales for bundle ${sale.id}:`, error);
+          this.saleItemCounts[sale.id] = 0;
+        }
+      });
+    });
+  }
+
+
+  pageChanged(event: any): void {
     this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.calculateTotalPages();
     this.loadData();
   }
 
@@ -160,13 +193,16 @@ export class SalesComponent implements AfterViewInit, OnInit {
 
   openUploadDialog(): void {
     const dialogRef = this.dialog.open(UploadCsvDialogComponent, {
-      width: '2000px'
+      width: '90%',
+      maxWidth: '600px',
+      panelClass: 'responsive-dialog'
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
         // Handle successful upload
         console.log('Upload successful:', result.data);
+        this.loadData(); // Reload data after successful upload
       }
     });
   }
@@ -174,19 +210,50 @@ export class SalesComponent implements AfterViewInit, OnInit {
 
   onSearch(query: string) {
     this.searchQuery = query;
+    this.currentPage = 1; // Reset to first page when search changes
 
-    this.userService.getSalesCount(query).pipe(take(1)).subscribe({
+    // Update the total count with the search filter
+    this.userService.getSalesCount(query, this.dateFilter).pipe(take(1)).subscribe({
       next: (count) => {
         this.totalRows = count;
+        this.calculateTotalPages();
       }
-    })
+    });
 
     this.loadData();
+  }
+
+  calculateCosts(sale: Sale) {
+    return sale.products.reduce((sum, sale) => {
+      const itemCost = sale.item_cost;
+      if (itemCost === null) return sum;
+      return sum + itemCost;
+    }, sale.total_fee + sale.seller_postage_cost);
+  }
+
+  formatCurrency(value: string | number, sign: string = '£'): string {
+    if (value === null || value === undefined) {
+      return '£0.00';
+    }
+
+    // Convert to number if it's a string
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+    if (isNaN(numValue)) {
+      return '£0.00';
+    }
+
+    // Format with 2 decimal places and add commas for thousands
+    return sign + numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 
   getValue(element: any, col: any): any {
     if (col.type === 'number') {
       return col.nestedKey ? element[col.key]?.[col.nestedKey]?.toFixed(2) : element[col.key]?.toFixed(2);
+    } else if (col.type === 'lastWord') {
+      let value: string | undefined =  col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
+      value = value?.split('-').pop();
+      return value!.charAt(0).toUpperCase() + value?.slice(1);
     } else {
       return col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
     }

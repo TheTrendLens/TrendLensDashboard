@@ -2,13 +2,11 @@ import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
 import {Listing} from '../../models/listing';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import {NgForOf, NgIf, NgSwitch} from '@angular/common';
-import {MatFormField, MatFormFieldModule} from '@angular/material/form-field';
+import {MatTableModule} from '@angular/material/table';
+import {NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginator, MatPaginatorModule, PageEvent} from '@angular/material/paginator';
-import {fakeAsync} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
 import {MatButton} from '@angular/material/button';
@@ -40,7 +38,7 @@ const COLUMNS_SCHEMA = [
 
 @Component({
   selector: 'app-listings',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, NgSwitch, NgIf, MatPaginatorModule, MatButton, TableSearchBarComponent],
+  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, NgIf, MatPaginatorModule, MatButton, TableSearchBarComponent],
   templateUrl: './listings.component.html',
   styleUrl: './listings.component.css'
 })

@@ -1,0 +1,8 @@
+/* Additional styles for sale-detail component */
+.mat-mdc-row:hover .mat-mdc-cell {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.btn-edit button {
+  color: #f87171;
+}

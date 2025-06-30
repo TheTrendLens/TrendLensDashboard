@@ -1,39 +1,29 @@
-import {Component, ElementRef, Inject, ViewChild} from '@angular/core';
-import {MatFormField, MatInput, MatSuffix} from '@angular/material/input';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Component, ElementRef, HostListener, Inject, ViewChild} from '@angular/core';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {
-  MAT_DIALOG_DATA,
   MatDialogActions,
   MatDialogContent,
   MatDialogRef,
   MatDialogTitle
 } from '@angular/material/dialog';
-import {MatCheckbox} from '@angular/material/checkbox';
 import {MatButton, MatIconButton} from '@angular/material/button';
-import {Listing} from '../../models/listing';
 import {SalesService} from '../../services/sales.service';
 import {finalize} from 'rxjs';
-import {NgIf} from '@angular/common';
-import {MatLabel} from '@angular/material/form-field';
-import {MatChip} from '@angular/material/chips';
-import {MatIcon} from '@angular/material/icon';
+import {NgClass, NgIf} from '@angular/common';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-upload-csv-dialog',
+  standalone: true,
   imports: [
-    MatInput,
     FormsModule,
-    MatFormField,
     ReactiveFormsModule,
     MatDialogContent,
     MatDialogTitle,
     MatDialogActions,
     MatButton,
-    MatLabel,
     NgIf,
-    MatIconButton,
-    MatIcon,
-    MatSuffix
+    NgClass
   ],
   templateUrl: './upload-csv-dialog.component.html',
   styleUrl: './upload-csv-dialog.component.css'
@@ -43,26 +33,79 @@ export class UploadCsvDialogComponent {
   selectedFile: File | null = null;
   selectedFileName: string | null = null;
   uploadInProgress = false;
+  isDragging = false;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   constructor(
     private formBuilder: FormBuilder,
     private salesService: SalesService,
-    public dialogRef: MatDialogRef<UploadCsvDialogComponent>
+    public dialogRef: MatDialogRef<UploadCsvDialogComponent>,
+    private snackBar: MatSnackBar
   ) {
     this.uploadForm = this.formBuilder.group({});
+  }
+
+  // Drag and drop functionality
+  @HostListener('dragover', ['$event'])
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  @HostListener('dragleave', ['$event'])
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+      if (this.isValidCSVFile(file)) {
+        this.selectedFile = file;
+        this.selectedFileName = file.name;
+      } else {
+        this.showError('Please select a valid CSV file');
+      }
+    }
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
-      this.selectedFileName = this.selectedFile.name;
+      const file = input.files[0];
+      if (this.isValidCSVFile(file)) {
+        this.selectedFile = file;
+        this.selectedFileName = this.selectedFile.name;
+      } else {
+        this.showError('Please select a valid CSV file');
+        input.value = '';
+        this.selectedFile = null;
+        this.selectedFileName = null;
+      }
     } else {
       this.selectedFile = null;
       this.selectedFileName = null;
     }
+  }
+
+  isValidCSVFile(file: File): boolean {
+    return file.name.endsWith('.csv') || file.type === 'text/csv';
+  }
+
+  showError(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
   }
 
   onCancel(): void {
@@ -82,11 +125,15 @@ export class UploadCsvDialogComponent {
       )
       .subscribe({
         next: (response) => {
+          this.snackBar.open('CSV file uploaded successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
           this.dialogRef.close({ success: true, data: response });
         },
         error: (error) => {
           console.error('Upload failed:', error);
-          // You could handle errors by showing a snackbar or alert
+          this.showError('Upload failed: ' + (error.message || 'Unknown error'));
         }
       });
   }

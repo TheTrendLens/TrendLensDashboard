@@ -1,3 +1,16 @@
+/* Styles for the responsive dialog */
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+/* Ensure the dialog content is scrollable on small screens */
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Style for the file info section */
 .file-info {
   margin: 8px 0;
   padding: 8px;
@@ -5,6 +18,55 @@
   border-radius: 4px;
 }
 
+/* Ensure form fields take full width */
 mat-form-field {
   width: 100%;
+}
+
+/* Animation for drag and drop */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Apply animation when dragging */
+.border-red-400.bg-red-50 {
+  animation: pulse 1.5s infinite ease-in-out;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+}
+
+/* Custom styles for error and success snackbars */
+::ng-deep .error-snackbar {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+::ng-deep .success-snackbar {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+/* Ensure buttons are large enough for touch on mobile */
+button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Media queries for better mobile experience */
+@media (max-width: 640px) {
+  mat-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  mat-dialog-actions button {
+    margin: 4px 0;
+  }
 }

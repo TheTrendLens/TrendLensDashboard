@@ -45,16 +45,16 @@ export class EditSaleDialogComponent {
   constructor(private formBuilder: FormBuilder, public dialogRef: MatDialogRef<EditSaleDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Sale, private salesService: SalesService) {
     this.dialogRef.updateSize()
     this.salesForm = formBuilder.group({
-      listing: [data.listing.slug],
-      dateSold: [data.date_sold, Validators.required],
-      dateListed: [data.listing.date_listed],
-      listedPrice: [data.listing.listed_price],
-      soldPrice: [data.listing.listed_price, Validators.required],
-      size: [data.size],
-      platformFee: [data.platform_fee || ''],
-      paymentFee: [data.payment_fee || '', Validators.required],
-      postageCost: [data.buyer_postage_cost || '', Validators.required],
-      itemCost: [data.item_cost || '', Validators.required],
+      // listing: [data.listing.slug],
+      // dateSold: [data.date_sold, Validators.required],
+      // dateListed: [data.listing.date_listed],
+      // listedPrice: [data.listing.listed_price],
+      // soldPrice: [data.total, Validators.required],
+      // size: [data.size],
+      // platformFee: [data.platform_fee || ''],
+      // paymentFee: [data.payment_fee || '', Validators.required],
+      // postageCost: [data.seller_postage_cost || '', Validators.required],
+      // itemCost: [data.item_cost || '', Validators.required],
     })
 
     this.salesForm.controls['listing'].disable();
@@ -68,21 +68,23 @@ export class EditSaleDialogComponent {
   }
 
   onSave() {
-    if (this.salesForm.valid) {
-      const sale: Sale = this.data;
-
-      sale.date_sold = new Date(this.salesForm.value['dateSold']);
-      sale.sold_price = +this.salesForm.value['soldPrice'];
-      sale.platform_fee = +this.salesForm.value['platformFee'];
-      sale.payment_fee = +this.salesForm.value['paymentFee'];
-      sale.buyer_postage_cost = +this.salesForm.value['postageCost'];
-      sale.item_cost = +this.salesForm.value['itemCost'];
-
-      this.salesService.update(sale).pipe(take(1)).subscribe(result => {
-        console.log(result);
-      });
-
-      this.dialogRef.close();
-    }
+    // if (this.salesForm.valid) {
+    //   const sale: Sale = this.data;
+    //
+    //   sale.date_sold = new Date(this.salesForm.value['dateSold']);
+    //   sale.total = +this.salesForm.value['soldPrice'];
+    //   sale.platform_fee = +this.salesForm.value['platformFee'];
+    //   sale.payment_fee = +this.salesForm.value['paymentFee'];
+    //   sale.seller_postage_cost = +this.salesForm.value['postageCost'];
+    //   sale.item_cost = +this.salesForm.value['itemCost'];
+    //   sale.total_fee = sale.platform_fee + sale.payment_fee;
+    //   sale.profit = sale.total - sale.total_fee - sale.seller_postage_cost - sale.item_cost;
+    //
+    //   this.salesService.update(sale).pipe(take(1)).subscribe(result => {
+    //     console.log(result);
+    //   });
+    //
+    //   this.dialogRef.close();
+    // }
   }
 }

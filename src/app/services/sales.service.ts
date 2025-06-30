@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {environment} from '../../environments/environment';
-import {Sale} from '../models/sale';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { Sale } from '../models/sale';
 
-const endpoint = `${environment.backend.baseURL}/api/sale`
+const endpoint = `${environment.backend.baseURL}/api/sale`;
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +12,18 @@ const endpoint = `${environment.backend.baseURL}/api/sale`
 export class SalesService {
 
   constructor(private http: HttpClient) { }
+
+  getAll(): Observable<Sale[]> {
+    return this.http.get<Sale[]>(`${endpoint}`);
+  }
+
+  deleteAll(): Observable<any> {
+    return this.http.get(`${endpoint}/deleteAll`);
+  }
+
+  findOne(id: string): Observable<Sale> {
+    return this.http.get<Sale>(`${endpoint}/${id}`);
+  }
 
   update(data: Sale): Observable<Sale> {
     return this.http.put<Sale>(`${endpoint}/${data.id}`, data);

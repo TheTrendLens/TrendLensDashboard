@@ -6,6 +6,7 @@ import {environment} from "../../environments/environment";
 import {User} from "../models/user";
 import {Sale} from "../models/sale";
 import {Report} from "../models/report";
+import {Bundle} from '../models/bundle';
 
 const endpoint = `${environment.backend.baseURL}/api/user`
 
@@ -36,20 +37,56 @@ export class UserService {
     return this.http.get<number>(`${endpoint}/listingscount?q=${query}`);
   }
 
-  getSales(limit: number, page: number): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${endpoint}/sales?limit=${limit}&page=${page}`);
+  getSales(limit: number, page: number, query: string = '', dateFilter: string = 'all', sortBy: string = 'date_desc'): Observable<Sale[]> {
+    let url = `${endpoint}/sales?limit=${limit}&page=${page}`;
+
+    // Add search query if provided
+    if (query && query.trim() !== '') {
+      url += `&q=${encodeURIComponent(query)}`;
+    }
+
+    // Add date filter if not 'all'
+    if (dateFilter !== 'all') {
+      url += `&dateFilter=${dateFilter}`;
+    }
+
+    // Add sort parameter
+    if (sortBy) {
+      url += `&sort=${sortBy}`;
+    }
+
+    return this.http.get<Sale[]>(url);
   }
 
+  // Keep this method for backward compatibility
   searchSales(query: string, limit: number, page: number): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${endpoint}/sales?q=${query}&limit=${limit}&page=${page}`);
+    return this.getSales(limit, page, query);
   }
 
   getSalesWithMissingData(limit: number, page: number): Observable<Sale[]> {
     return this.http.get<Sale[]>(`${endpoint}/sales?missingData=true&limit=${limit}&page=${page}`);
   }
 
-  getSalesCount(query: string = ''): Observable<number> {
-    return this.http.get<number>(`${endpoint}/salescount?q=${query}`);
+  getSalesCount(query: string = '', dateFilter: string = 'all'): Observable<number> {
+    let url = `${endpoint}/salescount`;
+
+    // Add query parameters
+    const params = [];
+
+    if (query && query.trim() !== '') {
+      params.push(`q=${encodeURIComponent(query)}`);
+    }
+
+    if (dateFilter !== 'all') {
+      params.push(`dateFilter=${dateFilter}`);
+    }
+
+    // Add parameters to URL if any exist
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+
+    return this.http.get<number>(url);
   }
 
   getSalesWithMissingDataCount(): Observable<number> {

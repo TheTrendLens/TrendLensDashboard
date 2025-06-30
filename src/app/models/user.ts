@@ -6,4 +6,6 @@ export interface User {
   active_package: string;
   admin: boolean;
   new_sub: boolean;
+  currency: string;
+  currencySymbol: string;
 }
