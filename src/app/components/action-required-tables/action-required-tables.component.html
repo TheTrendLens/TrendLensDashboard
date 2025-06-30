@@ -3,37 +3,113 @@
   <h2 class="text-sm text-gray-500 font-semibold mb-4">Please make sure all sales have a Platform fee, Payment Fee, Postage Cost, and Item Cost.</h2>
 </div>
 
-<div>
-  <dl class="mt-5 grid grid-cols-1">
-    <table mat-table class="min-w-full border-separate border-spacing-0" [dataSource]="salesData">
-      <ng-container [matColumnDef]="col.nestedKey ? col.nestedKey : col.key" *ngFor="let col of salesColumnsSchema">
-        <th mat-header-cell *matHeaderCellDef class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter sm:pl-6 lg:pl-8">{{col.label}}</th>
-        <td mat-cell *matCellDef="let element" class="hidden whitespace-nowrap border-b border-gray-200 px-3 py-4 text-sm text-gray-500 sm:table-cell">
-          <div *ngIf="!element.isEdit">
-            <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
-              <button mat-button (click)="openEditSaleDialog(element)">Edit</button>
-            </div>
-            <ng-template #dataField>
-        <span>
-          {{ getValue(element, col) ? (col.type === 'number' ? '£' : '') + getValue(element, col) : '' }}
-        </span>
-            </ng-template>
-          </div>
-          <div *ngIf="element.isEdit">
-            <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
-              <button mat-button (click)="openEditSaleDialog(element)">Done</button>
-            </div>
-            <ng-template #dataField>
-              <mat-form-field>
-<!--                <input [type]="col.type" matInput [(ngModel)]="">-->
-              </mat-form-field>
-            </ng-template>
-          </div>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="salesDisplayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: salesDisplayedColumns;"></tr>
-    </table>
-    <mat-paginator #salesPaginator [length]="salesTotalRows" [pageIndex]="salesCurrentPage" [pageSize]="salesPageSize" (page)="pageChanged($event)" aria-label="Select page"></mat-paginator>
-  </dl>
+<!-- Pagination Info -->
+<div class="flex justify-between items-center mb-6 mt-4">
+  <div class="text-sm text-gray-700">
+    Showing <span class="font-medium">{{ (salesCurrentPage * salesPageSize) + 1 }}</span> to
+    <span class="font-medium">{{ Math.min((salesCurrentPage + 1) * salesPageSize, salesTotalRows) }}</span> of
+    <span class="font-medium">{{ salesTotalRows }}</span> sales
+  </div>
+</div>
+
+<!-- Card Grid - Limited to 5 cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full" style="max-width: 100%;">
+  <!-- Sale Card -->
+  <div *ngFor="let sale of salesData"
+       class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col w-full"
+       (click)="navigateToSale(sale.id)">
+    <div class="p-3 flex-1 flex flex-col h-full">
+      <!-- Top Section: Name -->
+      <div>
+        <h3 class="text-base font-semibold text-gray-900 truncate">{{ sale.buyer }}</h3>
+
+        <!-- Date and Items Count Row -->
+        <div class="flex justify-between items-center mt-1 mb-2">
+          <p class="text-sm text-gray-500">{{ sale.date_sold | date }}</p>
+          <p class="text-sm text-gray-500">
+            <span class="font-medium">Items:</span>
+            <span class="ml-1 font-semibold">
+              {{ saleItemCounts[sale.id] !== undefined ? saleItemCounts[sale.id] : '...' }}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Product Details -->
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <div>
+          <p class="text-xs text-gray-500">Item</p>
+          <ul *ngFor="let product of sale.products">
+            <p class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'slug', type: 'lastWord'}) }}</p>
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">Size</p>
+          <ul *ngFor="let product of sale.products">
+            <p class="text-sm font-medium">{{ getValue(product, {key: 'size'}) }}</p>
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500">Listed Price</p>
+          <ul *ngFor="let product of sale.products">
+            <p class="text-sm font-medium">{{ formatCurrency(getValue(product, {key: 'listing', nestedKey: 'listed_price'})) }}</p>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Spacer to push financial info to bottom -->
+      <div class="flex-grow"></div>
+
+      <!-- Bottom Section: Financial Info -->
+      <div class="grid grid-cols-3 gap-1 mt-auto text-sm">
+        <div class="flex flex-col items-center text-center">
+          <span class="font-medium text-gray-500">Revenue</span>
+          <span class="font-semibold text-gray-900 truncate max-w-full">
+            {{ formatCurrency(sale.total, '£') }}
+          </span>
+        </div>
+
+        <div class="flex flex-col items-center text-center">
+          <span class="font-medium text-gray-500">Profit</span>
+          <span class="font-semibold text-gray-900 truncate max-w-full">
+            {{ formatCurrency(sale.total - calculateCosts(sale), '£') }}
+          </span>
+        </div>
+
+        <div class="flex flex-col items-center text-center">
+          <span class="font-medium text-gray-500">Cost</span>
+          <span class="font-semibold text-gray-900 truncate max-w-full">
+            {{ formatCurrency(calculateCosts(sale), '£') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Edit Button -->
+      <div class="absolute top-2 right-2">
+        <button mat-icon-button (click)="openEditSaleDialog(sale); $event.stopPropagation()">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination Arrows -->
+<div class="flex justify-center mt-6 mb-6 space-x-4">
+  <button
+    mat-icon-button
+    [disabled]="salesCurrentPage === 0"
+    (click)="goToPreviousPage()"
+    class="flex items-center justify-center"
+    aria-label="Previous page">
+    <mat-icon class="flex items-center justify-center">arrow_back</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    [disabled]="salesCurrentPage >= totalPages - 1"
+    (click)="goToNextPage()"
+    class="flex items-center justify-center"
+    aria-label="Next page">
+    <mat-icon class="flex items-center justify-center">arrow_forward</mat-icon>
+  </button>
 </div>

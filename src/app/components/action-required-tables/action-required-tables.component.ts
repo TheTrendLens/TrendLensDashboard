@@ -1,16 +1,6 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {MatButton} from "@angular/material/button";
-import {
-  MatCell,
-  MatCellDef, MatColumnDef,
-  MatHeaderCell, MatHeaderCellDef,
-  MatHeaderRow,
-  MatHeaderRowDef,
-  MatRow,
-  MatRowDef, MatTable
-} from "@angular/material/table";
-import {MatFormField} from "@angular/material/form-field";
-import {NgForOf, NgIf} from "@angular/common";
+import {MatIconButton} from "@angular/material/button";
+import {DatePipe, NgForOf} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {Sale} from '../../models/sale';
@@ -19,109 +9,46 @@ import {UserService} from '../../services/user.service';
 import {MatDialog} from '@angular/material/dialog';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {StatCardsComponent} from '../stat-cards/stat-cards.component';
-
-const SALES_COLUMNS_SCHEMA = [
-  {
-    key: 'listing',
-    nestedKey: 'slug',
-    type: 'text',
-    label: 'Listing'
-  },
-  {
-    key: 'date_sold',
-    type: 'text',
-    label: 'Date Sold'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'date_listed',
-    type: 'text',
-    label: 'Date Listed'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'listed_price',
-    type: 'number',
-    label: 'Listed Price'
-  },
-  {
-    key: 'total',
-    type: 'number',
-    label: 'Total'
-  },
-  {
-    key: 'size',
-    type: 'text',
-    label: 'Size'
-  },
-  {
-    key: 'platform_fee',
-    type: 'number',
-    label: 'Platform Fee'
-  },
-  {
-    key: 'payment_fee',
-    type: 'number',
-    label: 'Payment Fee'
-  },
-  {
-    key: 'seller_postage_cost',
-    type: 'number',
-    label: 'Postage Cost'
-  },
-  {
-    key: 'item_cost',
-    type: 'number',
-    label: 'Item Cost'
-  },
-  {
-    key: 'isEdit',
-    type: 'isEdit',
-    label: ''
-  }
-]
+import {MatIcon} from '@angular/material/icon';
+import {Router} from '@angular/router';
+import {Product} from '../../models/product';
+import {ProductService} from '../../services/product.service';
 
 @Component({
   selector: 'app-action-required-tables',
   imports: [
-    MatButton,
-    MatCell,
-    MatCellDef,
-    MatFormField,
-    MatHeaderCell,
-    MatHeaderRow,
-    MatHeaderRowDef,
-    MatRow,
-    MatRowDef,
-    MatTable,
+    MatIconButton,
+    MatIcon,
     NgForOf,
-    NgIf,
     ReactiveFormsModule,
-    MatColumnDef,
     FormsModule,
-    MatPaginator,
-    MatHeaderCellDef
+    DatePipe
   ],
   templateUrl: './action-required-tables.component.html',
   styleUrl: './action-required-tables.component.css'
 })
 export class ActionRequiredTablesComponent implements OnInit {
   console = console;
-
+  Math = Math; // Make Math available to the template
 
   public salesData: Sale[] = [];
-  salesDisplayedColumns: string[] = SALES_COLUMNS_SCHEMA.map((col) => col.nestedKey ? col.nestedKey : col.key);
-  salesColumnsSchema: any = SALES_COLUMNS_SCHEMA;
+  saleItemCounts: { [saleId: string]: number } = {};
 
   salesIsLoading: boolean = false;
   salesTotalRows = 250;
   salesPageSize = 5;
   salesCurrentPage = 0;
+  totalPages: number = 0;
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
 
   @Input('metricsComponent') metricsComponent: StatCardsComponent | undefined
 
-  constructor(public userService: UserService, public dialog: MatDialog) {
+  constructor(
+    public userService: UserService,
+    public dialog: MatDialog,
+    private router: Router,
+    private productService: ProductService
+  ) {
 
   }
 
@@ -135,19 +62,46 @@ export class ActionRequiredTablesComponent implements OnInit {
     this.loadData();
   }
 
+  calculateTotalPages(): void {
+    this.totalPages = Math.ceil(this.salesTotalRows / this.salesPageSize);
+  }
+
+  // Navigation methods for pagination arrows
+  goToPreviousPage(): void {
+    if (this.salesCurrentPage > 0) {
+      this.salesCurrentPage--;
+      this.loadData();
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.salesCurrentPage < this.totalPages - 1) {
+      this.salesCurrentPage++;
+      this.loadData();
+    }
+  }
+
+  navigateToSale(saleId: string): void {
+    this.router.navigate(['/sales', saleId]);
+  }
+
   loadData() {
     this.salesIsLoading = true;
 
     this.userService.getSalesWithMissingDataCount().pipe(take(1)).subscribe({
       next: (count) => {
         this.salesTotalRows = count;
+        this.calculateTotalPages();
       }
     })
 
     this.userService.getSalesWithMissingData(this.salesPageSize, this.salesCurrentPage + 1).pipe(take(1)).subscribe({
       next: (sales) => {
         this.salesData = sales;
-        this.salesPaginator.pageIndex = this.salesCurrentPage;
+        if (this.salesPaginator) {
+          this.salesPaginator.pageIndex = this.salesCurrentPage;
+        }
+        this.loadSaleItemCounts();
         this.salesIsLoading = false;
       },
       error: (error) => {
@@ -157,12 +111,54 @@ export class ActionRequiredTablesComponent implements OnInit {
     })
   }
 
+  loadSaleItemCounts(): void {
+    this.salesData.forEach(sale => {
+      this.productService.getProductsBySale(sale.id).subscribe({
+        next: (products: Product[]) => {
+          this.saleItemCounts[sale.id] = products.length;
+        },
+        error: (error) => {
+          console.error(`Error fetching products for sale ${sale.id}:`, error);
+          this.saleItemCounts[sale.id] = 0;
+        }
+      });
+    });
+  }
+
   getValue(element: any, col: any): any {
     if (col.type === 'number') {
       return col.nestedKey ? element[col.key]?.[col.nestedKey]?.toFixed(2) : element[col.key]?.toFixed(2);
+    } else if (col.type === 'lastWord') {
+      let value: string | undefined = col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
+      value = value?.split('-').pop();
+      return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
     } else {
       return col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
     }
+  }
+
+  formatCurrency(value: string | number, sign: string = '£'): string {
+    if (value === null || value === undefined) {
+      return '£0.00';
+    }
+
+    // Convert to number if it's a string
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+    if (isNaN(numValue)) {
+      return '£0.00';
+    }
+
+    // Format with 2 decimal places and add commas for thousands
+    return sign + numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  calculateCosts(sale: Sale) {
+    return sale.products?.reduce((sum, product) => {
+      const itemCost = product.item_cost;
+      if (itemCost === null) return sum;
+      return sum + itemCost;
+    }, sale.total_fee + sale.seller_postage_cost) || 0;
   }
 
   openEditSaleDialog(sale: Sale): void {
