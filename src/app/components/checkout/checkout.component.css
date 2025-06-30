@@ -1,0 +1,26 @@
+/* Stripe pricing table customization */
+.stripe-pricing-table {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Make sure the pricing table is responsive */
+@media (max-width: 768px) {
+  .stripe-pricing-table {
+    overflow-x: auto;
+  }
+}
+
+/* Add some spacing around the pricing table */
+stripe-pricing-table {
+  display: block;
+  margin: 1rem 0;
+}
+
+/* Ensure the button has proper spacing on mobile */
+@media (max-width: 640px) {
+  .mt-6.flex.justify-center {
+    margin-top: 1.5rem;
+  }
+}

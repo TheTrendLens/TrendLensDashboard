@@ -2,7 +2,7 @@ import {Component, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {map, Observable} from 'rxjs';
 import {AuthService} from '../../services/auth.service';
 import {HttpClient} from '@angular/common/http';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {NgxStripeModule} from 'ngx-stripe';
 import {CommonModule, NgIf} from '@angular/common';
 
@@ -15,8 +15,26 @@ import {CommonModule, NgIf} from '@angular/common';
 })
 export class CheckoutComponent {
   customerSecret$!: Observable<Object>;
+  isLoading = false;
 
-  constructor(public authService: AuthService, private http: HttpClient, private route: ActivatedRoute) {
+  constructor(
+    public authService: AuthService,
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
     this.customerSecret$ = this.route.data.pipe(map(data => data['resolvedData'].client_secret))
+  }
+
+  async backToLogin() {
+    try {
+      this.isLoading = true;
+      await this.authService.logout();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

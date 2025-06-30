@@ -124,6 +124,20 @@ export class AuthService {
     }
   }
 
+  async resendVerificationEmail(): Promise<void> {
+    try {
+      const user = this.auth.currentUser;
+      if (!user) {
+        throw new Error('No user is currently signed in');
+      }
+
+      await sendEmailVerification(user);
+    } catch (error) {
+      console.error('Resending verification email failed:', error);
+      throw error;
+    }
+  }
+
   private async fetchUserDataIfNeeded(): Promise<void> {
     if (!localStorage.getItem(this.STORAGE_KEYS.DB_USER)) {
       await this.fetchUserData();
