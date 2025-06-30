@@ -30,7 +30,7 @@ export class AnalyticsComponent implements OnInit {
   constructor(private analyticsService: AnalyticsService) {
     // Set default date range to last 30 days
     this.startDate = new Date();
-    this.startDate.setDate(this.startDate.getDate() - 30);
+    this.startDate.setDate(this.startDate.getDate() - 120);
     this.endDate = new Date();
   }
 
