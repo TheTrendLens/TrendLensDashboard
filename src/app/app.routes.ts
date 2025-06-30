@@ -20,6 +20,8 @@ import {SubscriberGuard} from './utils/subscriber.guard';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
 import {ListingsComponent} from './components/listings/listings.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
+import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
+import {AccountComponent} from './components/account/account.component';
 import {SalesComponent} from './components/sales/sales.component';
 import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
 
@@ -140,6 +142,7 @@ const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
   { path: 'forgot-password',  component: ForgotPasswordComponent,  canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'signup', component: SignupFlowComponent, children: [
       {
         path: '',
@@ -181,6 +184,10 @@ export const routes: Routes = [
       {
         path: 'sales/:id',
         component: SaleDetailComponent
+      },
+      {
+        path: 'account',
+        component: AccountComponent
       }
     ] },
   { path: '**', redirectTo: '', },

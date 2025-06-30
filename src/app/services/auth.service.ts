@@ -7,7 +7,8 @@ import {
   sendEmailVerification,
   UserCredential,
   GoogleAuthProvider,
-  signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail, signInWithPopup
+  signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail, signInWithPopup,
+  confirmPasswordReset, verifyPasswordResetCode, updatePassword, EmailAuthProvider, reauthenticateWithCredential
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
 import {User as DbUser} from '../models/user';
@@ -117,9 +118,63 @@ export class AuthService {
 
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
-      await sendPasswordResetEmail(this.auth, email);
+      // Configure action code settings with our custom reset password URL
+      const actionCodeSettings = {
+        url: window.location.origin + '/reset-password',
+        handleCodeInApp: true,
+        // Setting iOS and Android bundle IDs to ensure consistent behavior across platforms
+        iOS: {
+          bundleId: 'com.trendlens.app'
+        },
+        android: {
+          packageName: 'com.trendlens.app',
+          installApp: true,
+          minimumVersion: '12'
+        },
+        // This ensures the action code is passed directly to our app
+        dynamicLinkDomain: window.location.hostname
+      };
+
+      await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
     } catch (error) {
       console.error('Password reset email failed:', error);
+      throw error;
+    }
+  }
+
+  async verifyPasswordResetCode(code: string): Promise<string> {
+    try {
+      return await verifyPasswordResetCode(this.auth, code);
+    } catch (error) {
+      console.error('Verify password reset code failed:', error);
+      throw error;
+    }
+  }
+
+  async confirmPasswordReset(code: string, newPassword: string): Promise<void> {
+    try {
+      await confirmPasswordReset(this.auth, code, newPassword);
+    } catch (error) {
+      console.error('Password reset failed:', error);
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      const user = this.auth.currentUser;
+      if (!user || !user.email) {
+        throw new Error('No user is currently signed in or user has no email');
+      }
+
+      // Re-authenticate the user before changing password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Change the password
+      await updatePassword(user, newPassword);
+    } catch (error) {
+      console.error('Change password failed:', error);
       throw error;
     }
   }

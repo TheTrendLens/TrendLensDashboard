@@ -124,4 +124,21 @@ export class VerifyEmailComponent implements OnInit {
       this.isLoading = false;
     }
   }
+
+  async backToSignup() {
+    try {
+      this.isLoading = true;
+      this.errorMessage = '';
+
+      // Log the user out first
+      await this.authService.logout();
+
+      // Navigate back to the signup page
+      this.router.navigate(['/signup']);
+    } catch (error: any) {
+      this.errorMessage = error.message || 'An error occurred. Please try again.';
+    } finally {
+      this.isLoading = false;
+    }
+  }
 }

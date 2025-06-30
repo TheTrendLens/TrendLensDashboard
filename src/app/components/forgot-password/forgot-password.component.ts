@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import {AuthService} from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -13,11 +13,13 @@ import { CommonModule } from '@angular/common';
 })
 export class ForgotPasswordComponent {
   form = new FormGroup({
-    email: new FormControl('')
+    email: new FormControl('', [Validators.required, Validators.email])
   });
 
   isSubmitted = false;
+  isLoading = false;
   errorMessage = '';
+  successMessage = '';
 
   constructor(
     private authService: AuthService,
@@ -25,13 +27,17 @@ export class ForgotPasswordComponent {
   ) {}
 
   async onSubmit() {
-    if (this.form.value.email) {
+    if (this.form.valid) {
       try {
+        this.isLoading = true;
         this.errorMessage = '';
-        await this.authService.sendPasswordResetEmail(this.form.value.email);
+        await this.authService.sendPasswordResetEmail(this.form.value.email!);
+        this.successMessage = 'Password reset email sent. Please check your inbox.';
         this.isSubmitted = true;
       } catch (error: any) {
         this.errorMessage = error.message || 'Failed to send reset email. Please try again.';
+      } finally {
+        this.isLoading = false;
       }
     }
   }
@@ -39,4 +45,7 @@ export class ForgotPasswordComponent {
   backToLogin() {
     this.router.navigate(['/login']);
   }
+
+  // Helper methods for form validation
+  get email() { return this.form.get('email'); }
 }
