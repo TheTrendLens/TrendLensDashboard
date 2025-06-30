@@ -135,7 +135,7 @@ export class AuthService {
         dynamicLinkDomain: window.location.hostname
       };
 
-      await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
+      await sendPasswordResetEmail(this.auth, email);
     } catch (error) {
       console.error('Password reset email failed:', error);
       throw error;
