@@ -22,6 +22,29 @@
         </div>
 
         <div class="mb-8">
+          <h2 class="text-lg font-medium text-gray-900">Billing & Subscription</h2>
+          <div class="mt-4 bg-white px-6 py-5 shadow sm:rounded-lg sm:px-8">
+            <p class="text-sm text-gray-500 mb-4">
+              Manage your subscription, update payment methods, or view your billing history.
+            </p>
+            <button
+              type="button"
+              (click)="goToStripeBillingPortal()"
+              [disabled]="isLoading"
+              class="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
+              <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg *ngIf="!isLoading" class="-ml-0.5 mr-1.5 h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M2.5 4A1.5 1.5 0 001 5.5V6h18v-.5A1.5 1.5 0 0017.5 4h-15zM19 8.5H1v6A1.5 1.5 0 002.5 16h15a1.5 1.5 0 001.5-1.5v-6zM3 10h.01v1H3v-1zm2 0h.01v1H5v-1zm2 0h.01v1H7v-1zm2 0h.01v1H9v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1z" clip-rule="evenodd" />
+              </svg>
+              {{ isLoading ? 'Loading...' : 'Manage Billing & Subscription' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-8">
           <h2 class="text-lg font-medium text-gray-900">Security</h2>
           <div class="mt-4">
             <app-change-password></app-change-password>

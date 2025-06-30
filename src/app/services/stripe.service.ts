@@ -19,4 +19,26 @@ export class StripeService {
   createCustomerSession(userId: string): Observable<string> {
     return this.http.get<string>(`${endpoint}/createCustomerSession/${userId}`);
   }
+
+  /**
+   * Creates a Stripe billing portal session and redirects the user to it
+   * @param userId The user ID
+   * @param returnUrl Optional URL to return to after the billing portal session
+   */
+  redirectToBillingPortal(userId: string, returnUrl?: string): void {
+    // Show loading state in the component
+    const url = returnUrl ? `${endpoint}/createBillingPortalSession/${userId}?returnUrl=${encodeURIComponent(returnUrl)}` : `${endpoint}/createBillingPortalSession/${userId}`;
+
+    this.http.get<string>(url).subscribe({
+      next: (response) => {
+        // Redirect to the billing portal
+        window.location.href = response;
+      },
+      error: (error) => {
+        console.error('Error creating billing portal session:', error);
+        // Fallback to the static URL if there's an error
+        window.location.href = environment.STRIPE_BILLING_LINK;
+      }
+    });
+  }
 }
