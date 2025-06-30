@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {DatePipe, NgIf} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData } from '../../services/analytics.service';
@@ -12,7 +12,7 @@ Chart.register(...registerables);
   selector: 'app-analytics',
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
-  imports: [NgForOf, FormsModule, MatInputModule, DatePipe, NgIf],
+  imports: [FormsModule, MatInputModule, DatePipe, NgIf],
   standalone: true
 })
 export class AnalyticsComponent implements OnInit {
@@ -143,7 +143,7 @@ export class AnalyticsComponent implements OnInit {
     const countData = topCategories.map(item => item.count);
 
     this.categoryChart = new Chart(ctx, {
-      type: 'bar',
+      type: 'pie',
       data: {
         labels: labels,
         datasets: [
@@ -170,11 +170,7 @@ export class AnalyticsComponent implements OnInit {
       },
       options: {
         responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
+        maintainAspectRatio: false,
       }
     });
   }
@@ -225,7 +221,8 @@ export class AnalyticsComponent implements OnInit {
         ]
       },
       options: {
-        responsive: true
+        responsive: true,
+        maintainAspectRatio: false,
       }
     });
   }
