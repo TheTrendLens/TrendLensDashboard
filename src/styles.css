@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Apply Inter font to all elements */
+html, body {
+  font-family: 'Inter', sans-serif;
+}
+
 @theme {
   --color-midnight: #121063;
   --color-tahiti: #3ab7bf;

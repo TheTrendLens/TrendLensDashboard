@@ -29,7 +29,7 @@ export class StripeService {
     // Show loading state in the component
     const url = returnUrl ? `${endpoint}/createBillingPortalSession/${userId}?returnUrl=${encodeURIComponent(returnUrl)}` : `${endpoint}/createBillingPortalSession/${userId}`;
 
-    this.http.get<string>(url).subscribe({
+    this.http.get(url, { responseType: 'text' }).subscribe({
       next: (response) => {
         // Redirect to the billing portal
         window.location.href = response;

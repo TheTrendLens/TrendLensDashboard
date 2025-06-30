@@ -4,6 +4,9 @@ module.exports = {
     "./src/**/*.{html,ts}",
   ],
   theme: {
+    fontFamily: {
+      sans: ['Inter', 'sans-serif'],
+    },
     extend: {
       screens: {
         '3xl': '120rem',
@@ -12,4 +15,3 @@ module.exports = {
   },
   plugins: [],
 }
-
