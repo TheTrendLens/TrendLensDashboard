@@ -36,8 +36,6 @@ export class StripeService {
       },
       error: (error) => {
         console.error('Error creating billing portal session:', error);
-        // Fallback to the static URL if there's an error
-        window.location.href = environment.STRIPE_BILLING_LINK;
       }
     });
   }
