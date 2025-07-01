@@ -121,7 +121,7 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         if (this.paginator) {
-          this.paginator.pageIndex = this.currentPage;
+          this.paginator.pageIndex = this.currentPage - 1; // Convert from 1-based to 0-based for paginator
         }
         this.isLoading = false;
       },
@@ -172,7 +172,7 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
   pageChanged(event: any): void {
-    this.currentPage = event.pageIndex;
+    this.currentPage = event.pageIndex + 1; // Convert from 0-based to 1-based
     this.pageSize = event.pageSize;
     this.calculateTotalPages();
     this.loadData();

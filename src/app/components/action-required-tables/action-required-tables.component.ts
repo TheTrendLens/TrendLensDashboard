@@ -38,7 +38,7 @@ export class ActionRequiredTablesComponent implements OnInit {
   salesIsLoading: boolean = false;
   salesTotalRows = 250;
   salesPageSize = 5;
-  salesCurrentPage = 0;
+  salesCurrentPage = 1; // Changed from 0 to 1 for 1-based pagination
   totalPages: number = 0;
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
 
@@ -59,7 +59,7 @@ export class ActionRequiredTablesComponent implements OnInit {
 
   pageChanged(event: PageEvent) {
     this.salesPageSize = event.pageSize;
-    this.salesCurrentPage = event.pageIndex;
+    this.salesCurrentPage = event.pageIndex + 1; // Convert from 0-based to 1-based
     this.loadData();
   }
 
@@ -69,14 +69,14 @@ export class ActionRequiredTablesComponent implements OnInit {
 
   // Navigation methods for pagination arrows
   goToPreviousPage(): void {
-    if (this.salesCurrentPage > 0) {
+    if (this.salesCurrentPage > 1) { // Changed from 0 to 1 for 1-based pagination
       this.salesCurrentPage--;
       this.loadData();
     }
   }
 
   goToNextPage(): void {
-    if (this.salesCurrentPage < this.totalPages - 1) {
+    if (this.salesCurrentPage < this.totalPages) { // Removed -1 for 1-based pagination
       this.salesCurrentPage++;
       this.loadData();
     }
@@ -96,11 +96,11 @@ export class ActionRequiredTablesComponent implements OnInit {
       }
     })
 
-    this.userService.getSalesWithMissingData(this.salesPageSize, this.salesCurrentPage + 1).pipe(take(1)).subscribe({
+    this.userService.getSalesWithMissingData(this.salesPageSize, this.salesCurrentPage).pipe(take(1)).subscribe({
       next: (sales) => {
         this.salesData = sales;
         if (this.salesPaginator) {
-          this.salesPaginator.pageIndex = this.salesCurrentPage;
+          this.salesPaginator.pageIndex = this.salesCurrentPage - 1; // Convert from 1-based to 0-based for paginator
         }
         this.loadSaleItemCounts();
         this.salesIsLoading = false;
