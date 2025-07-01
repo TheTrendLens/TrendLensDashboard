@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+  ViewChildren, QueryList
+} from '@angular/core';
 import {NgForOf, NgIf, DatePipe, NgClass, CurrencyPipe} from '@angular/common';
 import { Sale } from '../../models/sale';
 import { MatIcon } from '@angular/material/icon';
@@ -22,6 +31,8 @@ export class SaleCardComponent implements AfterViewInit {
   @Input() itemCount: number | undefined;
   @Input() canEdit: boolean = false;
   @Output() cardClick = new EventEmitter<string>();
+  editingPostage = false;
+  originalPostageCost: number | null = null;
   editingItemCost: { [key: string]: boolean } = {};
   originalItemCosts: { [key: string]: number } = {};
 
@@ -31,6 +42,9 @@ export class SaleCardComponent implements AfterViewInit {
   private productRowHeight = 30; // Default value
 
   @ViewChild('productRow') productRowElement: ElementRef | undefined;
+  @ViewChild('postageCostInput') postageCostInput: ElementRef | undefined;
+  @ViewChildren('itemCostInput') itemCostInputs: QueryList<ElementRef> | undefined;
+
 
   constructor(
     private route: ActivatedRoute,
@@ -49,7 +63,7 @@ export class SaleCardComponent implements AfterViewInit {
 
   // Check if any edits are in progress
   get isEditing(): boolean {
-    return Object.values(this.editingItemCost).some(value => value);
+    return Object.values(this.editingItemCost).some(value => value) || this.editingPostage;
   }
 
   onCardClick(): void {
@@ -133,6 +147,55 @@ export class SaleCardComponent implements AfterViewInit {
     return products.length > visibleProducts;
   }
 
+  // Postage cost editing methods
+  startEditingPostage(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!this.sale) return;
+    this.editingPostage = true;
+    this.originalPostageCost = this.sale.seller_postage_cost;
+
+    setTimeout(() => {
+      if (this.postageCostInput) {
+        this.postageCostInput.nativeElement.focus();
+        this.postageCostInput.nativeElement.select();
+      }
+    });
+
+  }
+
+  savePostage(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!this.sale) return;
+    this.salesService.update(this.sale).subscribe({
+      next: (updatedSale) => {
+        this.sale = updatedSale;
+        this.editingPostage = false;
+        this.originalPostageCost = null;
+      },
+      error: (error) => {
+        console.error('Error updating postage cost:', error);
+        this.cancelEditingPostage();
+      }
+    });
+  }
+
+  cancelEditingPostage(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!this.sale || this.originalPostageCost === null) return;
+    this.sale.seller_postage_cost = this.originalPostageCost;
+    this.editingPostage = false;
+    this.originalPostageCost = null;
+  }
+
   // Item cost editing methods
   startEditingItemCost(productId: string, event?: Event): void {
     if (event) {
@@ -144,6 +207,20 @@ export class SaleCardComponent implements AfterViewInit {
 
     this.editingItemCost[productId] = true;
     this.originalItemCosts[productId] = product.item_cost;
+
+    setTimeout(() => {
+      if (this.itemCostInputs) {
+        // Find the input element with the matching product ID data attribute
+        const inputElement = this.itemCostInputs.find(el =>
+          el.nativeElement.getAttribute('data-product-id') === productId
+        );
+
+        if (inputElement) {
+          inputElement.nativeElement.focus();
+          inputElement.nativeElement.select();
+        }
+      }
+    }, 0);
   }
 
   saveItemCost(product: Product, event?: Event): void {

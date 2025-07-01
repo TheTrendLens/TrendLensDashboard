@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
@@ -94,8 +94,8 @@ export class SaleDetailComponent implements OnInit {
   editingItemCost: { [key: string]: boolean } = {};
   originalItemCosts: { [key: string]: number } = {};
 
-  displayedColumns: string[] = PRODUCT_COLUMNS_SCHEMA.map((col) => col.nestedKey ? col.nestedKey : col.key);
-  columnsSchema: any = PRODUCT_COLUMNS_SCHEMA;
+  @ViewChild('postageCostInput') postageCostInput: ElementRef | undefined;
+  @ViewChildren('itemCostInput') itemCostInputs: QueryList<ElementRef> | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -175,6 +175,14 @@ export class SaleDetailComponent implements OnInit {
     if (!this.sale) return;
     this.editingPostage = true;
     this.originalPostageCost = this.sale.seller_postage_cost;
+
+    setTimeout(() => {
+      if (this.postageCostInput) {
+        this.postageCostInput.nativeElement.focus();
+        this.postageCostInput.nativeElement.select();
+      }
+    });
+
   }
 
   savePostage(): void {
@@ -206,6 +214,17 @@ export class SaleDetailComponent implements OnInit {
 
     this.editingItemCost[productId] = true;
     this.originalItemCosts[productId] = product.item_cost;
+
+    setTimeout(() => {
+      if (this.itemCostInputs) {
+        const inputElement = this.itemCostInputs.find(el =>
+          el.nativeElement.closest('div').querySelector(`[ng-reflect-model="${product.item_cost}"]`));
+        if (inputElement) {
+          inputElement.nativeElement.focus();
+          inputElement.nativeElement.select();
+        }
+      }
+    })
   }
 
   saveItemCost(product: Product): void {
