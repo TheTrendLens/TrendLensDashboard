@@ -54,25 +54,25 @@
     <!-- Total Revenue Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Revenue</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalRevenue) }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
 
     <!-- Total Fees Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Fees</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalFees) }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalFees | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
 
     <!-- Total Profit Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Profit</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.totalProfit) }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
 
     <!-- Average Sale Price Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Average Sale Price</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(analyticsData.summary.averageSalePrice) }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
   </div>
 

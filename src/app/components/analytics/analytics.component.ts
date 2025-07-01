@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import {DatePipe, NgIf} from '@angular/common';
+import {DatePipe, NgIf, CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData } from '../../services/analytics.service';
 import { Chart, registerables } from 'chart.js';
+import { CurrencyService } from '../../services/currency.service';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -12,7 +13,7 @@ Chart.register(...registerables);
   selector: 'app-analytics',
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
-  imports: [FormsModule, MatInputModule, DatePipe, NgIf],
+  imports: [FormsModule, MatInputModule, DatePipe, NgIf, CurrencyPipe],
   standalone: true
 })
 export class AnalyticsComponent implements OnInit {
@@ -27,7 +28,10 @@ export class AnalyticsComponent implements OnInit {
   categoryChart: Chart | null = null;
   brandChart: Chart | null = null;
 
-  constructor(private analyticsService: AnalyticsService) {
+  constructor(
+    private analyticsService: AnalyticsService,
+    private currencyService: CurrencyService
+  ) {
     // Set default date range to last 30 days
     this.startDate = new Date();
     this.startDate.setDate(this.startDate.getDate() - 120);
@@ -113,14 +117,16 @@ export class AnalyticsComponent implements OnInit {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(value) {
-                return '£' + value;
+              callback: (value) => this.ticksCallback(value)
               }
             }
           }
         }
-      }
     });
+  }
+
+  ticksCallback(value: string | number): string {
+    return this.getCurrencyCode() + value;
   }
 
   initCategoryChart(): void {
@@ -227,11 +233,16 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  formatCurrency(value: number): string {
-    if (value === null || value === undefined) {
-      return '£0.00';
-    }
+  /**
+   * Gets the current currency code from the CurrencyService
+   * This is used by the CurrencyPipe in the template
+   */
+  getCurrencyCode(): string {
+    const currencySymbol = this.currencyService.getCurrencySymbol();
+    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
 
-    return '£' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    console.log('currencyOption', currencyOption);
+
+    return currencyOption?.code || 'GBP';
   }
 }
