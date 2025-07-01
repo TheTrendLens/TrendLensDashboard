@@ -13,6 +13,7 @@ import {MatIcon} from '@angular/material/icon';
 import {Router} from '@angular/router';
 import {Product} from '../../models/product';
 import {ProductService} from '../../services/product.service';
+import {SaleCardComponent} from '../sale-card/sale-card.component';
 
 @Component({
   selector: 'app-action-required-tables',
@@ -22,7 +23,7 @@ import {ProductService} from '../../services/product.service';
     NgForOf,
     ReactiveFormsModule,
     FormsModule,
-    DatePipe
+    SaleCardComponent
   ],
   templateUrl: './action-required-tables.component.html',
   styleUrl: './action-required-tables.component.css'

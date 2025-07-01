@@ -1,8 +1,8 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild, ElementRef} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
 import {MatTableModule} from '@angular/material/table';
-import {DatePipe, NgForOf} from '@angular/common';
+import {NgForOf, CurrencyPipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginator, MatPaginatorModule} from '@angular/material/paginator';
@@ -16,14 +16,15 @@ import {MatIcon} from '@angular/material/icon';
 import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {Product} from '../../models/product';
+import {SaleCardComponent} from '../sale-card/sale-card.component';
 
 @Component({
   selector: 'app-sales',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, DatePipe, MatIcon, MatIconButton],
+  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.css'
 })
-export class SalesComponent implements AfterViewInit, OnInit {
+export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
   public salesData: Sale[] = [];
   saleItemCounts: { [bundleId: string]: number } = {};
   console = console;
@@ -36,6 +37,14 @@ export class SalesComponent implements AfterViewInit, OnInit {
   itemsFilter: string = 'all';
   Math = Math; // Make Math available to the template
 
+  // Product display limits for different screen sizes
+  xxxlLimit: number = 2;
+  xxlLimit: number = 2;
+  xlLimit: number = 2;
+  lgLimit: number = 2;
+  mdLimit: number = 2;
+  smLimit: number = 2;
+
   isLoading: boolean = false;
   totalRows = 7;
   pageSize = 32;
@@ -43,6 +52,9 @@ export class SalesComponent implements AfterViewInit, OnInit {
   pageSizeOptions: number[] = [5, 10, 25, 100];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('productRow') productRowElement: ElementRef | undefined;
+
+  private productRowHeight = 30; // Default value
 
   constructor(public userService: UserService, public salesService: SalesService, public productService: ProductService, public dialog: MatDialog, private router: Router) {
 
@@ -77,10 +89,11 @@ export class SalesComponent implements AfterViewInit, OnInit {
     }
   }
 
-
-
   ngAfterViewInit(): void {
-    // this.listingsData.paginator = this.paginator;
+    // Once the view is initialized, measure the actual height of a product row
+    if (this.productRowElement && this.productRowElement.nativeElement) {
+      this.productRowHeight = this.productRowElement.nativeElement.clientHeight;
+    }
   }
 
   navigateToBundle(saleId: string): void {
@@ -266,5 +279,69 @@ export class SalesComponent implements AfterViewInit, OnInit {
     dialogRef.afterClosed().subscribe(result => {
       this.loadData();
     })
+  }
+
+  /**
+   * Get a limited number of products based on card height
+   * @param products The full list of products
+   * @param cardElement The DOM element of the card
+   * @returns A limited list of products
+   */
+  getLimitedProducts(products: any[], cardElement?: HTMLElement): any[] {
+    // Default to lg limit for SSR or if element isn't provided
+    if (typeof window === 'undefined' || !cardElement) {
+      return products.slice(0, this.lgLimit);
+    }
+
+    // Get the card height
+    const cardHeight = cardElement.clientHeight;
+
+    // Calculate available space for products
+    const reservedSpace = 150; // Space for header and footer
+    const availableHeight = cardHeight - reservedSpace;
+
+    // Calculate how many products can fit using the measured row height
+    const visibleProducts = Math.max(1, Math.floor(availableHeight / this.productRowHeight));
+
+    return products.slice(0, visibleProducts);
+  }
+
+  /**
+   * Check if there are more products than the limit
+   * @param products The full list of products
+   * @param cardElement The DOM element of the card
+   * @returns True if there are more products than the limit
+   */
+  hasMoreProducts(products: any[], cardElement?: HTMLElement): boolean {
+    if (typeof window === 'undefined' || !cardElement) {
+      return products.length > this.lgLimit;
+    }
+
+    const cardHeight = cardElement.clientHeight;
+    const productRowHeight = 50;
+    const reservedSpace = 150;
+    const availableHeight = cardHeight - reservedSpace;
+    const visibleProducts = Math.max(1, Math.floor(availableHeight / productRowHeight));
+
+    return products.length > visibleProducts;
+
+  }
+
+  /**
+   * Listen for window resize events to update product display
+   */
+  @HostListener('window:resize')
+  onResize() {
+    // Force change detection to update the product display
+    // This is needed because the product limits depend on screen size
+    // and we need to re-evaluate them when the screen size changes
+    this.salesData = [...this.salesData];
+  }
+
+  /**
+   * Clean up resources when the component is destroyed
+   */
+  ngOnDestroy(): void {
+    // No specific cleanup needed for now
   }
 }

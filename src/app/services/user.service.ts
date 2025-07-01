@@ -141,6 +141,10 @@ export class UserService {
     return this.http.put(`${endpoint}/${id}`, data);
   }
 
+  updateCurrency(currency: string, currencySymbol: string): Observable<any> {
+    return this.http.put(`${endpoint}/currency`, { currency, currencySymbol });
+  }
+
   getActivePackage(id: any): Observable<Object> {
     return this.http.get(`${endpoint}/${id}/subscription`);
   }

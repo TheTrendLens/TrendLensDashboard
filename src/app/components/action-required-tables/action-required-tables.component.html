@@ -13,78 +13,15 @@
 </div>
 
 <!-- Card Grid - Limited to 5 cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full" style="max-width: 100%;">
-  <!-- Sale Card -->
-  <div *ngFor="let sale of salesData"
-       class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col w-full"
-       (click)="navigateToSale(sale.id)">
-    <div class="p-3 flex-1 flex flex-col h-full">
-      <!-- Top Section: Name -->
-      <div>
-        <h3 class="text-base font-semibold text-gray-900 truncate">{{ sale.buyer }}</h3>
-
-        <!-- Date and Items Count Row -->
-        <div class="flex justify-between items-center mt-1 mb-2">
-          <p class="text-sm text-gray-500">{{ sale.date_sold | date }}</p>
-          <p class="text-sm text-gray-500">
-            <span class="font-medium">Items:</span>
-            <span class="ml-1 font-semibold">
-              {{ saleItemCounts[sale.id] !== undefined ? saleItemCounts[sale.id] : '...' }}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Product Details -->
-      <div class="grid grid-cols-3 gap-2 mb-3">
-        <div>
-          <p class="text-xs text-gray-500">Item</p>
-          <ul *ngFor="let product of sale.products">
-            <p class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'slug', type: 'lastWord'}) }}</p>
-          </ul>
-        </div>
-        <div>
-          <p class="text-xs text-gray-500">Size</p>
-          <ul *ngFor="let product of sale.products">
-            <p class="text-sm font-medium">{{ getValue(product, {key: 'size'}) }}</p>
-          </ul>
-        </div>
-        <div>
-          <p class="text-xs text-gray-500">Listed Price</p>
-          <ul *ngFor="let product of sale.products">
-            <p class="text-sm font-medium">{{ formatCurrency(getValue(product, {key: 'listing', nestedKey: 'listed_price'})) }}</p>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Spacer to push financial info to bottom -->
-      <div class="flex-grow"></div>
-
-      <!-- Bottom Section: Financial Info -->
-      <div class="grid grid-cols-3 gap-1 mt-auto text-sm">
-        <div class="flex flex-col items-center text-center">
-          <span class="font-medium text-gray-500">Revenue</span>
-          <span class="font-semibold text-gray-900 truncate max-w-full">
-            {{ formatCurrency(sale.total, '£') }}
-          </span>
-        </div>
-
-        <div class="flex flex-col items-center text-center">
-          <span class="font-medium text-gray-500">Profit</span>
-          <span class="font-semibold text-gray-900 truncate max-w-full">
-            {{ formatCurrency(sale.total - calculateCosts(sale), '£') }}
-          </span>
-        </div>
-
-        <div class="flex flex-col items-center text-center">
-          <span class="font-medium text-gray-500">Cost</span>
-          <span class="font-semibold text-gray-900 truncate max-w-full">
-            {{ formatCurrency(calculateCosts(sale), '£') }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full" style="max-width: 100%;">
+  <!-- Sale Card Component -->
+  <app-sale-card
+    *ngFor="let sale of salesData"
+    [sale]="sale"
+    [itemCount]="saleItemCounts[sale.id]"
+    [canEdit]="true"
+    (cardClick)="navigateToSale($event)">
+  </app-sale-card>
 </div>
 
 <!-- Pagination Arrows -->

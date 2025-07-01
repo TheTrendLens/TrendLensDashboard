@@ -2,13 +2,14 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {CurrencyPipe, DatePipe, NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {Product} from '../../models/product';
 import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
+import {CurrencyService} from '../../services/currency.service';
 
 const PRODUCT_COLUMNS_SCHEMA = [
   {
@@ -78,7 +79,8 @@ const PRODUCT_COLUMNS_SCHEMA = [
     NgForOf,
     NgIf,
     FormsModule,
-    DatePipe
+    DatePipe,
+    CurrencyPipe
   ],
   templateUrl: './sale-detail.component.html',
   styleUrls: ['./sale-detail.component.css']
@@ -99,7 +101,8 @@ export class SaleDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private salesService: SalesService,
     private productService: ProductService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit(): void {
@@ -235,19 +238,13 @@ export class SaleDetailComponent implements OnInit {
     delete this.originalItemCosts[productId];
   }
 
-  formatCurrency(value: string | number, sign: string = '£'): string {
-    if (value === null || value === undefined) {
-      return '£0.00';
-    }
-
-    // Convert to number if it's a string
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-
-    if (isNaN(numValue)) {
-      return '£0.00';
-    }
-
-    // Format with 2 decimal places and add commas for thousands
-    return sign + numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  /**
+   * Gets the current currency code from the CurrencyService
+   * This is used by the CurrencyPipe in the template
+   */
+  getCurrencyCode(): string {
+    const currencySymbol = this.currencyService.getCurrencySymbol();
+    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
+    return currencyOption?.code || 'GBP';
   }
 }
