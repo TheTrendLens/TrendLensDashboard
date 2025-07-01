@@ -1,24 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BundleService} from '../../services/bundle.service';
-import {Bundle} from '../../models/bundle';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
-import {DatePipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {DatePipe, NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {
-  MatCell,
-  MatCellDef,
-  MatColumnDef,
-  MatHeaderCell,
-  MatHeaderCellDef,
-  MatHeaderRow,
-  MatHeaderRowDef,
-  MatRow,
-  MatRowDef,
-  MatTable
-} from '@angular/material/table';
-import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {MatDialog} from '@angular/material/dialog';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {Product} from '../../models/product';
@@ -167,20 +152,6 @@ export class SaleDetailComponent implements OnInit {
       return col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
     }
   }
-
-  openEditSaleDialog(sale: Sale): void {
-    const dialogRef = this.dialog.open(EditSaleDialogComponent, {
-      width: '500px',
-      data: sale
-    });
-
-    // dialogRef.afterClosed().subscribe(result => {
-    //   if (this.bundle) {
-    //     this.loadSalesData(this.bundle.id);
-    //   }
-    // });
-  }
-
   get totalItemCosts(): number {
     return this.products.reduce((sum, sale) => {
       const itemCost = sale.item_cost;
