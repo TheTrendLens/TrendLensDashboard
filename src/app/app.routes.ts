@@ -21,6 +21,7 @@ import {SignupCompleteComponent} from './components/signup-complete/signup-compl
 import {ListingsComponent} from './components/listings/listings.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
+import {AuthActionComponent} from './components/auth-action/auth-action.component';
 import {AccountComponent} from './components/account/account.component';
 import {SalesComponent} from './components/sales/sales.component';
 import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
@@ -144,6 +145,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
   { path: 'forgot-password',  component: ForgotPasswordComponent,  canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
   { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'auth-action', component: AuthActionComponent },
   { path: 'signup', component: SignupFlowComponent, children: [
       {
         path: '',

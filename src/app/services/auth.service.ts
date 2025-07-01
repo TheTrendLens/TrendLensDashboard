@@ -8,7 +8,8 @@ import {
   UserCredential,
   GoogleAuthProvider,
   signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail, signInWithPopup,
-  confirmPasswordReset, verifyPasswordResetCode, updatePassword, EmailAuthProvider, reauthenticateWithCredential
+  confirmPasswordReset, verifyPasswordResetCode, updatePassword, EmailAuthProvider, reauthenticateWithCredential,
+  applyActionCode, ActionCodeSettings
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
 import {User as DbUser} from '../models/user';
@@ -64,7 +65,11 @@ export class AuthService {
       const result = await createUserWithEmailAndPassword(this.auth, email, password);
       if (result.user && result.user.email) {
         await this.createUserInDatabase(result.user.uid, result.user.email);
+
+        // Configure action code settings with our custom URL for email verification
+        const actionCodeSettings = this.getActionCodeSettings('verifyEmail');
         await sendEmailVerification(result.user);
+
         this.router.navigate(['/signup/verify-email']);
       }
     } catch (error) {
@@ -116,24 +121,29 @@ export class AuthService {
     }
   }
 
+  // Get action code settings for Firebase auth actions
+  private getActionCodeSettings(mode: string): ActionCodeSettings {
+    return {
+      url: `${window.location.origin}/auth-action?mode=${mode}`,
+      handleCodeInApp: true,
+      // Setting iOS and Android bundle IDs to ensure consistent behavior across platforms
+      iOS: {
+        bundleId: 'com.trendlens.app'
+      },
+      android: {
+        packageName: 'com.trendlens.app',
+        installApp: true,
+        minimumVersion: '12'
+      },
+      // This ensures the action code is passed directly to our app
+      dynamicLinkDomain: window.location.hostname
+    };
+  }
+
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
-      // Configure action code settings with our custom reset password URL
-      const actionCodeSettings = {
-        url: window.location.origin + '/reset-password',
-        handleCodeInApp: true,
-        // Setting iOS and Android bundle IDs to ensure consistent behavior across platforms
-        iOS: {
-          bundleId: 'com.trendlens.app'
-        },
-        android: {
-          packageName: 'com.trendlens.app',
-          installApp: true,
-          minimumVersion: '12'
-        },
-        // This ensures the action code is passed directly to our app
-        dynamicLinkDomain: window.location.hostname
-      };
+      // Configure action code settings with our custom URL for password reset
+      const actionCodeSettings = this.getActionCodeSettings('resetPassword');
 
       await sendPasswordResetEmail(this.auth, email);
     } catch (error) {
@@ -186,9 +196,21 @@ export class AuthService {
         throw new Error('No user is currently signed in');
       }
 
+      // Configure action code settings with our custom URL for email verification
+      const actionCodeSettings = this.getActionCodeSettings('verifyEmail');
+
       await sendEmailVerification(user);
     } catch (error) {
       console.error('Resending verification email failed:', error);
+      throw error;
+    }
+  }
+
+  async applyActionCode(code: string): Promise<void> {
+    try {
+      await applyActionCode(this.auth, code);
+    } catch (error) {
+      console.error('Apply action code failed:', error);
       throw error;
     }
   }
