@@ -68,7 +68,6 @@ html, body {
 
 .sidebar-desktop-container {
   @apply flex grow flex-col gap-y-5 overflow-y-auto px-6;
-  background-color: #E45D5D;
 }
 
 .company-logo {

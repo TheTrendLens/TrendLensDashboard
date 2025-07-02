@@ -46,11 +46,11 @@
 }
 
 /* Match the mobile top bar color with the sidebar */
-.mobile-top-bar {
-  background-color: #E45D5D;
-}
+/*.mobile-top-bar {*/
+/*  background-color: #E45D5D;*/
+/*}*/
 
-/* Also ensure consistent coloring in the mobile sidebar */
-.sidebar-desktop-container {
-  background-color: #4f8fc5;
-}
+/*!* Also ensure consistent coloring in the mobile sidebar *!*/
+/*.sidebar-desktop-container {*/
+/*  background-color: #4f8fc5;*/
+/*}*/

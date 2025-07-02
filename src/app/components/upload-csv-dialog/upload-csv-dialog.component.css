@@ -37,7 +37,7 @@ mat-form-field {
 }
 
 /* Apply animation when dragging */
-.border-red-400.bg-red-50 {
+.border-red-400.bg-blue-50 {
   animation: pulse 1.5s infinite ease-in-out;
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
 }
