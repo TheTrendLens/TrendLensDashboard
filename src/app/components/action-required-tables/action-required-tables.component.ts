@@ -1,26 +1,21 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {MatIconButton} from "@angular/material/button";
-import {DatePipe, NgForOf} from "@angular/common";
+import {NgForOf} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {MatPaginator, PageEvent} from '@angular/material/paginator';
+import {MatPaginator} from '@angular/material/paginator';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
 import {UserService} from '../../services/user.service';
 import {MatDialog} from '@angular/material/dialog';
 import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {StatCardsComponent} from '../stat-cards/stat-cards.component';
-import {MatIcon} from '@angular/material/icon';
 import {Router} from '@angular/router';
 import {Product} from '../../models/product';
 import {ProductService} from '../../services/product.service';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
-import {Pagination} from '../../models/pagination';
 
 @Component({
   selector: 'app-action-required-tables',
   imports: [
-    MatIconButton,
-    MatIcon,
     NgForOf,
     ReactiveFormsModule,
     FormsModule,
@@ -37,9 +32,9 @@ export class ActionRequiredTablesComponent implements OnInit {
   saleItemCounts: { [saleId: string]: number } = {};
 
   salesIsLoading: boolean = false;
-  salesTotalRows = 250;
-  salesPageSize = 5;
-  salesCurrentPage = 1; // Changed from 0 to 1 for 1-based pagination
+  salesTotalRows = 1000;
+  salesPageSize = 1000;
+  salesCurrentPage = 1;
   totalPages: number = 0;
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
 
@@ -55,12 +50,6 @@ export class ActionRequiredTablesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadData();
-  }
-
-  pageChanged(event: PageEvent) {
-    this.salesPageSize = event.pageSize;
-    this.salesCurrentPage = event.pageIndex + 1; // Convert from 0-based to 1-based
     this.loadData();
   }
 

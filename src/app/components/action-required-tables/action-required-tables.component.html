@@ -3,15 +3,6 @@
   <h2 class="text-sm text-gray-500 font-semibold mb-4">Please make sure all sales have a <b>Postage Cost</b>, and an <b>Item Cost</b> for each product.</h2>
 </div>
 
-<!-- Pagination Info -->
-<div class="flex justify-between items-center mb-6 mt-4">
-  <div class="text-sm text-gray-700">
-    Showing <span class="font-medium">{{ (salesCurrentPage * salesPageSize) + 1 }}</span> to
-    <span class="font-medium">{{ Math.min((salesCurrentPage + 1) * salesPageSize, salesTotalRows) }}</span> of
-    <span class="font-medium">{{ salesTotalRows }}</span> sales
-  </div>
-</div>
-
 <!-- Card Grid - Limited to 5 cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full" style="max-width: 100%;">
   <!-- Sale Card Component -->
@@ -22,24 +13,4 @@
     [canEdit]="true"
     (cardClick)="navigateToSale($event)">
   </app-sale-card>
-</div>
-
-<!-- Pagination Arrows -->
-<div class="flex justify-center mt-6 mb-6 space-x-4">
-  <button
-    mat-icon-button
-    [disabled]="salesCurrentPage === 0"
-    (click)="goToPreviousPage()"
-    class="flex items-center justify-center"
-    aria-label="Previous page">
-    <mat-icon class="flex items-center justify-center">arrow_back</mat-icon>
-  </button>
-  <button
-    mat-icon-button
-    [disabled]="salesCurrentPage >= totalPages - 1"
-    (click)="goToNextPage()"
-    class="flex items-center justify-center"
-    aria-label="Next page">
-    <mat-icon class="flex items-center justify-center">arrow_forward</mat-icon>
-  </button>
 </div>
