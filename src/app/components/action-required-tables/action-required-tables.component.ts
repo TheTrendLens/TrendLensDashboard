@@ -33,7 +33,7 @@ export class ActionRequiredTablesComponent implements OnInit {
 
   salesIsLoading: boolean = false;
   salesTotalRows = 1000;
-  salesPageSize = 50;
+  salesPageSize = 32; // Set to 32 as per requirements
   salesCurrentPage = 1;
   totalPages: number = 0;
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
@@ -99,16 +99,26 @@ export class ActionRequiredTablesComponent implements OnInit {
   }
 
   loadSaleItemCounts(): void {
+    // First, use any products already loaded with the sales
     this.salesData.forEach(sale => {
-      this.productService.getProductsBySale(sale.id).subscribe({
-        next: (products: Product[]) => {
-          this.saleItemCounts[sale.id] = products.length;
-        },
-        error: (error) => {
-          console.error(`Error fetching products for sale ${sale.id}:`, error);
-          this.saleItemCounts[sale.id] = 0;
-        }
-      });
+      if (sale.products && Array.isArray(sale.products)) {
+        // Products are already loaded, use them directly
+        this.saleItemCounts[sale.id] = sale.products.length;
+      } else {
+        // Products not loaded, set initial count to 0
+        this.saleItemCounts[sale.id] = 0;
+
+        // Fetch products for this sale
+        this.productService.getProductsBySale(sale.id).subscribe({
+          next: (products: Product[]) => {
+            this.saleItemCounts[sale.id] = products.length;
+          },
+          error: (error) => {
+            console.error(`Error fetching products for sale ${sale.id}:`, error);
+            this.saleItemCounts[sale.id] = 0;
+          }
+        });
+      }
     });
   }
 
