@@ -26,6 +26,8 @@ import {AccountComponent} from './components/account/account.component';
 import {SalesComponent} from './components/sales/sales.component';
 import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
 import {AnalyticsComponent} from './components/analytics/analytics.component';
+import {AdminComponent} from './components/admin/admin.component';
+import {AdminGuard} from './utils/admin.guard';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
@@ -195,6 +197,11 @@ export const routes: Routes = [
       {
         path: 'account',
         component: AccountComponent
+      },
+      {
+        path: 'admin',
+        component: AdminComponent,
+        canActivate: [AdminGuard]
       }
     ] },
   { path: '**', redirectTo: '', },

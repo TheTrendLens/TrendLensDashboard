@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { filter } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog.component';
+import { User as DbUser } from '../../models/user';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -16,6 +17,7 @@ import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog
 export class DashboardLayoutComponent implements OnInit {
   isMobileSidebarOpen = false;
   currentPageTitle = 'Dashboard';
+  isAdmin = false;
 
   constructor(
     public authService: AuthService,
@@ -32,6 +34,19 @@ export class DashboardLayoutComponent implements OnInit {
 
     // Set initial page title
     this.updatePageTitle();
+
+    // Check if user is admin
+    this.checkAdminStatus();
+  }
+
+  private checkAdminStatus() {
+    try {
+      const dbUser: DbUser = JSON.parse(localStorage.getItem('dbUser')!);
+      this.isAdmin = dbUser && dbUser.admin === true;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      this.isAdmin = false;
+    }
   }
 
   private updatePageTitle() {
@@ -41,8 +56,14 @@ export class DashboardLayoutComponent implements OnInit {
       this.currentPageTitle = 'Dashboard';
     } else if (currentRoute.includes('/sales')) {
       this.currentPageTitle = 'Sales';
+    } else if (currentRoute.includes('/admin')) {
+      this.currentPageTitle = 'Admin Dashboard';
+    } else if (currentRoute.includes('/analytics')) {
+      this.currentPageTitle = 'Analytics';
+    } else if (currentRoute.includes('/account')) {
+      this.currentPageTitle = 'Account';
     } else {
-      // Add more route mappings as needed
+      // Default title
       this.currentPageTitle = 'Dashboard';
     }
   }

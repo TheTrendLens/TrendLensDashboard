@@ -12,11 +12,12 @@ export interface UserAdminInfo {
   database_usage: number; // in bytes
 }
 
+const endpoint = `${environment.backend.baseURL}/api/admin`;
+
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
@@ -25,7 +26,7 @@ export class AdminService {
    * @returns Observable of UserAdminInfo array
    */
   getAllUsers(): Observable<UserAdminInfo[]> {
-    return this.http.get<UserAdminInfo[]>(`${this.apiUrl}/api/admin/users`);
+    return this.http.get<UserAdminInfo[]>(`${endpoint}/users`);
   }
 
   /**
@@ -34,7 +35,7 @@ export class AdminService {
    * @returns Observable of success message
    */
   deleteUser(userId: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/admin/users/${userId}`);
+    return this.http.delete<{ message: string }>(`${endpoint}/users/${userId}`);
   }
 
   /**
