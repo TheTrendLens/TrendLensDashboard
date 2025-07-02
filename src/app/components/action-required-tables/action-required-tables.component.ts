@@ -33,7 +33,7 @@ export class ActionRequiredTablesComponent implements OnInit {
 
   salesIsLoading: boolean = false;
   salesTotalRows = 1000;
-  salesPageSize = 1000;
+  salesPageSize = 50;
   salesCurrentPage = 1;
   totalPages: number = 0;
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
