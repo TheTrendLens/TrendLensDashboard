@@ -73,6 +73,20 @@ export class CurrencyService {
     // Update the subject
     this.currencySubject.next(currencyOption.symbol);
 
+    const dbUserStr = localStorage.getItem('dbUser');
+    if (dbUserStr) {
+      try {
+        const dbUser: User = JSON.parse(dbUserStr);
+        if (dbUser) {
+          dbUser.currency = currencyOption.code;
+          dbUser.currencySymbol = currencyOption.symbol;
+          localStorage.setItem('dbUser', JSON.stringify(dbUser));
+        }
+      } catch (e) {
+        console.error('Error parsing dbUser from localStorage', e);
+      }
+    }
+
     // Update the user in the database
     return this.userService.updateCurrency(currencyOption.code, currencyOption.symbol);
   }

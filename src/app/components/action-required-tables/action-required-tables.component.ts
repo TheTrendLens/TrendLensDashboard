@@ -14,6 +14,7 @@ import {Router} from '@angular/router';
 import {Product} from '../../models/product';
 import {ProductService} from '../../services/product.service';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
+import {Pagination} from '../../models/pagination';
 
 @Component({
   selector: 'app-action-required-tables',
@@ -89,16 +90,12 @@ export class ActionRequiredTablesComponent implements OnInit {
   loadData() {
     this.salesIsLoading = true;
 
-    this.userService.getSalesWithMissingDataCount().pipe(take(1)).subscribe({
-      next: (count) => {
-        this.salesTotalRows = count;
-        this.calculateTotalPages();
-      }
-    })
-
     this.userService.getSalesWithMissingData(this.salesPageSize, this.salesCurrentPage).pipe(take(1)).subscribe({
-      next: (sales) => {
-        this.salesData = sales;
+      next: (paginatedSales) => {
+        this.salesData = paginatedSales.items;
+        this.salesTotalRows = paginatedSales.meta.totalItems;
+        this.calculateTotalPages();
+
         if (this.salesPaginator) {
           this.salesPaginator.pageIndex = this.salesCurrentPage - 1; // Convert from 1-based to 0-based for paginator
         }

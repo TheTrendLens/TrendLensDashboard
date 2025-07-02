@@ -126,7 +126,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ticksCallback(value: string | number): string {
-    return this.getCurrencyCode() + value;
+    return this.currencyService.getCurrencySymbol() + value;
   }
 
   initCategoryChart(): void {
@@ -240,8 +240,6 @@ export class AnalyticsComponent implements OnInit {
   getCurrencyCode(): string {
     const currencySymbol = this.currencyService.getCurrencySymbol();
     const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
-
-    console.log('currencyOption', currencyOption);
 
     return currencyOption?.code || 'GBP';
   }

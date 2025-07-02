@@ -5,6 +5,7 @@ import { ChangePasswordComponent } from '../change-password/change-password.comp
 import { AuthService } from '../../services/auth.service';
 import { StripeService } from '../../services/stripe.service';
 import { CurrencyService } from '../../services/currency.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-account',
@@ -18,11 +19,13 @@ export class AccountComponent {
   isLoading: boolean = false;
   selectedCurrency: string = 'GBP';
   isCurrencyUpdating: boolean = false;
+  isDarkMode: boolean = false;
 
   constructor(
     private authService: AuthService,
     private stripeService: StripeService,
-    public currencyService: CurrencyService
+    public currencyService: CurrencyService,
+    public themeService: ThemeService
   ) {
     const user = this.authService.getSignedInUser();
     if (user && user.email) {
@@ -41,6 +44,19 @@ export class AccountComponent {
         console.error('Error parsing dbUser from localStorage', e);
       }
     }
+
+    // Initialize dark mode state
+    this.isDarkMode = this.themeService.getCurrentTheme();
+    this.themeService.isDarkMode().subscribe(isDark => {
+      this.isDarkMode = isDark;
+    });
+  }
+
+  /**
+   * Toggles between light and dark mode
+   */
+  toggleDarkMode(): void {
+    this.themeService.toggleDarkMode();
   }
 
   /**

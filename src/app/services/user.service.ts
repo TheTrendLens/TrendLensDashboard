@@ -7,6 +7,7 @@ import {User} from "../models/user";
 import {Sale} from "../models/sale";
 import {Report} from "../models/report";
 import {Bundle} from '../models/bundle';
+import {Pagination} from '../models/pagination';
 
 const endpoint = `${environment.backend.baseURL}/api/user`
 
@@ -37,7 +38,15 @@ export class UserService {
     return this.http.get<number>(`${endpoint}/listingscount?q=${query}`);
   }
 
-  getSales(limit: number, page: number, query: string = '', dateFilter: string = 'all', sortBy: string = 'date_desc'): Observable<Sale[]> {
+  getSales(
+    limit: number,
+    page: number,
+    query: string = '',
+    dateFilter: string = 'all',
+    sortBy: string = 'date_desc',
+    minProducts: number = 0,
+    missingCosts: boolean = false
+  ): Observable<Pagination<Sale>> {
     let url = `${endpoint}/sales?limit=${limit}&page=${page}`;
 
     // Add search query if provided
@@ -55,19 +64,34 @@ export class UserService {
       url += `&sort=${sortBy}`;
     }
 
-    return this.http.get<Sale[]>(url);
+    // Add minimum products filter if specified
+    if (minProducts > 0) {
+      url += `&minProducts=${minProducts}`;
+    }
+
+    // Add missing costs filter if true
+    if (missingCosts) {
+      url += `&missingCosts=true`;
+    }
+
+    return this.http.get<Pagination<Sale>>(url);
   }
 
   // Keep this method for backward compatibility
-  searchSales(query: string, limit: number, page: number): Observable<Sale[]> {
+  searchSales(query: string, limit: number, page: number): Observable<Pagination<Sale>> {
     return this.getSales(limit, page, query);
   }
 
-  getSalesWithMissingData(limit: number, page: number): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${endpoint}/sales?missingData=true&limit=${limit}&page=${page}`);
+  getSalesWithMissingData(limit: number, page: number): Observable<Pagination<Sale>> {
+    return this.http.get<Pagination<Sale>>(`${endpoint}/sales?missingData=true&limit=${limit}&page=${page}`);
   }
 
-  getSalesCount(query: string = '', dateFilter: string = 'all'): Observable<number> {
+  getSalesCount(
+    query: string = '',
+    dateFilter: string = 'all',
+    minProducts: number = 0,
+    missingCosts: boolean = false
+  ): Observable<number> {
     let url = `${endpoint}/salescount`;
 
     // Add query parameters
@@ -79,6 +103,16 @@ export class UserService {
 
     if (dateFilter !== 'all') {
       params.push(`dateFilter=${dateFilter}`);
+    }
+
+    // Add minimum products filter if specified
+    if (minProducts > 0) {
+      params.push(`minProducts=${minProducts}`);
+    }
+
+    // Add missing costs filter if true
+    if (missingCosts) {
+      params.push(`missingCosts=true`);
     }
 
     // Add parameters to URL if any exist

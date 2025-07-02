@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <!-- Date Filter -->
     <div>
       <label for="dateFilter" class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
@@ -61,6 +61,20 @@
         <option value="single">Single Item</option>
         <option value="multiple">Multiple Items</option>
       </select>
+    </div>
+
+    <!-- Missing Costs Filter -->
+    <div>
+      <label for="missingCosts" class="block mb-2 text-sm font-medium text-gray-900">Missing Costs</label>
+      <div class="flex items-center">
+        <input
+          id="missingCosts"
+          type="checkbox"
+          class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
+          [(ngModel)]="missingCosts"
+          (change)="applyFilters()">
+        <label for="missingCosts" class="ml-2 text-sm font-medium text-gray-900">Show sales with missing costs</label>
+      </div>
     </div>
   </div>
 </div>

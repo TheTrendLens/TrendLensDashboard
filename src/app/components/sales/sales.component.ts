@@ -17,6 +17,7 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {Product} from '../../models/product';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
+import {Pagination} from '../../models/pagination';
 
 @Component({
   selector: 'app-sales',
@@ -35,23 +36,14 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
   dateFilter: string = 'all';
   sortBy: string = 'date_desc';
   itemsFilter: string = 'all';
+  minProducts: number = 0;
+  missingCosts: boolean = false;
   Math = Math; // Make Math available to the template
-
-  // Product display limits for different screen sizes
-  xxxlLimit: number = 2;
-  xxlLimit: number = 2;
-  xlLimit: number = 2;
-  lgLimit: number = 2;
-  mdLimit: number = 2;
-  smLimit: number = 2;
 
   isLoading: boolean = false;
   totalRows = 7;
   pageSize = 32;
   currentPage = 1;
-  pageSizeOptions: number[] = [5, 10, 25, 100];
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild('productRow') productRowElement: ElementRef | undefined;
 
   private productRowHeight = 30; // Default value
@@ -61,17 +53,7 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadData();
-    this.userService.getSalesCount(this.searchQuery, this.dateFilter).pipe(take(1)).subscribe({
-      next: (count) => {
-        this.totalRows = count;
-        this.calculateTotalPages();
-      }
-    });
-  }
-
-  calculateTotalPages(): void {
-    this.totalPages = Math.ceil(this.totalRows / this.pageSize);
+    this.loadData(); // This will update totalRows from the pagination response
   }
 
   // Add these navigation methods
@@ -103,26 +85,31 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
   loadData() {
     this.isLoading = true;
 
+    // Convert itemsFilter to minProducts
+    if (this.itemsFilter === 'multiple') {
+      this.minProducts = 2; // At least 2 products for multiple items
+    } else if (this.itemsFilter === 'single') {
+      this.minProducts = 1; // Exactly 1 product for single item
+    } else {
+      this.minProducts = 0; // No minimum for 'all'
+    }
+
     // Pass filters to the service
     this.userService.getSales(
       this.pageSize,
       this.currentPage,
       this.searchQuery,
       this.dateFilter,
-      this.sortBy
+      this.sortBy,
+      this.minProducts,
+      this.missingCosts
     ).pipe(take(1)).subscribe({
-      next: (sales) => {
-        this.salesData = sales;
+      next: (paginatedSales) => {
+        this.salesData = paginatedSales.items;
+        this.totalRows = paginatedSales.meta.totalItems;
+        this.totalPages = paginatedSales.meta.totalPages;
         this.loadSaleItemCounts();
 
-        // Apply client-side filtering for items count if needed
-        if (this.itemsFilter !== 'all') {
-          this.applyItemsFilter();
-        }
-
-        if (this.paginator) {
-          this.paginator.pageIndex = this.currentPage - 1; // Convert from 1-based to 0-based for paginator
-        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -140,22 +127,6 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadData();
   }
 
-  /**
-   * Apply client-side filtering for items count
-   * This is done client-side since we already have the item counts loaded
-   */
-  applyItemsFilter() {
-    if (this.itemsFilter === 'single') {
-      this.salesData = this.salesData.filter(sale =>
-        this.saleItemCounts[sale.id] === 1
-      );
-    } else if (this.itemsFilter === 'multiple') {
-      this.salesData = this.salesData.filter(sale =>
-        this.saleItemCounts[sale.id] > 1
-      );
-    }
-  }
-
   loadSaleItemCounts(): void {
     this.salesData.forEach(sale => {
       this.productService.getProductsBySale(sale.id).subscribe({
@@ -170,161 +141,10 @@ export class SalesComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-
-  pageChanged(event: any): void {
-    this.currentPage = event.pageIndex + 1; // Convert from 0-based to 1-based
-    this.pageSize = event.pageSize;
-    this.calculateTotalPages();
-    this.loadData();
-  }
-
-  itemNameFormatter(params: any) {
-    let splits: string[] = params.value.split('-');
-
-    splits.reverse().pop();
-    splits.reverse();
-
-    splits = splits.map((split) => split.charAt(0).toUpperCase() + split.slice(1));
-
-    return splits.join(' ');
-  }
-
-  currencyFormatter(currency: number, sign: string) {
-    if (typeof currency !== "number") {
-      currency = Number.parseInt(currency);
-    }
-    if (currency) {
-      const sansDec = currency.toFixed(0);
-      const formatted = sansDec.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      return sign + `${formatted}`;
-    }
-
-    return '£0.00';
-  }
-
-  openUploadDialog(): void {
-    const dialogRef = this.dialog.open(UploadCsvDialogComponent, {
-      width: '90%',
-      maxWidth: '600px',
-      panelClass: 'responsive-dialog'
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && result.success) {
-        // Handle successful upload
-        console.log('Upload successful:', result.data);
-        this.loadData(); // Reload data after successful upload
-      }
-    });
-  }
-
-
   onSearch(query: string) {
     this.searchQuery = query;
     this.currentPage = 1; // Reset to first page when search changes
-
-    // Update the total count with the search filter
-    this.userService.getSalesCount(query, this.dateFilter).pipe(take(1)).subscribe({
-      next: (count) => {
-        this.totalRows = count;
-        this.calculateTotalPages();
-      }
-    });
-
-    this.loadData();
-  }
-
-  calculateCosts(sale: Sale) {
-    return sale.products.reduce((sum, sale) => {
-      const itemCost = sale.item_cost;
-      if (itemCost === null) return sum;
-      return sum + itemCost;
-    }, sale.total_fee + sale.seller_postage_cost);
-  }
-
-  formatCurrency(value: string | number, sign: string = '£'): string {
-    if (value === null || value === undefined) {
-      return '£0.00';
-    }
-
-    // Convert to number if it's a string
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-
-    if (isNaN(numValue)) {
-      return '£0.00';
-    }
-
-    // Format with 2 decimal places and add commas for thousands
-    return sign + numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
-
-  getValue(element: any, col: any): any {
-    if (col.type === 'number') {
-      return col.nestedKey ? element[col.key]?.[col.nestedKey]?.toFixed(2) : element[col.key]?.toFixed(2);
-    } else if (col.type === 'lastWord') {
-      let value: string | undefined =  col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
-      value = value?.split('-').pop();
-      return value!.charAt(0).toUpperCase() + value?.slice(1);
-    } else {
-      return col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
-    }
-  }
-
-  openEditSaleDialog(sale: Sale): void {
-    const dialogRef = this.dialog.open(EditSaleDialogComponent, {
-      width: '500px',
-      data: sale
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      this.loadData();
-    })
-  }
-
-  /**
-   * Get a limited number of products based on card height
-   * @param products The full list of products
-   * @param cardElement The DOM element of the card
-   * @returns A limited list of products
-   */
-  getLimitedProducts(products: any[], cardElement?: HTMLElement): any[] {
-    // Default to lg limit for SSR or if element isn't provided
-    if (typeof window === 'undefined' || !cardElement) {
-      return products.slice(0, this.lgLimit);
-    }
-
-    // Get the card height
-    const cardHeight = cardElement.clientHeight;
-
-    // Calculate available space for products
-    const reservedSpace = 150; // Space for header and footer
-    const availableHeight = cardHeight - reservedSpace;
-
-    // Calculate how many products can fit using the measured row height
-    const visibleProducts = Math.max(1, Math.floor(availableHeight / this.productRowHeight));
-
-    return products.slice(0, visibleProducts);
-  }
-
-  /**
-   * Check if there are more products than the limit
-   * @param products The full list of products
-   * @param cardElement The DOM element of the card
-   * @returns True if there are more products than the limit
-   */
-  hasMoreProducts(products: any[], cardElement?: HTMLElement): boolean {
-    if (typeof window === 'undefined' || !cardElement) {
-      return products.length > this.lgLimit;
-    }
-
-    const cardHeight = cardElement.clientHeight;
-    const productRowHeight = 50;
-    const reservedSpace = 150;
-    const availableHeight = cardHeight - reservedSpace;
-    const visibleProducts = Math.max(1, Math.floor(availableHeight / productRowHeight));
-
-    return products.length > visibleProducts;
-
+    this.loadData(); // This will update totalRows from the pagination response
   }
 
   /**
