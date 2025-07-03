@@ -5,6 +5,7 @@ import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData } from '../../services/analytics.service';
 import { Chart, registerables } from 'chart.js';
 import { CurrencyService } from '../../services/currency.service';
+import {UserService} from '../../services/user.service';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -22,6 +23,9 @@ export class AnalyticsComponent implements OnInit {
   endDate: Date = new Date();
   isLoading: boolean = false;
   analyticsData: AnalyticsData | null = null;
+  selectedCategory: string = 'All';
+  categories: string[] = [];
+  isCategoryUpdating: boolean = false;
 
   // Charts
   salesChart: Chart | null = null;
@@ -30,6 +34,7 @@ export class AnalyticsComponent implements OnInit {
 
   constructor(
     private analyticsService: AnalyticsService,
+    private userService: UserService,
     private currencyService: CurrencyService
   ) {
     // Set default date range to last 30 days
@@ -40,6 +45,7 @@ export class AnalyticsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAnalyticsData();
+    this.loadCategories();
   }
 
   loadAnalyticsData(): void {
@@ -58,6 +64,21 @@ export class AnalyticsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading analytics data:', error);
         this.isLoading = false;
+      }
+    });
+  }
+
+  loadCategories(): void {
+    this.isCategoryUpdating = true;
+
+    this.userService.getCategories().subscribe({
+      next: (data) => {
+        this.categories = data;
+        this.isCategoryUpdating = false;
+      },
+      error: (error) => {
+        console.error('Error loading categories data:', error);
+        this.isCategoryUpdating = false;
       }
     });
   }

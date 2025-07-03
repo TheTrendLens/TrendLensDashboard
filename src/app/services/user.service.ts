@@ -192,4 +192,8 @@ export class UserService {
   getActivePackage(id: any): Observable<Object> {
     return this.http.get(`${endpoint}/${id}/subscription`);
   }
+
+  getCategories(): Observable<string[]> {
+    return this.http.get<string[]>(`${endpoint}/categories`);
+  }
 }
