@@ -67,9 +67,9 @@ export class ThemeService {
    */
   private applyTheme(isDark: boolean): void {
     if (isDark) {
-      document.documentElement.classList.add('dark-mode');
+      document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark-mode');
+      document.documentElement.classList.remove('dark');
     }
   }
 }

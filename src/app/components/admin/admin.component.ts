@@ -51,7 +51,8 @@ export class AdminComponent implements OnInit {
       error: (error) => {
         console.error('Error loading users:', error);
         this.snackBar.open('Error loading users. Please try again.', 'Close', {
-          duration: 5000
+          duration: 5000,
+          panelClass: ['error-snackbar']
         });
         this.loading = false;
       }
@@ -72,14 +73,16 @@ export class AdminComponent implements OnInit {
     this.adminService.deleteUser(user.id).subscribe({
       next: (response) => {
         this.snackBar.open(response.message, 'Close', {
-          duration: 5000
+          duration: 5000,
+          panelClass: ['success-snackbar']
         });
         this.loadUsers(); // Reload the user list
       },
       error: (error) => {
         console.error('Error deleting user:', error);
         this.snackBar.open('Error deleting user. Please try again.', 'Close', {
-          duration: 5000
+          duration: 5000,
+          panelClass: ['error-snackbar']
         });
       }
     });

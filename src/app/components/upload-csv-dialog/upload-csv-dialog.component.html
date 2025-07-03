@@ -1,4 +1,4 @@
-<h2 mat-dialog-title class="text-xl text-blue-500 font-semibold pb-2 border-b border-gray-100">Upload CSV File</h2>
+<h2 mat-dialog-title class="text-xl text-brand-500 font-semibold pb-2 border-b border-gray-100">Upload CSV File</h2>
 <mat-dialog-content class="mt-4">
   <form [formGroup]="uploadForm">
     <div class="grid grid-cols-1 gap-4">
@@ -6,20 +6,20 @@
       <div
         class="bg-gray-50 border rounded-lg p-4 transition-colors"
         [ngClass]="{
-          'border-blue-400 bg-blue-50': isDragging,
-          'border-gray-300 hover:border-blue-400': !isDragging
+          'border-brand-400 bg-brand-50': isDragging,
+          'border-gray-300 hover:border-brand-400': !isDragging
         }"
       >
         <div class="flex flex-col items-center justify-center cursor-pointer" (click)="fileInput.click()">
           <!-- File icon -->
           <svg xmlns="http://www.w3.org/2000/svg"
-            [ngClass]="{'text-blue-400': isDragging, 'text-gray-400': !isDragging}"
+            [ngClass]="{'text-brand-400': isDragging, 'text-gray-400': !isDragging}"
             class="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
 
           <!-- File selection text -->
-          <p class="text-sm mb-1" [ngClass]="{'text-blue-500 font-medium': isDragging, 'text-gray-500': !isDragging}">
+          <p class="text-sm mb-1" [ngClass]="{'text-brand-500 font-medium': isDragging, 'text-gray-500': !isDragging}">
             {{ isDragging ? 'Drop CSV file here' : 'Click to select a CSV file' }}
           </p>
           <p class="text-xs text-gray-400" *ngIf="!isDragging">or drag and drop file here</p>
@@ -30,9 +30,9 @@
       <input type="file" hidden #fileInput accept=".csv" (change)="onFileSelected($event)">
 
       <!-- Selected file info with improved styling -->
-      <div *ngIf="selectedFileName" class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-400">
+      <div *ngIf="selectedFileName" class="bg-white rounded-lg shadow p-4 border-l-4 border-brand-400">
         <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <div>
@@ -48,7 +48,7 @@
   <button mat-button class="text-gray-500 hover:text-gray-700 px-4 py-2 rounded-lg" (click)="onCancel()">Cancel</button>
   <button
     mat-button
-    class="bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500 disabled:bg-gray-300 disabled:text-gray-500"
+    class="bg-brand-400 text-white px-4 py-2 rounded-lg hover:bg-brand-500 disabled:bg-gray-300 disabled:text-gray-500"
     [disabled]="!selectedFile || uploadInProgress"
     (click)="onUpload()">
     <span *ngIf="!uploadInProgress" class="flex items-center">

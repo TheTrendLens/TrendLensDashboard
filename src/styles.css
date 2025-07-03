@@ -4,55 +4,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode styles */
-.dark-mode {
-  /* Background colors */
-  --bg-primary: #121212;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #2d2d2d;
+@layer base {
+  /* Define dark mode variables */
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-tertiary: #6b7280;
+    --border-color: #d1d5db;
+  }
 
-  /* Text colors */
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-tertiary: #a0a0a0;
+  .dark {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-tertiary: #a0a0a0;
+    --border-color: #3d3d3d;
+  }
 
-  /* Border colors */
-  --border-color: #3d3d3d;
+  /* Apply base styles */
+  body {
+    @apply bg-white text-gray-900 dark:bg-[var(--bg-primary)] dark:text-[var(--text-primary)];
+  }
 
-  /* Apply dark mode to common elements */
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-gray-900 dark:text-[var(--text-primary)];
+  }
+
+  input, select, textarea {
+    @apply bg-white text-gray-900 border-gray-300 dark:bg-[var(--bg-tertiary)] dark:text-[var(--text-primary)] dark:border-[var(--border-color)];
+  }
 }
 
-/* Dark mode specific element styles */
-.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
-  color: var(--text-primary);
+@layer components {
+  /* Override Tailwind classes for dark mode */
+  .text-gray-900 {
+    @apply dark:text-[var(--text-primary)];
+  }
+
+  .text-green-800 {
+    @apply dark:text-[var(--text-primary)];
+  }
+
+  .text-gray-500 {
+    @apply dark:text-[var(--text-secondary)];
+  }
+
+  .bg-white {
+    @apply dark:bg-[var(--bg-secondary)];
+  }
+
+  .shadow {
+    @apply dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.4),0_1px_2px_0_rgba(0,0,0,0.24)];
+  }
+
+  .ring-gray-300 {
+    @apply dark:ring-[var(--border-color)];
+  }
 }
 
-.dark-mode .text-gray-900 {
-  color: var(--text-primary);
+/* Global styles for Angular Material snackbars */
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: white;
+  --mdc-snackbar-supporting-text-color: rgba(0, 0, 0, 0.87);
 }
 
-.dark-mode .text-gray-500 {
-  color: var(--text-secondary);
-}
-
-.dark-mode .bg-white {
-  background-color: var(--bg-secondary);
-}
-
-.dark-mode .shadow {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
-}
-
-.dark-mode .ring-gray-300 {
-  --tw-ring-color: var(--border-color);
-}
-
-.dark-mode input, .dark-mode select, .dark-mode textarea {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border-color: var(--border-color);
+.dark .mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: var(--bg-secondary);
+  --mdc-snackbar-supporting-text-color: var(--text-primary);
 }
 
 /* Apply Inter font to all elements */

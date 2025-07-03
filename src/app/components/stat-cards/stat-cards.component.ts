@@ -6,9 +6,10 @@ import {FormsModule} from '@angular/forms';
 import {BaseChartDirective} from 'ng2-charts';
 import {Chart, ChartData, ChartDataset, ChartOptions, registerables, TooltipItem} from 'chart.js';
 import TrendlineLinearPlugin from 'chartjs-plugin-trendline';
+import 'chartjs-adapter-date-fns';
 
 Chart.register(...registerables);
-Chart.register(TrendlineLinearPlugin)
+Chart.register(TrendlineLinearPlugin);
 
 @Component({
   selector: 'app-stat-cards',
@@ -127,7 +128,8 @@ export class StatCardsComponent implements OnInit {
   }
 
   public updateStats() {
-    this.userService.getMetrics(this.selectedTimeframe).pipe(take(1)).subscribe({
+    // Get metrics with filterMissingCosts=true to only include sales with complete cost data
+    this.userService.getMetrics(this.selectedTimeframe, true).pipe(take(1)).subscribe({
       next: (metrics) => {
         this.metrics = metrics;
       },
@@ -137,9 +139,14 @@ export class StatCardsComponent implements OnInit {
     });
 
 
-    this.userService.getGraphableMetrics(this.selectedTimeframe).pipe(take(1)).subscribe({
+    // Get graphable metrics with filterMissingCosts=true to only include sales with complete cost data
+    this.userService.getGraphableMetrics(this.selectedTimeframe, true).pipe(take(1)).subscribe({
       next: (metrics) => {
+        // Set labels based on date range
         this.chartData.labels = metrics.labels;
+        this.barChartData.labels = metrics.labels;
+
+        // Update chart datasets
         this.chartData.datasets = metrics.series.filter((series) => series.label == 'Profit' || series.label == 'Costs').map((series) => ({
           label: series.label,
           data: series.data,
@@ -154,7 +161,6 @@ export class StatCardsComponent implements OnInit {
           }
         }));
 
-        this.barChartData.labels = metrics.labels;
         this.barChartData.datasets = metrics.series.filter((series) => series.label == 'Number of Sales').map((series) => ({
           label: series.label,
           data: series.data,
@@ -168,6 +174,18 @@ export class StatCardsComponent implements OnInit {
             width: 2
           }
         }));
+
+        // Determine if we need day or month labels based on the date range
+        if (metrics.labels.length > 0) {
+          const allDatesInSameMonth = this.areDatesInSameMonth(metrics.labels);
+          const allDatesInSameYear = this.areDatesInSameYear(metrics.labels);
+
+          // Update x-axis format based on date range
+          const xAxisFormat = allDatesInSameMonth ? 'day' : (allDatesInSameYear ? 'month' : 'month');
+
+          // Update chart options with the appropriate format
+          this.updateChartOptions(xAxisFormat);
+        }
 
         this.charts.forEach((child) => {
           if (child.chart)
@@ -185,4 +203,86 @@ export class StatCardsComponent implements OnInit {
     this.updateStats();
   }
 
+  /**
+   * Check if all dates in the labels array are within the same month
+   */
+  private areDatesInSameMonth(labels: string[]): boolean {
+    if (labels.length <= 1) return true;
+
+    try {
+      // Try to parse the first date to determine format
+      const firstDate = new Date(labels[0]);
+      const firstMonth = firstDate.getMonth();
+      const firstYear = firstDate.getFullYear();
+
+      // Check if all dates are in the same month and year
+      return labels.every(label => {
+        const date = new Date(label);
+        return date.getMonth() === firstMonth && date.getFullYear() === firstYear;
+      });
+    } catch (e) {
+      console.error('Error parsing dates:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Check if all dates in the labels array are within the same year
+   */
+  private areDatesInSameYear(labels: string[]): boolean {
+    if (labels.length <= 1) return true;
+
+    try {
+      // Try to parse the first date to determine format
+      const firstDate = new Date(labels[0]);
+      const firstYear = firstDate.getFullYear();
+
+      // Check if all dates are in the same year
+      return labels.every(label => {
+        const date = new Date(label);
+        return date.getFullYear() === firstYear;
+      });
+    } catch (e) {
+      console.error('Error parsing dates:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Update chart options based on the date format needed
+   */
+  private updateChartOptions(format: 'day' | 'month'): void {
+    // Update line chart options
+    this.chartOptions.scales = {
+      ...this.chartOptions.scales,
+      x: {
+        type: 'time',
+        time: {
+          unit: format,
+          displayFormats: {
+            day: 'MMM d',
+            month: 'MMM yyyy'
+          }
+        }
+      }
+    };
+
+    // Update bar chart options
+    this.barChartOptions = {
+      ...this.barChartOptions,
+      scales: {
+        ...this.barChartOptions.scales,
+        x: {
+          type: 'time',
+          time: {
+            unit: format,
+            displayFormats: {
+              day: 'MMM d',
+              month: 'MMM yyyy'
+            }
+          }
+        }
+      }
+    };
+  }
 }

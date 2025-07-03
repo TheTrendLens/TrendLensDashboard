@@ -13,7 +13,7 @@
       <!-- Completed Step -->
 <!--      <a href="#" class="group flex w-full items-center">-->
 <!--        <span class="flex items-center px-6 py-4 text-sm font-medium">-->
-<!--          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-500 group-hover:bg-blue-700">-->
+<!--          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-500 group-hover:bg-brand-700">-->
 <!--            <svg class="size-6 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-slot="icon">-->
 <!--              <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd" />-->
 <!--            </svg>-->
@@ -22,10 +22,10 @@
 <!--        </span>-->
 <!--      </a>-->
       <a href="#" class="flex items-center px-6 py-4 text-sm font-medium" aria-current="step">
-        <span class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-red-500">
-          <span class="text-red-500">01</span>
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-brand-500">
+          <span class="text-brand-500">01</span>
         </span>
-        <span class="ml-4 text-sm font-medium text-red-500">Login details</span>
+        <span class="ml-4 text-sm font-medium text-brand-500">Login details</span>
       </a>
       <!-- Arrow separator for lg screens and up -->
       <div class="absolute right-0 top-0 hidden h-full w-5 md:block" aria-hidden="true">
@@ -74,15 +74,15 @@
       <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
         <form class="space-y-6" [formGroup]="form" (ngSubmit)="onSubmit()">
           <!-- Error message display -->
-          <div *ngIf="errorMessage" class="rounded-md bg-blue-50 p-4 mb-4">
+          <div *ngIf="errorMessage" class="rounded-md bg-brand-50 p-4 mb-4">
             <div class="flex">
               <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <svg class="h-5 w-5 text-brand-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">{{ errorMessage }}</h3>
+                <h3 class="text-sm font-medium text-brand-800">{{ errorMessage }}</h3>
               </div>
             </div>
           </div>
@@ -90,9 +90,9 @@
           <div>
             <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
             <div class="mt-2">
-              <input type="email" name="email" id="email" formControlName="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-red-500 sm:text-sm/6" [ngClass]="{'outline-red-500': email?.invalid && (email?.dirty || email?.touched)}">
+              <input type="email" name="email" id="email" formControlName="email" autocomplete="email" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-brand-500 sm:text-sm/6" [ngClass]="{'outline-brand-500': email?.invalid && (email?.dirty || email?.touched)}">
             </div>
-            <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="mt-1 text-sm text-red-600">
+            <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="mt-1 text-sm text-brand-600">
               <div *ngIf="email?.errors?.['required']">Email is required.</div>
               <div *ngIf="email?.errors?.['email']">Please enter a valid email address.</div>
             </div>
@@ -101,9 +101,9 @@
           <div>
             <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
             <div class="mt-2">
-              <input type="password" name="password" id="password" formControlName="password" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-red-500 sm:text-sm/6" [ngClass]="{'outline-red-500': password?.invalid && (password?.dirty || password?.touched)}">
+              <input type="password" name="password" id="password" formControlName="password" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-brand-500 sm:text-sm/6" [ngClass]="{'outline-brand-500': password?.invalid && (password?.dirty || password?.touched)}">
             </div>
-            <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="mt-1 text-sm text-red-600">
+            <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="mt-1 text-sm text-brand-600">
               <div *ngIf="password?.errors?.['required']">Password is required.</div>
               <div *ngIf="password?.errors?.['weakPassword']">Password must be at least 8 characters and include uppercase, lowercase, and numbers.</div>
             </div>
@@ -112,15 +112,15 @@
           <div>
             <label for="confirmPassword" class="block text-sm/6 font-medium text-gray-900">Confirm Password</label>
             <div class="mt-2">
-              <input type="password" name="confirmPassword" id="confirmPassword" formControlName="confirmPassword" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-red-500 sm:text-sm/6" [ngClass]="{'outline-red-500': !passwordsMatch && (confirmPassword?.dirty || confirmPassword?.touched)}">
+              <input type="password" name="confirmPassword" id="confirmPassword" formControlName="confirmPassword" autocomplete="new-password" required class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-brand-500 sm:text-sm/6" [ngClass]="{'outline-brand-500': !passwordsMatch && (confirmPassword?.dirty || confirmPassword?.touched)}">
             </div>
-            <div *ngIf="!passwordsMatch && (confirmPassword?.dirty || confirmPassword?.touched)" class="mt-1 text-sm text-red-600">
+            <div *ngIf="!passwordsMatch && (confirmPassword?.dirty || confirmPassword?.touched)" class="mt-1 text-sm text-brand-600">
               Passwords do not match.
             </div>
           </div>
 
           <div>
-            <button type="submit" [disabled]="!form.valid || isLoading" class="flex w-full justify-center rounded-md bg-blue-500 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
+            <button type="submit" [disabled]="!form.valid || isLoading" class="flex w-full justify-center rounded-md bg-brand-500 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-brand-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
               <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -160,7 +160,7 @@
 
       <p class="mt-10 text-center text-sm/6 text-gray-500">
         Already a member?
-        <a href="login" class="font-semibold text-red-500 hover:text-red-400">Login</a>
+        <a href="login" class="font-semibold text-brand-500 hover:text-brand-400">Login</a>
       </p>
     </div>
   </div>

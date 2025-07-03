@@ -9,7 +9,7 @@
       <input
         type="date"
         id="startDate"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
         [ngModel]="startDate | date:'yyyy-MM-dd'"
         (ngModelChange)="startDate = $event">
     </div>
@@ -20,7 +20,7 @@
       <input
         type="date"
         id="endDate"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
         [ngModel]="endDate | date:'yyyy-MM-dd'"
         (ngModelChange)="endDate = $event">
     </div>
@@ -29,7 +29,7 @@
     <div class="flex items-end">
       <button
         (click)="applyDateFilter()"
-        class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
+        class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
         Apply Filter
       </button>
     </div>
@@ -38,7 +38,7 @@
 
 <!-- Loading Indicator -->
 <div *ngIf="isLoading" class="flex justify-center items-center my-8">
-  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-500"></div>
 </div>
 
 <!-- Analytics Content -->

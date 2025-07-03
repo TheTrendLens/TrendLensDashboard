@@ -8,7 +8,7 @@
       </div>
       <input
         type="text"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full pl-10 p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
         placeholder="Search by buyer name, date, etc."
         [(ngModel)]="searchQuery"
         (keyup.enter)="onSearch(searchQuery)">
@@ -21,7 +21,7 @@
       <label for="dateFilter" class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
       <select
         id="dateFilter"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
         [(ngModel)]="dateFilter"
         (change)="applyFilters()">
         <option value="all">All Time</option>
@@ -37,7 +37,7 @@
       <label for="sortBy" class="block mb-2 text-sm font-medium text-gray-900">Sort By</label>
       <select
         id="sortBy"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
         [(ngModel)]="sortBy"
         (change)="applyFilters()">
         <option value="date_desc">Date (Newest First)</option>
@@ -54,7 +54,7 @@
       <label for="itemsFilter" class="block mb-2 text-sm font-medium text-gray-900">Items Count</label>
       <select
         id="itemsFilter"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
         [(ngModel)]="itemsFilter"
         (change)="applyFilters()">
         <option value="all">All</option>
@@ -70,7 +70,7 @@
         <input
           id="missingCosts"
           type="checkbox"
-          class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
+          class="w-4 h-4 text-brand-600 bg-gray-100 border-gray-300 rounded focus:ring-brand-500"
           [(ngModel)]="missingCosts"
           (change)="applyFilters()">
         <label for="missingCosts" class="ml-2 text-sm font-medium text-gray-900">Show sales with missing costs</label>

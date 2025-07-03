@@ -143,7 +143,7 @@ export class UserService {
     return this.http.get<Report>(`${endpoint}/reports/${year}/${month}/${type}`);
   }
 
-  getMetrics(timeframe: string): Observable<{
+  getMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
     revenue: number;
     costs: number;
     profit: number;
@@ -154,17 +154,23 @@ export class UserService {
       costs: number;
       profit: number;
       numberOfSales: number;
-    }>(`${endpoint}/sales/metrics/${timeframe}`);
+    }>(`${endpoint}/sales/metrics/${timeframe}${filterMissingCosts ? '?filterMissingCosts=true' : ''}`);
   }
 
-  getGraphableMetrics(timeframe: string): Observable<{
+  getGraphableMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
     labels: string[];
     series: { label: string; data: number[]; borderColor: string }[];
   }> {
+    const params = new URLSearchParams();
+    params.append('graphed', 'true');
+    if (filterMissingCosts) {
+      params.append('filterMissingCosts', 'true');
+    }
+
     return this.http.get<{
       labels: string[];
       series: { label: string; data: number[]; borderColor: string }[];
-    }>(`${endpoint}/sales/metrics/${timeframe}?graphed=true`);
+    }>(`${endpoint}/sales/metrics/${timeframe}?${params.toString()}`);
   }
 
   create(id: string, email: string): Observable<any> {

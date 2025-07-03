@@ -8,7 +8,7 @@ import {CommonModule} from '@angular/common';
   selector: 'app-login',
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './login.component.html',
-  styleUrl: './signup.component.css'
+  styleUrl: './login.component.css'
 })
 export class LoginComponent implements OnInit {
   form = new FormGroup({
@@ -49,7 +49,7 @@ export class LoginComponent implements OnInit {
 
         await this.authService.loginWithEmailAndPassword(this.form.value.email!, this.form.value.password!);
       } catch (error: any) {
-        this.errorMessage = error.message || 'Failed to login. Please check your credentials and try again.';
+        this.errorMessage = 'Failed to login. Please check your credentials and try again.';
       } finally {
         this.isLoading = false;
       }
@@ -62,7 +62,7 @@ export class LoginComponent implements OnInit {
       this.errorMessage = '';
       await this.authService.loginWithGoogle();
     } catch (error: any) {
-      this.errorMessage = error.message || 'Failed to login with Google. Please try again.';
+      this.errorMessage = 'Failed to login with Google. Please try again.';
     } finally {
       this.isLoading = false;
     }
