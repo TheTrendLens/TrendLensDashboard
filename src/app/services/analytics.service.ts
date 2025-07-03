@@ -50,11 +50,11 @@ export class AnalyticsService {
    * @param startDate Start date for the analytics data
    * @param endDate End date for the analytics data
    */
-  getAnalytics(startDate: Date, endDate: Date): Observable<AnalyticsData> {
+  getAnalytics(startDate: Date, endDate: Date, category: string): Observable<AnalyticsData> {
     // Format dates as ISO strings (YYYY-MM-DD)
     const startDateStr = new Date(startDate).toISOString().split('T')[0];
     const endDateStr = new Date(endDate).toISOString().split('T')[0];
 
-    return this.http.get<AnalyticsData>(`${endpoint}?startDate=${startDateStr}&endDate=${endDateStr}`);
+    return this.http.get<AnalyticsData>(`${endpoint}?startDate=${startDateStr}&endDate=${endDateStr}&category=${category}`);
   }
 }

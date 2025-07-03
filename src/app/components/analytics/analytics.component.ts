@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {DatePipe, NgIf, CurrencyPipe} from '@angular/common';
+import {DatePipe, NgIf, CurrencyPipe, NgForOf} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData } from '../../services/analytics.service';
@@ -14,7 +14,7 @@ Chart.register(...registerables);
   selector: 'app-analytics',
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
-  imports: [FormsModule, MatInputModule, DatePipe, NgIf, CurrencyPipe],
+  imports: [FormsModule, MatInputModule, DatePipe, NgIf, CurrencyPipe, NgForOf],
   standalone: true
 })
 export class AnalyticsComponent implements OnInit {
@@ -51,7 +51,7 @@ export class AnalyticsComponent implements OnInit {
   loadAnalyticsData(): void {
     this.isLoading = true;
 
-    this.analyticsService.getAnalytics(this.startDate, this.endDate).subscribe({
+    this.analyticsService.getAnalytics(this.startDate, this.endDate, this.selectedCategory).subscribe({
       next: (data) => {
         this.analyticsData = data;
         this.isLoading = false;
@@ -74,6 +74,7 @@ export class AnalyticsComponent implements OnInit {
     this.userService.getCategories().subscribe({
       next: (data) => {
         this.categories = data;
+        this.categories.unshift('All');
         this.isCategoryUpdating = false;
       },
       error: (error) => {
@@ -81,6 +82,10 @@ export class AnalyticsComponent implements OnInit {
         this.isCategoryUpdating = false;
       }
     });
+  }
+
+  onCategoryChange(): void {
+    this.loadAnalyticsData();
   }
 
   applyDateFilter(): void {

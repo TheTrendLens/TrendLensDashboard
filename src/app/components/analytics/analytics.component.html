@@ -33,6 +33,23 @@
         Apply Filter
       </button>
     </div>
+
+    <div class="sm:col-span-1">
+      <dt class="text-sm font-medium text-gray-500">Category</dt>
+      <dd class="mt-1 text-sm text-gray-900">
+        <div class="flex items-center space-x-2">
+          <select
+            [(ngModel)]="selectedCategory"
+            (ngModelChange)="onCategoryChange()"
+            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          >
+            <option *ngFor="let option of categories" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </div>
+      </dd>
+    </div>
   </div>
 </div>
 
