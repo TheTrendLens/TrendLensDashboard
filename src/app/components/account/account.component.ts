@@ -6,6 +6,8 @@ import { AuthService } from '../../services/auth.service';
 import { StripeService } from '../../services/stripe.service';
 import { CurrencyService } from '../../services/currency.service';
 import { ThemeService } from '../../services/theme.service';
+import { UserService } from '../../services/user.service';
+import { FeatureFlagService } from '../../services/feature-flag.service';
 
 @Component({
   selector: 'app-account',
@@ -20,12 +22,16 @@ export class AccountComponent {
   selectedCurrency: string = 'GBP';
   isCurrencyUpdating: boolean = false;
   isDarkMode: boolean = false;
+  experimentalFeatures: boolean = false;
+  isExperimentalFeaturesUpdating: boolean = false;
 
   constructor(
     private authService: AuthService,
     private stripeService: StripeService,
     public currencyService: CurrencyService,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private userService: UserService,
+    public featureFlagService: FeatureFlagService
   ) {
     const user = this.authService.getSignedInUser();
     if (user && user.email) {
@@ -40,6 +46,9 @@ export class AccountComponent {
         if (dbUser && dbUser.currency) {
           this.selectedCurrency = dbUser.currency;
         }
+        if (dbUser && dbUser.experimental_features !== undefined) {
+          this.experimentalFeatures = dbUser.experimental_features;
+        }
       } catch (e) {
         console.error('Error parsing dbUser from localStorage', e);
       }
@@ -49,6 +58,12 @@ export class AccountComponent {
     this.isDarkMode = this.themeService.getCurrentTheme();
     this.themeService.isDarkMode().subscribe(isDark => {
       this.isDarkMode = isDark;
+    });
+
+    // Initialize experimental features state
+    this.experimentalFeatures = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
+      this.experimentalFeatures = enabled;
     });
   }
 
@@ -102,5 +117,21 @@ export class AccountComponent {
           this.isCurrencyUpdating = false;
         }
       });
+  }
+
+  /**
+   * Updates the user's experimental features preference
+   */
+  updateExperimentalFeatures(): void {
+    this.isExperimentalFeaturesUpdating = true;
+
+    // Use the feature flag service to update the experimental features
+    this.featureFlagService.setExperimentalFeaturesEnabled(this.experimentalFeatures);
+
+    // The feature flag service handles the API call and localStorage update
+    // We just need to update the UI state
+    setTimeout(() => {
+      this.isExperimentalFeaturesUpdating = false;
+    }, 500); // Add a small delay to show the loading state
   }
 }

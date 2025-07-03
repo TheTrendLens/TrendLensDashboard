@@ -2,7 +2,7 @@ import {Component, HostListener, OnInit} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
 import {MatTableModule} from '@angular/material/table';
-import {NgForOf} from '@angular/common';
+import {NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginatorModule} from '@angular/material/paginator';
@@ -16,10 +16,11 @@ import {ProductService} from '../../services/product.service';
 import {Product} from '../../models/product';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
 import {CreateSaleDialogComponent} from '../create-sale-dialog/create-sale-dialog.component';
+import {FeatureFlagService} from '../../services/feature-flag.service';
 
 @Component({
   selector: 'app-sales',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent],
+  imports: [MatTableModule, NgForOf, NgIf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.css'
 })
@@ -41,9 +42,21 @@ export class SalesComponent implements OnInit {
   totalRows = 7;
   pageSize = 32;
   currentPage = 1;// Default value
+  experimentalFeaturesEnabled: boolean = false;
 
-  constructor(public userService: UserService, public salesService: SalesService, public productService: ProductService, public dialog: MatDialog, private router: Router) {
-
+  constructor(
+    public userService: UserService,
+    public salesService: SalesService,
+    public productService: ProductService,
+    public dialog: MatDialog,
+    private router: Router,
+    private featureFlagService: FeatureFlagService
+  ) {
+    // Initialize experimental features state
+    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
+      this.experimentalFeaturesEnabled = enabled;
+    });
   }
 
   ngOnInit(): void {

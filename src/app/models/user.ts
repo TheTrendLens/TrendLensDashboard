@@ -8,4 +8,5 @@ export interface User {
   new_sub: boolean;
   currency: string;
   currencySymbol: string;
+  experimental_features?: boolean;
 }

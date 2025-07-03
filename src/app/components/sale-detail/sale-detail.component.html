@@ -137,7 +137,10 @@
     <!-- Mobile-friendly product cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <!-- Add Product Card -->
-      <div (click)="addProduct()" class="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex items-center justify-center h-48">
+      <div
+        *ngIf="experimentalFeaturesEnabled"
+        (click)="addProduct()"
+        class="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex items-center justify-center h-48">
         <div class="text-center">
           <div class="text-5xl text-brand-500 mb-2">+</div>
           <p class="text-gray-600">Add Product</p>

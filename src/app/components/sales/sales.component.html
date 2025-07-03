@@ -15,8 +15,9 @@
         (keyup.enter)="onSearch(searchQuery)">
     </div>
 
-    <!-- Create Sale Button -->
+    <!-- Create Sale Button - Only shown if experimental features are enabled -->
     <button
+      *ngIf="experimentalFeaturesEnabled"
       (click)="createSale()"
       class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
       <mat-icon class="mr-1">add</mat-icon>

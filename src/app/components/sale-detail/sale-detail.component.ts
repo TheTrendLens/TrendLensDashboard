@@ -11,68 +11,7 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {CurrencyService} from '../../services/currency.service';
 import {AddProductDialogComponent} from '../add-product-dialog/add-product-dialog.component';
-
-const PRODUCT_COLUMNS_SCHEMA = [
-  {
-    key: 'listing',
-    nestedKey: 'slug',
-    type: 'text',
-    label: 'Listing'
-  },
-  {
-    key: 'date_sold',
-    type: 'text',
-    label: 'Date Sold'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'date_listed',
-    type: 'text',
-    label: 'Date Listed'
-  },
-  {
-    key: 'listing',
-    nestedKey: 'listed_price',
-    type: 'number',
-    label: 'Listed Price'
-  },
-  {
-    key: 'total',
-    type: 'number',
-    label: 'Total'
-  },
-  {
-    key: 'size',
-    type: 'text',
-    label: 'Size'
-  },
-  {
-    key: 'platform_fee',
-    type: 'number',
-    label: 'Platform Fee'
-  },
-  {
-    key: 'payment_fee',
-    type: 'number',
-    label: 'Payment Fee'
-  },
-  {
-    key: 'seller_postage_cost',
-    type: 'number',
-    label: 'Postage Cost'
-  },
-  {
-    key: 'item_cost',
-    type: 'number',
-    label: 'Item Cost'
-  },
-  {
-    key: 'isEdit',
-    type: 'isEdit',
-    label: ''
-  }
-];
-
+import {FeatureFlagService} from '../../services/feature-flag.service';
 @Component({
   selector: 'app-sale-detail',
   standalone: true,
@@ -94,6 +33,7 @@ export class SaleDetailComponent implements OnInit {
   originalPostageCost: number | null = null;
   editingItemCost: { [key: string]: boolean } = {};
   originalItemCosts: { [key: string]: number } = {};
+  experimentalFeaturesEnabled: boolean = false;
 
   @ViewChild('postageCostInput') postageCostInput: ElementRef | undefined;
   @ViewChildren('itemCostInput') itemCostInputs: QueryList<ElementRef> | undefined;
@@ -104,8 +44,14 @@ export class SaleDetailComponent implements OnInit {
     private salesService: SalesService,
     private productService: ProductService,
     public dialog: MatDialog,
-    private currencyService: CurrencyService
-  ) {}
+    private currencyService: CurrencyService,
+    private featureFlagService: FeatureFlagService,
+  ) {
+    // Initialize experimental features state
+    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
+      this.experimentalFeaturesEnabled = enabled;
+    });}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {

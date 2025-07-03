@@ -111,7 +111,6 @@ export class AddListingDialogComponent implements OnInit {
       }
 
       const listing: Listing = {
-        id: 0,
         ...this.listingForm.value,
         date_updated: new Date(),
         date_listed: new Date(),
