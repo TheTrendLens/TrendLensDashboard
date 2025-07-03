@@ -252,37 +252,42 @@ export class StatCardsComponent implements OnInit {
    * Update chart options based on the date format needed
    */
   private updateChartOptions(format: 'day' | 'month'): void {
+    // Create time scale configuration
+    const timeScale = this.createTimeScale(format);
+
     // Update line chart options
     this.chartOptions.scales = {
       ...this.chartOptions.scales,
-      x: {
-        type: 'time',
-        time: {
-          unit: format,
-          displayFormats: {
-            day: 'MMM d',
-            month: 'MMM yyyy'
-          }
-        }
-      }
-    };
+      x: timeScale
+    } as any; // Type assertion until we properly define scales
 
     // Update bar chart options
     this.barChartOptions = {
       ...this.barChartOptions,
       scales: {
         ...this.barChartOptions.scales,
-        x: {
-          type: 'time',
-          time: {
-            unit: format,
-            displayFormats: {
-              day: 'MMM d',
-              month: 'MMM yyyy'
-            }
-          }
+        x: timeScale
+      }
+    } as any; // Type assertion until we properly define scales
+  }
+
+
+  /**
+   * Creates a time scale configuration for chart x-axis
+   * @param format The time unit format ('day' or 'month')
+   * @returns Time scale configuration object
+   */
+  private createTimeScale(format: 'day' | 'month'): any {
+    return {
+      type: 'time',
+      time: {
+        unit: format,
+        displayFormats: {
+          day: 'MMM d',
+          month: 'MMM yyyy'
         }
       }
     };
   }
+
 }
