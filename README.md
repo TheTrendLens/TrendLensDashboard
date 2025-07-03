@@ -56,37 +56,29 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 ## Environment Configuration
 
-This application uses environment variables for configuration of sensitive information such as API URLs, Firebase configuration, and Stripe keys. To set up your environment:
+This application uses environment-specific configuration files for sensitive information such as API URLs, Firebase configuration, and Stripe keys. The configuration is stored in:
 
-1. Copy the `.env.example` file to a new file named `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Edit the `.env` file and fill in your actual values for:
-   - API URL
-   - Firebase configuration
-   - Stripe keys and pricing table IDs
+- `src/environments/environment.ts` for production
+- `src/environments/environment.development.ts` for development
 
 ### Development vs Production
 
-- For development, use test keys (e.g., Stripe test keys that start with `pk_test_`)
-- For production, use live keys (e.g., Stripe live keys that start with `pk_live_`)
+- For development, the application uses the configuration in `environment.development.ts`, which includes test keys (e.g., Stripe test keys that start with `pk_test_`)
+- For production, the application uses the configuration in `environment.ts`, which includes live keys (e.g., Stripe live keys that start with `pk_live_`)
 
-### Node.js Types for Environment Variables
+### Modifying Configuration
 
-This project uses Node.js type definitions to access environment variables via `process.env`. The necessary configuration is already set up in:
+To modify the configuration:
 
-- `tsconfig.json`: Includes `"types": ["node"]` to recognize the Node.js global objects
-- `package.json`: Includes `@types/node` in devDependencies
-
-If you encounter a "Cannot find name 'process'" error, make sure these configurations are present and run `npm install` to install the required dependencies.
+1. Edit the appropriate environment file based on your target environment
+2. Update the values directly in the file
+3. Rebuild the application to apply the changes
 
 ### Important Notes
 
-- Never commit your `.env` file to version control
-- Different environments (development, production) may require different values
-- The application will fall back to default values if environment variables are not set
+- Keep sensitive keys and credentials secure
+- Different environments (development, production) have different configurations
+- The application uses the values defined in the environment files
 
 ## Additional Resources
 
