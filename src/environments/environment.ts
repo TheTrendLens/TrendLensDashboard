@@ -5,7 +5,7 @@ enableProdMode();
 export const environment = {
   production: true,
   backend: {
-    baseURL: "https://api.thetrendlens.co.uk"
+    baseURL: "https://dev.thetrendlens.co.uk"
   },
   firebaseConfig: {
     apiKey: "AIzaSyAe4OWrwydmxI6pYtI0FpJv_ZXxtXUZ1-4",
