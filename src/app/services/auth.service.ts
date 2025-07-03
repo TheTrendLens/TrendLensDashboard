@@ -223,16 +223,8 @@ export class AuthService {
 
   private async fetchUserData(): Promise<void> {
     try {
-      this.userService.get().pipe(take(1)).subscribe({
-        next: (user) => {
-          localStorage.setItem(this.STORAGE_KEYS.DB_USER, JSON.stringify(user));
-        },
-        error: (error) => {
-          this.handleUserSignedOut();
-          console.error('Failed to fetch user data:', error);
-          throw error;
-        }
-      });
+      const userData = await this.userService.get().pipe(take(1)).toPromise();
+      localStorage.setItem(this.STORAGE_KEYS.DB_USER, JSON.stringify(userData));
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       throw error;
