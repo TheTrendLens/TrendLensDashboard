@@ -5,6 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NgxStripeModule} from 'ngx-stripe';
 import {CommonModule, NgIf} from '@angular/common';
+import {environment} from '../../../environments/environment';
 
 @Component({
   selector: 'app-checkout',
@@ -15,8 +16,8 @@ import {CommonModule, NgIf} from '@angular/common';
 })
 export class CheckoutComponent {
   customerSecret$!: Observable<Object>;
-  stripeKey = process.env['STRIPE_KEY'];
-  stripePricingTableId = process.env['STRIPE_PRICING_TABLE_ID'];
+  stripeKey = environment.STRIPE_KEY;
+  stripePricingTableId = environment.STRIPE_PRICING_TABLE_ID;
   isLoading = false;
 
   constructor(

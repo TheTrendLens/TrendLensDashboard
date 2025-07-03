@@ -10,17 +10,19 @@ import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from '@ang
 import {JwtInterceptor} from './utils/jwt-interceptor';
 import {provideNgxStripe} from 'ngx-stripe';
 import {provideNativeDateAdapter} from '@angular/material/core';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimationsAsync(),
-    { provide: FIREBASE_OPTIONS, useValue: { projectId: "trendlens-dev", appId: "1:917406287028:web:a451a3e375d88fab2443e1", storageBucket: "trendlens-dev.firebasestorage.app", apiKey: "AIzaSyAe4OWrwydmxI6pYtI0FpJv_ZXxtXUZ1-4", authDomain: "trendlens-dev.firebaseapp.com", messagingSenderId: "917406287028", measurementId: "G-Y6JM26S7CY" } },
-    provideFirebaseApp(() => initializeApp({ projectId: "trendlens-dev", appId: "1:917406287028:web:a451a3e375d88fab2443e1", storageBucket: "trendlens-dev.firebasestorage.app", apiKey: "AIzaSyAe4OWrwydmxI6pYtI0FpJv_ZXxtXUZ1-4", authDomain: "trendlens-dev.firebaseapp.com", messagingSenderId: "917406287028", measurementId: "G-Y6JM26S7CY" })), provideAuth(() => getAuth()),
+    { provide: FIREBASE_OPTIONS, useValue: environment.firebaseConfig },
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideAuth(() => getAuth()),
     provideRouter(routes, withDebugTracing()),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true},
-    provideNgxStripe(process.env['STRIPE_KEY']),
+    provideNgxStripe(environment.STRIPE_KEY),
     provideNativeDateAdapter()
   ]
 };

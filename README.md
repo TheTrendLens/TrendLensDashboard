@@ -54,6 +54,31 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Environment Configuration
+
+This application uses environment variables for configuration of sensitive information such as API URLs, Firebase configuration, and Stripe keys. To set up your environment:
+
+1. Copy the `.env.example` file to a new file named `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file and fill in your actual values for:
+   - API URL
+   - Firebase configuration
+   - Stripe keys and pricing table IDs
+
+### Development vs Production
+
+- For development, use test keys (e.g., Stripe test keys that start with `pk_test_`)
+- For production, use live keys (e.g., Stripe live keys that start with `pk_live_`)
+
+### Important Notes
+
+- Never commit your `.env` file to version control
+- Different environments (development, production) may require different values
+- The application will fall back to default values if environment variables are not set
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
