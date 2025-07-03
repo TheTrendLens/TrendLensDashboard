@@ -1,12 +1,13 @@
 import {Component, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {take} from 'rxjs';
 import { UserService } from '../../services/user.service';
-import {NgClass, NgForOf} from '@angular/common';
+import {NgClass, NgForOf, CurrencyPipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {BaseChartDirective} from 'ng2-charts';
 import {Chart, ChartData, ChartDataset, ChartOptions, registerables, TooltipItem} from 'chart.js';
 import TrendlineLinearPlugin from 'chartjs-plugin-trendline';
 import 'chartjs-adapter-date-fns';
+import { CurrencyService } from '../../services/currency.service';
 
 Chart.register(...registerables);
 Chart.register(TrendlineLinearPlugin);
@@ -17,7 +18,8 @@ Chart.register(TrendlineLinearPlugin);
     NgForOf,
     FormsModule,
     NgClass,
-    BaseChartDirective
+    BaseChartDirective,
+    CurrencyPipe
   ],
   templateUrl: './stat-cards.component.html',
   styleUrl: './stat-cards.component.css'
@@ -60,6 +62,9 @@ export class StatCardsComponent implements OnInit {
     elements: {
       line: {
         tension: .3,
+      },
+      point: {
+        radius: 0 // Hide points to improve performance
       }
     },
     maintainAspectRatio: false,
@@ -69,10 +74,26 @@ export class StatCardsComponent implements OnInit {
         stacked: true,
         beginAtZero: true,
         ticks: {
-          callback: function(value: any, index: any, ticks: any) {
-            return '£' + value.toFixed(2);
+          callback: (value: any, index: any, ticks: any) => {
+            return this.currencyService.getCurrencySymbol() + value.toFixed(2);
           }
         }
+      },
+      x: {
+        type: 'timeseries',
+        time: {
+          unit: 'month',
+          displayFormats: {
+            day: 'MMM d',
+            month: 'MMM yyyy'
+          }
+        },
+        ticks: {
+          source: 'data',
+          autoSkip: false,
+          stepSize: 1
+        },
+        bounds: 'ticks',
       }
     },
     plugins: {
@@ -82,10 +103,19 @@ export class StatCardsComponent implements OnInit {
       tooltip: {
         mode: 'index',
         callbacks: {
-          label: function(value: TooltipItem<any>) {
+          title: (tooltipItems: TooltipItem<any>[]) => {
+            // Format the date without time
+            if (tooltipItems.length > 0) {
+              const item = tooltipItems[0];
+              const date = new Date(item.parsed.x);
+              return date.toLocaleDateString();
+            }
+            return '';
+          },
+          label: (value: TooltipItem<any>) => {
             if (typeof value.raw === "number") {
               let numberValue: number = value.raw;
-              return '£' + numberValue.toFixed(2);
+              return this.currencyService.getCurrencySymbol() + numberValue.toFixed(2);
             }
 
             return value.formattedValue;
@@ -100,7 +130,7 @@ export class StatCardsComponent implements OnInit {
     }
   }
 
-  public barChartOptions = {
+  public barChartOptions: ChartOptions = {
     maintainAspectRatio: false,
     responsive: true,
     scales: {
@@ -113,13 +143,48 @@ export class StatCardsComponent implements OnInit {
             }
           }
         }
+      },
+      x: {
+        type: 'timeseries',
+        time: {
+          unit: 'month',
+          displayFormats: {
+            day: 'MMM d',
+            month: 'MMM yyyy'
+          }
+        },
+        ticks: {
+          source: 'labels',
+          autoSkip: false,
+          stepSize: 1
+        },
+        bounds: 'ticks',
+      }
+    },
+    plugins: {
+      tooltip: {
+        mode: 'index',
+        callbacks: {
+          title: (tooltipItems: TooltipItem<any>[]) => {
+            // Format the date without time
+            if (tooltipItems.length > 0) {
+              const item = tooltipItems[0];
+              const date = new Date(item.parsed.x);
+              return date.toLocaleDateString();
+            }
+            return '';
+          }
+        }
       }
     }
   }
 
   selectedTimeframe = this.timeframeOptions[0].value;
 
-  constructor(private userService: UserService) {
+  constructor(
+    private userService: UserService,
+    private currencyService: CurrencyService
+  ) {
 
   }
 
@@ -175,22 +240,27 @@ export class StatCardsComponent implements OnInit {
           }
         }));
 
-        // Determine if we need day or month labels based on the date range
-        if (metrics.labels.length > 0) {
-          const allDatesInSameMonth = this.areDatesInSameMonth(metrics.labels);
-          const allDatesInSameYear = this.areDatesInSameYear(metrics.labels);
+        // Determine the format based on the selected timeframe
+        let xAxisFormat: 'day' | 'month';
 
-          // Update x-axis format based on date range
-          const xAxisFormat = allDatesInSameMonth ? 'day' : (allDatesInSameYear ? 'month' : 'month');
-
-          // Update chart options with the appropriate format
-          this.updateChartOptions(xAxisFormat);
+        if (this.selectedTimeframe === 'month' || this.selectedTimeframe === 'lastmonth') {
+          xAxisFormat = 'day';
+        } else {
+          // For 'year', 'lastyear', or any other timeframe
+          xAxisFormat = 'month';
         }
 
-        this.charts.forEach((child) => {
-          if (child.chart)
-            child.chart.update()
-        });
+        // Update chart options with the appropriate format
+        this.updateChartOptions(xAxisFormat);
+
+        // Force a complete update of all charts
+        setTimeout(() => {
+          this.charts.forEach((child) => {
+            if (child.chart) {
+              child.chart.update('reset');
+            }
+          });
+        }, 0);
       },
       error: (error) => {
         console.error(error);
@@ -255,13 +325,16 @@ export class StatCardsComponent implements OnInit {
     // Create time scale configuration
     const timeScale = this.createTimeScale(format);
 
-    // Update line chart options
-    this.chartOptions.scales = {
-      ...this.chartOptions.scales,
-      x: timeScale
+    // Update line chart options - create a new object to ensure changes are applied
+    this.chartOptions = {
+      ...this.chartOptions,
+      scales: {
+        ...this.chartOptions.scales,
+        x: timeScale
+      }
     } as any; // Type assertion until we properly define scales
 
-    // Update bar chart options
+    // Update bar chart options - create a new object to ensure changes are applied
     this.barChartOptions = {
       ...this.barChartOptions,
       scales: {
@@ -278,16 +351,61 @@ export class StatCardsComponent implements OnInit {
    * @returns Time scale configuration object
    */
   private createTimeScale(format: 'day' | 'month'): any {
+    const now = new Date();
+    let min: Date | undefined = undefined;
+    let max: Date | undefined = undefined;
+
+    // Set min and max dates based on the selected timeframe
+    if (format === 'month') {
+      if (this.selectedTimeframe === 'year') {
+        // This year: Jan 1 to Dec 31
+        min = new Date(now.getFullYear(), 0, 1);
+        max = new Date(now.getFullYear(), 11, 31);
+      } else if (this.selectedTimeframe === 'lastyear') {
+        // Last year: Jan 1 to Dec 31 of last year
+        min = new Date(now.getFullYear() - 1, 0, 1);
+        max = new Date(now.getFullYear() - 1, 11, 31);
+      }
+    } else if (format === 'day') {
+      if (this.selectedTimeframe === 'month') {
+        // This month: 1st to last day of current month
+        min = new Date(now.getFullYear(), now.getMonth(), 1);
+        max = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
+      } else if (this.selectedTimeframe === 'lastmonth') {
+        // Last month: 1st to last day of previous month
+        min = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        max = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
+      }
+    }
+
     return {
-      type: 'time',
+      type: 'timeseries',
       time: {
         unit: format,
         displayFormats: {
           day: 'MMM d',
           month: 'MMM yyyy'
         }
-      }
+      },
+      min: min,
+      max: max,
+      ticks: {
+        source: 'ticks',
+        autoSkip: false,
+        stepSize: 1
+      },
+      bounds: 'ticks',
+      distribution: 'linear'
     };
   }
 
+  /**
+   * Gets the current currency code from the CurrencyService
+   * This is used by the CurrencyPipe in the template
+   */
+  getCurrencyCode(): string {
+    const currencySymbol = this.currencyService.getCurrencySymbol();
+    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
+    return currencyOption?.code || 'GBP';
+  }
 }
