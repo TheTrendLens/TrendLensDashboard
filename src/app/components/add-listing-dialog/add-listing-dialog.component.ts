@@ -1,4 +1,4 @@
-import {Component, Inject} from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import {MatFormField, MatInput} from '@angular/material/input';
 import {AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators} from '@angular/forms';
 import {
@@ -13,6 +13,9 @@ import {MatButton} from '@angular/material/button';
 import {Listing} from '../../models/listing';
 import {MatError} from '@angular/material/form-field';
 import {NgIf} from '@angular/common';
+import {UserService} from '../../services/user.service';
+import {User} from '../../models/user';
+import {take} from 'rxjs';
 
 // Custom validator for slug format (5 words with hyphens)
 export function slugFormatValidator(): ValidatorFn {
@@ -61,10 +64,16 @@ export function slugFormatValidator(): ValidatorFn {
   templateUrl: './add-listing-dialog.component.html',
   styleUrl: './add-listing-dialog.component.css'
 })
-export class AddListingDialogComponent {
+export class AddListingDialogComponent implements OnInit {
   listingForm: FormGroup;
+  currentUser: User | null = null;
 
-  constructor(private formBuilder: FormBuilder, public dialogRef: MatDialogRef<AddListingDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Listing) {
+  constructor(
+    private formBuilder: FormBuilder,
+    public dialogRef: MatDialogRef<AddListingDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: Listing,
+    private userService: UserService
+  ) {
     this.listingForm = formBuilder.group({
       name: ['', Validators.required],
       brand: [''],
@@ -79,12 +88,28 @@ export class AddListingDialogComponent {
     })
   }
 
+  ngOnInit(): void {
+    this.userService.get().pipe(take(1)).subscribe({
+      next: (user) => {
+        this.currentUser = user;
+      },
+      error: (error) => {
+        console.error('Error getting current user:', error);
+      }
+    });
+  }
+
   onCancel() {
     this.dialogRef.close();
   }
 
   onSave() {
     if (this.listingForm.valid) {
+      if (!this.currentUser) {
+        console.error('No user found. Cannot create listing.');
+        return;
+      }
+
       const listing: Listing = {
         id: 0,
         ...this.listingForm.value,
@@ -99,7 +124,8 @@ export class AddListingDialogComponent {
         sub_category: null,
         attributes: {},
         sizes: [],
-        date_last_gathered: new Date()
+        date_last_gathered: new Date(),
+        userId: this.currentUser.id // Add the user ID
       }
       this.dialogRef.close(listing);
     }

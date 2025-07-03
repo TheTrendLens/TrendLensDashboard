@@ -18,6 +18,7 @@ import {UserService} from '../../services/user.service';
 import {Listing} from '../../models/listing';
 import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
 import {take} from 'rxjs';
+import {ListingService} from '../../services/listing.service';
 
 @Component({
   selector: 'app-add-product-dialog',
@@ -54,7 +55,8 @@ export class AddProductDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<AddProductDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { saleId: string },
     private userService: UserService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private listingService: ListingService
   ) {
     this.productForm = formBuilder.group({
       listing: ['', Validators.required],
@@ -102,9 +104,17 @@ export class AddProductDialogComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // Use the newly created listing
-        this.productForm.patchValue({
-          listing: result.id
+        // Save the listing to the backend
+        this.listingService.create(result).subscribe({
+          next: (createdListing) => {
+            // Use the newly created listing with the ID from the backend
+            this.productForm.patchValue({
+              listing: createdListing.id
+            });
+          },
+          error: (error) => {
+            console.error('Error creating listing:', error);
+          }
         });
       }
     });

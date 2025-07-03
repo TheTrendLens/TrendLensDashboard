@@ -1,4 +1,4 @@
-import {Component, Inject} from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -15,6 +15,8 @@ import {SalesService} from '../../services/sales.service';
 import {take} from 'rxjs';
 import {MatDatepicker, MatDatepickerInput, MatDatepickerToggle} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
+import {UserService} from '../../services/user.service';
+import {User} from '../../models/user';
 
 @Component({
   selector: 'app-create-sale-dialog',
@@ -37,18 +39,20 @@ import {MatNativeDateModule} from '@angular/material/core';
   templateUrl: './create-sale-dialog.component.html',
   styleUrl: './create-sale-dialog.component.css'
 })
-export class CreateSaleDialogComponent {
+export class CreateSaleDialogComponent implements OnInit {
   saleForm: FormGroup;
+  currentUser: User | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
     public dialogRef: MatDialogRef<CreateSaleDialogComponent>,
-    private salesService: SalesService
+    private salesService: SalesService,
+    private userService: UserService
   ) {
     this.saleForm = formBuilder.group({
       buyer: ['', Validators.required],
       date_sold: [new Date(), Validators.required],
-      payment_type: ['', Validators.required],
+      payment_type: [''],
       total: [0, [Validators.required, Validators.min(0)]],
       platform_fee: [0, [Validators.required, Validators.min(0)]],
       payment_fee: [0, [Validators.required, Validators.min(0)]],
@@ -58,17 +62,34 @@ export class CreateSaleDialogComponent {
     });
   }
 
+  ngOnInit(): void {
+    this.userService.get().pipe(take(1)).subscribe({
+      next: (user) => {
+        this.currentUser = user;
+      },
+      error: (error) => {
+        console.error('Error getting current user:', error);
+      }
+    });
+  }
+
   onCancel() {
     this.dialogRef.close();
   }
 
   onSave() {
     if (this.saleForm.valid) {
+      if (!this.currentUser) {
+        console.error('No user found. Cannot create sale.');
+        return;
+      }
+
       const sale: Partial<Sale> = {
         ...this.saleForm.value,
         time_sold: new Date().toTimeString().split(' ')[0],
         total_fee: +this.saleForm.value.platform_fee + +this.saleForm.value.payment_fee + +this.saleForm.value.boosting_fee,
-        products: []
+        products: [],
+        user: this.currentUser
       };
 
       this.dialogRef.close(sale);
