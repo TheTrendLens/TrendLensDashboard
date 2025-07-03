@@ -31,6 +31,10 @@
     @apply bg-white text-gray-900 dark:bg-[var(--bg-primary)] dark:text-[var(--text-primary)];
   }
 
+  main {
+       @apply bg-white text-gray-900 dark:bg-[var(--bg-primary)] dark:text-[var(--text-primary)];
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply text-gray-900 dark:text-[var(--text-primary)];
   }
@@ -121,3 +125,8 @@ html, body {
   background-color: rgba(255, 255, 255, 0.1);
   font-weight: bold;
 }
+
+.title {
+  @apply text-gray-900 dark:text-gray-900;
+}
+
