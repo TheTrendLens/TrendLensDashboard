@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>Create New Sale</h2>
+<mat-dialog-content>
+  <form [formGroup]="saleForm">
+    <div class="grid grid-cols-2 gap-4">
+      <mat-form-field>
+        <mat-label>Buyer</mat-label>
+        <input matInput placeholder="Buyer Name" formControlName="buyer" required>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Date Sold</mat-label>
+        <input matInput [matDatepicker]="dateSoldPicker" formControlName="date_sold" required>
+        <mat-datepicker-toggle matSuffix [for]="dateSoldPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dateSoldPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Payment Type</mat-label>
+        <input matInput placeholder="Payment Type" formControlName="payment_type" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Total Amount</mat-label>
+        <input matInput type="number" placeholder="Total Amount" formControlName="total" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Platform Fee</mat-label>
+        <input matInput type="number" placeholder="Platform Fee" formControlName="platform_fee" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Payment Fee</mat-label>
+        <input matInput type="number" placeholder="Payment Fee" formControlName="payment_fee" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Postage Cost</mat-label>
+        <input matInput type="number" placeholder="Postage Cost" formControlName="seller_postage_cost" required>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Boosting Fee</mat-label>
+        <input matInput type="number" placeholder="Boosting Fee" formControlName="boosting_fee">
+      </mat-form-field>
+      <div class="flex items-center">
+        <label class="mr-2">Offer:</label>
+        <input type="checkbox" formControlName="offer">
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSave()" [disabled]="saleForm.invalid">Save</button>
+</mat-dialog-actions>

@@ -29,6 +29,14 @@ export class SalesService {
     return this.http.put<Sale>(`${endpoint}/${data.id}`, data);
   }
 
+  create(data: Partial<Sale>): Observable<Sale> {
+    return this.http.post<Sale>(`${endpoint}`, data);
+  }
+
+  delete(id: string): Observable<any> {
+    return this.http.delete(`${endpoint}/${id}`);
+  }
+
   uploadCSVSales(file: File, user: string): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);

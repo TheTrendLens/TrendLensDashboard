@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>Add Product to Sale</h2>
+<mat-dialog-content>
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <p class="text-gray-500">Loading listings...</p>
+  </div>
+
+  <div *ngIf="!isLoading">
+    <div class="mb-4">
+      <mat-radio-group [(ngModel)]="selectedOption" (change)="onOptionChange($event.value)">
+        <mat-radio-button value="existing" class="mr-4">Use Existing Listing</mat-radio-button>
+        <mat-radio-button value="new">Create New Listing</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <form [formGroup]="productForm">
+      <div *ngIf="selectedOption === 'existing'" class="mb-4">
+        <mat-form-field class="w-full">
+          <mat-label>Select Listing</mat-label>
+          <mat-select formControlName="listing" required>
+            <mat-option *ngFor="let listing of listings" [value]="listing.id">
+              {{ listing.name }} ({{ listing.slug }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Pagination controls -->
+        <div class="flex justify-center mt-2 space-x-4">
+          <button mat-button [disabled]="currentPage === 1" (click)="goToPreviousPage()">
+            Previous
+          </button>
+          <span class="flex items-center">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button mat-button [disabled]="currentPage >= totalPages" (click)="goToNextPage()">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="selectedOption === 'new'" class="mb-4">
+        <button mat-button color="primary" (click)="openAddListingDialog()">
+          Open Listing Creation Form
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <mat-form-field>
+          <mat-label>Size</mat-label>
+          <input matInput placeholder="Size" formControlName="size" required>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Item Cost</mat-label>
+          <input matInput type="number" placeholder="Item Cost" formControlName="item_cost" required>
+        </mat-form-field>
+      </div>
+    </form>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSave()" [disabled]="productForm.invalid || (selectedOption === 'new' && !productForm.value.listing)">
+    Add Product
+  </button>
+</mat-dialog-actions>

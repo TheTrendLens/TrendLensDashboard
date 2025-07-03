@@ -1,8 +1,9 @@
 <!-- Search, Filter, and Sort Controls -->
 <div class="mb-6 bg-white rounded-lg shadow p-4">
-  <!-- Search Bar -->
-  <div class="mb-4">
-    <div class="relative">
+  <!-- Header with Search and Create Button -->
+  <div class="flex justify-between items-center mb-4">
+    <!-- Search Bar -->
+    <div class="relative flex-grow mr-4">
       <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
         <mat-icon class="text-gray-400">search</mat-icon>
       </div>
@@ -13,6 +14,14 @@
         [(ngModel)]="searchQuery"
         (keyup.enter)="onSearch(searchQuery)">
     </div>
+
+    <!-- Create Sale Button -->
+    <button
+      (click)="createSale()"
+      class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
+      <mat-icon class="mr-1">add</mat-icon>
+      Create Sale
+    </button>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">

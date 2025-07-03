@@ -23,6 +23,7 @@
       <mat-checkbox formControlName="is_kids">Is Kids</mat-checkbox>
       <mat-form-field>
         <input matInput placeholder="Slug" formControlName="slug" required>
+        <mat-error *ngIf="listingForm.get('slug')?.invalid">{{ getSlugErrorMessage() }}</mat-error>
       </mat-form-field>
       <mat-checkbox formControlName="sold">Sold</mat-checkbox>
       <mat-form-field>

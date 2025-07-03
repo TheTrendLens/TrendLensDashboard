@@ -1,5 +1,5 @@
 import {Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
 import {CurrencyPipe, DatePipe, NgForOf, NgIf} from '@angular/common';
@@ -10,6 +10,7 @@ import {Product} from '../../models/product';
 import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {CurrencyService} from '../../services/currency.service';
+import {AddProductDialogComponent} from '../add-product-dialog/add-product-dialog.component';
 
 const PRODUCT_COLUMNS_SCHEMA = [
   {
@@ -99,6 +100,7 @@ export class SaleDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private salesService: SalesService,
     private productService: ProductService,
     public dialog: MatDialog,
@@ -265,5 +267,73 @@ export class SaleDetailComponent implements OnInit {
     const currencySymbol = this.currencyService.getCurrencySymbol();
     const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
     return currencyOption?.code || 'GBP';
+  }
+
+  /**
+   * Opens a dialog to add a new product to the sale
+   */
+  addProduct(): void {
+    if (!this.sale) return;
+
+    const dialogRef = this.dialog.open(AddProductDialogComponent, {
+      width: '600px',
+      data: { saleId: this.sale.id }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Create the product
+        this.productService.create(
+          result.saleId,
+          result.listingId,
+          result.size,
+          result.itemCost
+        ).subscribe({
+          next: (newProduct) => {
+            // Add the new product to the local array
+            this.products.push(newProduct);
+          },
+          error: (error) => {
+            console.error('Error creating product:', error);
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Removes a product from the sale
+   */
+  removeProduct(productId: string): void {
+    if (confirm('Are you sure you want to remove this product?')) {
+      this.productService.delete(productId).subscribe({
+        next: () => {
+          // Remove the product from the local array
+          this.products = this.products.filter(p => p.id !== productId);
+        },
+        error: (error) => {
+          console.error('Error deleting product:', error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Deletes the entire sale and navigates back to the sales list
+   */
+  deleteSale(): void {
+    if (!this.sale) return;
+
+    if (confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
+      this.salesService.delete(this.sale.id).subscribe({
+        next: () => {
+          // Navigate back to the sales list
+          this.router.navigate(['/sales']);
+        },
+        error: (error) => {
+          console.error('Error deleting sale:', error);
+        }
+      });
+    }
   }
 }

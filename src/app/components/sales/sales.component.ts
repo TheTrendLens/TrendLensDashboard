@@ -15,6 +15,7 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {Product} from '../../models/product';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
+import {CreateSaleDialogComponent} from '../create-sale-dialog/create-sale-dialog.component';
 
 @Component({
   selector: 'app-sales',
@@ -142,5 +143,28 @@ export class SalesComponent implements OnInit {
     // This is needed because the product limits depend on screen size
     // and we need to re-evaluate them when the screen size changes
     this.salesData = [...this.salesData];
+  }
+
+  /**
+   * Opens a dialog to create a new sale
+   */
+  createSale(): void {
+    const dialogRef = this.dialog.open(CreateSaleDialogComponent, {
+      width: '600px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.salesService.create(result).subscribe({
+          next: (newSale) => {
+            // Navigate to the new sale detail page
+            this.router.navigate(['/sales', newSale.id]);
+          },
+          error: (error) => {
+            console.error('Error creating sale:', error);
+          }
+        });
+      }
+    });
   }
 }

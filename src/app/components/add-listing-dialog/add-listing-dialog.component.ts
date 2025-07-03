@@ -1,6 +1,6 @@
 import {Component, Inject} from '@angular/core';
 import {MatFormField, MatInput} from '@angular/material/input';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators} from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -11,6 +11,37 @@ import {
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatButton} from '@angular/material/button';
 import {Listing} from '../../models/listing';
+import {MatError} from '@angular/material/form-field';
+import {NgIf} from '@angular/common';
+
+// Custom validator for slug format (5 words with hyphens)
+export function slugFormatValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+
+    if (!value) {
+      return null; // Let required validator handle empty values
+    }
+
+    // Check if the slug has exactly 4 hyphens (which means 5 words)
+    const hyphens = (value.match(/-/g) || []).length;
+    if (hyphens !== 4) {
+      return { slugFormat: true };
+    }
+
+    // Check if the slug starts and ends with a word (not a hyphen)
+    if (value.startsWith('-') || value.endsWith('-')) {
+      return { slugFormat: true };
+    }
+
+    // Check if there are no consecutive hyphens
+    if (value.includes('--')) {
+      return { slugFormat: true };
+    }
+
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-add-listing-dialog',
@@ -23,7 +54,9 @@ import {Listing} from '../../models/listing';
     MatDialogTitle,
     MatCheckbox,
     MatDialogActions,
-    MatButton
+    MatButton,
+    MatError,
+    NgIf
   ],
   templateUrl: './add-listing-dialog.component.html',
   styleUrl: './add-listing-dialog.component.css'
@@ -40,7 +73,7 @@ export class AddListingDialogComponent {
       condition: ['', Validators.required],
       gender: [''],
       is_kids: [false],
-      slug: ['', Validators.required],
+      slug: ['', [Validators.required, slugFormatValidator()]],
       sold: [true],
       item_cost: ['']
     })
@@ -70,5 +103,16 @@ export class AddListingDialogComponent {
       }
       this.dialogRef.close(listing);
     }
+  }
+
+  getSlugErrorMessage(): string {
+    const slugControl = this.listingForm.get('slug');
+    if (slugControl?.hasError('required')) {
+      return 'Slug is required';
+    }
+    if (slugControl?.hasError('slugFormat')) {
+      return 'Slug must be 5 words separated by hyphens (e.g., word1-word2-word3-word4-word5)';
+    }
+    return '';
   }
 }
