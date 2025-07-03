@@ -15,6 +15,8 @@ import {CommonModule, NgIf} from '@angular/common';
 })
 export class CheckoutComponent {
   customerSecret$!: Observable<Object>;
+  stripeKey = process.env['STRIPE_KEY'];
+  stripePricingTableId = process.env['STRIPE_PRICING_TABLE_ID'];
   isLoading = false;
 
   constructor(

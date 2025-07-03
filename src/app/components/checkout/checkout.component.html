@@ -61,8 +61,8 @@
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-4xl">
     <div class="bg-white px-6 py-8 shadow sm:rounded-lg sm:px-12">
       <div *ngIf="customerSecret$ | async as customerSecret" class="stripe-pricing-table">
-        <stripe-pricing-table pricing-table-id="prctbl_1PAZAfKU9ihQF2dqlWu8TUOb"
-                            publishable-key="pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm"
+        <stripe-pricing-table pricing-table-id="stripePricingTableId"
+                            publishable-key="stripeKey"
                             [attr.client-reference-id]="authService.getSignedInUser()!.uid"
                             [attr.customer-session-client-secret]="customerSecret">
         </stripe-pricing-table>

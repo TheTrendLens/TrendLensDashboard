@@ -12,5 +12,6 @@ export const environment = {
     appId: "1:917406287028:web:a451a3e375d88fab2443e1",
     measurementId: "G-Y6JM26S7CY"
   },
-  STRIPE_KEY: 'pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm'
+  STRIPE_KEY: 'pk_test_51P6WfHKU9ihQF2dqWPo0TLuAvBvWaLgO9PAX7xQq2vNKD9DYVLTUlfVIlWI4lmYiTcGezzg4mzK8ZdE2GqXKladz00UfoscPUm',
+  STRIPE_PRICING_TABLE_ID: 'prctbl_1PAZAfKU9ihQF2dqlWu8TUOb',
 }
