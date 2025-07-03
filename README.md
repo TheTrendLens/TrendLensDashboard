@@ -66,6 +66,15 @@ This application uses environment-specific configuration files for sensitive inf
 - For development, the application uses the configuration in `environment.development.ts`, which includes test keys (e.g., Stripe test keys that start with `pk_test_`)
 - For production, the application uses the configuration in `environment.ts`, which includes live keys (e.g., Stripe live keys that start with `pk_live_`)
 
+### Heroku Environment Detection
+
+When deploying to Heroku, the application automatically detects which environment to use:
+
+- If the Heroku app name contains "staging" (e.g., "trendlens-staging"), it will use the development configuration
+- Otherwise, it will use the production configuration
+
+This detection is handled by the `heroku-build.js` script, which is called during the Heroku build process.
+
 ### Modifying Configuration
 
 To modify the configuration:
@@ -79,6 +88,7 @@ To modify the configuration:
 - Keep sensitive keys and credentials secure
 - Different environments (development, production) have different configurations
 - The application uses the values defined in the environment files
+- When deploying to Heroku, make sure your app names follow the convention (include "staging" for staging environments)
 
 ## Additional Resources
 
