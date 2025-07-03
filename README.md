@@ -73,6 +73,15 @@ This application uses environment variables for configuration of sensitive infor
 - For development, use test keys (e.g., Stripe test keys that start with `pk_test_`)
 - For production, use live keys (e.g., Stripe live keys that start with `pk_live_`)
 
+### Node.js Types for Environment Variables
+
+This project uses Node.js type definitions to access environment variables via `process.env`. The necessary configuration is already set up in:
+
+- `tsconfig.json`: Includes `"types": ["node"]` to recognize the Node.js global objects
+- `package.json`: Includes `@types/node` in devDependencies
+
+If you encounter a "Cannot find name 'process'" error, make sure these configurations are present and run `npm install` to install the required dependencies.
+
 ### Important Notes
 
 - Never commit your `.env` file to version control
