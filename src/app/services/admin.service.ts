@@ -12,6 +12,7 @@ export interface UserAdminInfo {
   database_usage: number; // in bytes
   is_missing_costs: boolean;
   is_missing_costs_this_month: boolean;
+  sent_report: boolean;
 }
 
 export interface PaginatedUserAdminInfo {
@@ -67,5 +68,21 @@ export class AdminService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Upload a PDF report and send it to a user via email
+   * @param userId The user ID
+   * @param file The PDF file to upload
+   * @returns Observable of success message
+   */
+  sendReportToUser(userId: string, file: File): Observable<{ message: string, filename: string, size: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<{ message: string, filename: string, size: number }>(
+      `${endpoint}/users/${userId}/send-report`,
+      formData
+    );
   }
 }

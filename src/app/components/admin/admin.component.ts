@@ -38,6 +38,7 @@ export class AdminComponent implements OnInit {
     'databaseUsage',
     'missingCosts',
     'missingCostsThisMonth',
+    'sent_report',
     'actions'
   ];
   loading = true;
@@ -107,6 +108,67 @@ export class AdminComponent implements OnInit {
       error: (error) => {
         console.error('Error deleting user:', error);
         this.snackBar.open('Error deleting user. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  /**
+   * Trigger file input click
+   * @param userId The user ID
+   */
+  triggerFileInput(userId: string): void {
+    // Create a file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/pdf';
+    fileInput.style.display = 'none';
+
+    // Add event listener for file selection
+    fileInput.addEventListener('change', (event) => {
+      const target = event.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        this.uploadPdfReport(userId, target.files[0]);
+      }
+    });
+
+    // Trigger click on the file input
+    document.body.appendChild(fileInput);
+    fileInput.click();
+
+    // Remove the file input after selection
+    fileInput.addEventListener('blur', () => {
+      document.body.removeChild(fileInput);
+    });
+  }
+
+  /**
+   * Upload PDF report and send it to the user
+   * @param userId The user ID
+   * @param file The PDF file
+   */
+  uploadPdfReport(userId: string, file: File): void {
+    if (!file.type.includes('pdf')) {
+      this.snackBar.open('Only PDF files are allowed.', 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.adminService.sendReportToUser(userId, file).subscribe({
+      next: (response) => {
+        this.snackBar.open(response.message, 'Close', {
+          duration: 5000,
+          panelClass: ['success-snackbar']
+        });
+        this.loadUsers(); // Reload the user list to update the sent_report status
+      },
+      error: (error) => {
+        console.error('Error uploading PDF report:', error);
+        this.snackBar.open(error.error?.message || 'Error uploading PDF report. Please try again.', 'Close', {
           duration: 5000,
           panelClass: ['error-snackbar']
         });
