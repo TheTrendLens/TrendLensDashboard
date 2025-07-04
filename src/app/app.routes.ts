@@ -18,7 +18,6 @@ import {inject} from '@angular/core';
 import {StripeService} from './services/stripe.service';
 import {SubscriberGuard} from './utils/subscriber.guard';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
-import {ListingsComponent} from './components/listings/listings.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
 import {AuthActionComponent} from './components/auth-action/auth-action.component';
@@ -28,6 +27,7 @@ import {SaleDetailComponent} from './components/sale-detail/sale-detail.componen
 import {AnalyticsComponent} from './components/analytics/analytics.component';
 import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
+import {ListingsComponent} from './components/listings/listings.component';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
@@ -178,10 +178,10 @@ export const routes: Routes = [
         path: 'home',
         component: HomeComponent
       },
-      // {
-      //   path: 'listings',
-      //   component: ListingsComponent
-      // },
+      {
+        path: 'listings',
+        component: ListingsComponent
+      },
       {
         path: 'sales',
         component: SalesComponent

@@ -1,147 +1,174 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {Component, HostListener, OnInit} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
-import {Listing} from '../../models/listing';
 import {MatTableModule} from '@angular/material/table';
 import {NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
-import {MatPaginator, MatPaginatorModule, PageEvent} from '@angular/material/paginator';
+import {MatPaginatorModule} from '@angular/material/paginator';
 import {MatDialog} from '@angular/material/dialog';
+import {MatIconButton} from '@angular/material/button';
+import {Router} from '@angular/router';
+import {MatIcon} from '@angular/material/icon';
+import {ListingService} from '../../services/listing.service';
+import {Listing} from '../../models/listing';
+import {FeatureFlagService} from '../../services/feature-flag.service';
 import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
-import {MatButton} from '@angular/material/button';
-import {TableSearchBarComponent} from '../table-search-bar/table-search-bar.component';
-
-
-const COLUMNS_SCHEMA = [
-  {
-    key: 'id',
-    type: 'number',
-    label: 'ID'
-  },
-  {
-    key: 'brand',
-    type: 'text',
-    label: 'Brand'
-  },
-  {
-    key: 'category',
-    type: 'text',
-    label: 'Category'
-  },
-  {
-    key: 'isEdit',
-    type: 'isEdit',
-    label: ''
-  }
-]
+import {ListingCardComponent} from '../listing-card/listing-card.component';
 
 @Component({
   selector: 'app-listings',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, NgIf, MatPaginatorModule, MatButton, TableSearchBarComponent],
+  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, ListingCardComponent],
   templateUrl: './listings.component.html',
   styleUrl: './listings.component.css'
 })
-export class ListingsComponent implements AfterViewInit, OnInit {
+export class ListingsComponent implements OnInit {
   public listingsData: Listing[] = [];
-  displayedColumns: string[] = COLUMNS_SCHEMA.map((col) => col.key);
-  columnsSchema: any = COLUMNS_SCHEMA;
-  console = console;
   searchQuery: string = '';
+  totalPages: number = 0;
+
+  // Properties for filtering and sorting
+  dateFilter: string = 'all';
+  sortBy: string = 'date_desc';
+  categoryFilter: string = 'all';
+  categories: string[] = [];
+  Math = Math; // Make Math available to the template
 
   isLoading: boolean = false;
-  totalRows = 250;
-  pageSize = 100;
-  currentPage = 0;
-  pageSizeOptions: number[] = [5, 10, 25, 100];
+  totalRows = 0;
+  pageSize = 32;
+  currentPage = 1;// Default value
+  experimentalFeaturesEnabled: boolean = false;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-
-  constructor(public userService: UserService, public dialog: MatDialog) {
-
+  constructor(
+    public userService: UserService,
+    public listingService: ListingService,
+    public dialog: MatDialog,
+    private router: Router,
+    private featureFlagService: FeatureFlagService
+  ) {
+    // Initialize experimental features state
+    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
+      this.experimentalFeaturesEnabled = enabled;
+    });
   }
 
   ngOnInit(): void {
-    this.loadData();
-    this.userService.getListingsCount().pipe(take(1)).subscribe({
-      next: (count) => {
-        this.totalRows = count;
-      }
-    })
+    this.loadData(); // This will update totalRows from the pagination response
+    this.loadCategories();
   }
 
-  ngAfterViewInit(): void {
-    // this.listingsData.paginator = this.paginator;
+  // Add these navigation methods
+  goToPreviousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadData();
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadData();
+    }
+  }
+
+  navigateToListing(listingId: string): void {
+    this.router.navigate(['/listings', listingId]);
   }
 
   loadData() {
     this.isLoading = true;
 
-    this.userService.searchListings(this.searchQuery, this.pageSize, this.currentPage + 1).pipe(take(1)).subscribe({
-      next: (listings) => {
-        this.listingsData = listings;
-        this.paginator.pageIndex = this.currentPage;
+    // Pass filters to the service
+    this.listingService.getListings(
+      this.pageSize,
+      this.currentPage,
+      this.searchQuery,
+      this.dateFilter,
+      this.sortBy
+    ).pipe(take(1)).subscribe({
+      next: (paginatedListings) => {
+        this.listingsData = paginatedListings.items;
+        this.totalRows = paginatedListings.meta.totalItems;
+        this.totalPages = paginatedListings.meta.totalPages;
+
         this.isLoading = false;
       },
       error: (error) => {
         console.error(error);
         this.isLoading = false;
       }
-    })
-  }
-
-  pageChanged(event: PageEvent) {
-    this.pageSize = event.pageSize;
-    this.currentPage = event.pageIndex;
-    this.loadData();
-  }
-
-  itemNameFormatter(params: any) {
-    let splits: string[] = params.value.split('-');
-
-    splits.reverse().pop();
-    splits.reverse();
-
-    splits = splits.map((split) => split.charAt(0).toUpperCase() + split.slice(1));
-
-    return splits.join(' ');
-  }
-
-  currencyFormatter(currency: number, sign: string) {
-    if (typeof currency !== "number") {
-      currency = Number.parseInt(currency);
-    }
-    if (currency) {
-      const sansDec = currency.toFixed(0);
-      const formatted = sansDec.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      return sign + `${formatted}`;
-    }
-
-    return '£0.00';
-  }
-
-  openAddListingDialog(): void {
-    const dialogRef = this.dialog.open(AddListingDialogComponent, {
-      width: '500px',
-      data: {}
     });
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        console.log(result);
+  loadCategories() {
+    this.listingService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
       }
-    })
+    });
+  }
+
+  /**
+   * Apply all filters and reload data
+   */
+  applyFilters() {
+    this.currentPage = 1; // Reset to first page when filters change
+    this.loadData();
   }
 
   onSearch(query: string) {
     this.searchQuery = query;
+    this.currentPage = 1; // Reset to first page when search changes
+    this.loadData(); // This will update totalRows from the pagination response
+  }
 
-    this.userService.getListingsCount(query).pipe(take(1)).subscribe({
-      next: (count) => {
-        this.totalRows = count;
+  /**
+   * Listen for window resize events to update display
+   */
+  @HostListener('window:resize')
+  onResize() {
+    // Force change detection to update the display
+    this.listingsData = [...this.listingsData];
+  }
+
+  /**
+   * Opens a dialog to create a new listing
+   */
+  createListing(listingData?: any, errorMessage?: string): void {
+    const dialogRef = this.dialog.open(AddListingDialogComponent, {
+      width: '600px',
+      data: {
+        listing: listingData,
+        errorMessage: errorMessage
       }
-    })
+    });
 
-    this.loadData();
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.listingService.create(result).subscribe({
+          next: (newListing) => {
+            // Navigate to the new listing detail page
+            this.router.navigate(['/listings', newListing.id]);
+          },
+          error: (error) => {
+            console.error('Error creating listing:', error);
+
+            // If it's a conflict error (409), reopen the dialog with the error message
+            if (error.status === 409) {
+              this.createListing(
+                result,
+                'A listing with this date and description already exists for this user. Please change the date or description.'
+              );
+            }
+          }
+        });
+      }
+    });
   }
 }

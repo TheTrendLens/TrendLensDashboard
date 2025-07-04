@@ -1,0 +1,54 @@
+/* Card hover effects */
+:host {
+  display: block;
+  height: 100%;
+}
+
+div.cursor-pointer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+/* Ensure the card maintains its aspect ratio */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Responsive text adjustments */
+@media (max-width: 640px) {
+  .text-base {
+    font-size: 0.875rem;
+  }
+
+  .text-sm {
+    font-size: 0.75rem;
+  }
+
+  .text-xs {
+    font-size: 0.7rem;
+  }
+}
+
+/* Ensure edit buttons are properly aligned */
+.flex.items-center.justify-between {
+  width: 100%;
+}
+
+/* Style for the edit input */
+input[type="number"] {
+  width: 100%;
+  max-width: 80px;
+  text-align: center;
+}
+
+/* Remove spinner from number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

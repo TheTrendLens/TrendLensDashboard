@@ -1,5 +1,5 @@
 import {Component, Inject, OnInit} from '@angular/core';
-import {MatFormField, MatInput} from '@angular/material/input';
+import {MatFormField, MatHint, MatInput} from '@angular/material/input';
 import {AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators} from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -10,6 +10,8 @@ import {
 } from '@angular/material/dialog';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatButton} from '@angular/material/button';
+import {MatDatepicker, MatDatepickerModule} from '@angular/material/datepicker';
+import {MatNativeDateModule} from '@angular/material/core';
 import {Listing} from '../../models/listing';
 import {MatError} from '@angular/material/form-field';
 import {NgIf} from '@angular/common';
@@ -17,34 +19,6 @@ import {UserService} from '../../services/user.service';
 import {User} from '../../models/user';
 import {take} from 'rxjs';
 
-// Custom validator for slug format (5 words with hyphens)
-export function slugFormatValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const value = control.value;
-
-    if (!value) {
-      return null; // Let required validator handle empty values
-    }
-
-    // Check if the slug has exactly 4 hyphens (which means 5 words)
-    const hyphens = (value.match(/-/g) || []).length;
-    if (hyphens !== 4) {
-      return { slugFormat: true };
-    }
-
-    // Check if the slug starts and ends with a word (not a hyphen)
-    if (value.startsWith('-') || value.endsWith('-')) {
-      return { slugFormat: true };
-    }
-
-    // Check if there are no consecutive hyphens
-    if (value.includes('--')) {
-      return { slugFormat: true };
-    }
-
-    return null;
-  };
-}
 
 @Component({
   selector: 'app-add-listing-dialog',
@@ -54,12 +28,12 @@ export function slugFormatValidator(): ValidatorFn {
     MatFormField,
     ReactiveFormsModule,
     MatDialogContent,
-    MatDialogTitle,
-    MatCheckbox,
     MatDialogActions,
     MatButton,
-    MatError,
-    NgIf
+    NgIf,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatHint
   ],
   templateUrl: './add-listing-dialog.component.html',
   styleUrl: './add-listing-dialog.component.css'
@@ -67,25 +41,35 @@ export function slugFormatValidator(): ValidatorFn {
 export class AddListingDialogComponent implements OnInit {
   listingForm: FormGroup;
   currentUser: User | null = null;
+  errorMessage: string = '';
 
   constructor(
     private formBuilder: FormBuilder,
     public dialogRef: MatDialogRef<AddListingDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: Listing,
+    @Inject(MAT_DIALOG_DATA) public data: any,
     private userService: UserService
   ) {
+    // Initialize form
     this.listingForm = formBuilder.group({
-      name: ['', Validators.required],
+      slug: ['', [Validators.required]],
+      date_listed: [new Date(), Validators.required],
       brand: [''],
       category: ['', Validators.required],
-      listed_price: ['', Validators.required],
-      condition: ['', Validators.required],
-      gender: [''],
-      is_kids: [false],
-      slug: ['', [Validators.required, slugFormatValidator()]],
-      sold: [true],
-      item_cost: ['']
-    })
+      listed_price: [0, [Validators.required, Validators.min(0)]],
+      item_cost: [0, [Validators.min(0)]],
+      quantity: [1, [Validators.required, Validators.min(0)]],
+      description: ['', Validators.required]
+    });
+
+    // If data contains a listing, populate the form
+    if (data && data.listing) {
+      this.listingForm.patchValue(data.listing);
+    }
+
+    // If data contains an error message, set it
+    if (data && data.errorMessage) {
+      this.errorMessage = data.errorMessage;
+    }
   }
 
   ngOnInit(): void {
@@ -112,18 +96,6 @@ export class AddListingDialogComponent implements OnInit {
 
       const listing: Listing = {
         ...this.listingForm.value,
-        date_updated: new Date(),
-        date_listed: new Date(),
-        status: 'active',
-        like_count: 0,
-        colour: null,
-        age: null,
-        source: null,
-        style: null,
-        sub_category: null,
-        attributes: {},
-        sizes: [],
-        date_last_gathered: new Date(),
         userId: this.currentUser.id // Add the user ID
       }
       this.dialogRef.close(listing);
@@ -134,9 +106,6 @@ export class AddListingDialogComponent implements OnInit {
     const slugControl = this.listingForm.get('slug');
     if (slugControl?.hasError('required')) {
       return 'Slug is required';
-    }
-    if (slugControl?.hasError('slugFormat')) {
-      return 'Slug must be 5 words separated by hyphens (e.g., word1-word2-word3-word4-word5)';
     }
     return '';
   }

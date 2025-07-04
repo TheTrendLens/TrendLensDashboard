@@ -1,38 +1,128 @@
-<mat-paginator #paginator [length]="totalRows" [pageIndex]="currentPage" [pageSize]="pageSize"
-               [pageSizeOptions]="pageSizeOptions" (page)="pageChanged($event)" aria-label="Select page">
-</mat-paginator>
-
-<button mat-raised-button color="primary" (click)="openAddListingDialog()">Add New Listing</button>
-
-<app-table-search-bar (search)="onSearch($event)"></app-table-search-bar>
-
-<table mat-table class="min-w-full border-separate border-spacing-0" [dataSource]="listingsData">
-  <ng-container [matColumnDef]="col.key" *ngFor="let col of columnsSchema">
-    <th mat-header-cell *matHeaderCellDef class="sticky top-0 z-10 border-b border-gray-300 bg-white/75 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter sm:pl-6 lg:pl-8">{{col.label}}</th>
-    <td mat-cell *matCellDef="let element" class="hidden whitespace-nowrap border-b border-gray-200 px-3 py-4 text-sm text-gray-500 sm:table-cell">
-      <div *ngIf="!element.isEdit">
-        <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
-          <button mat-button (click)="element.isEdit = !element.isEdit">Edit</button>
-        </div>
-        <ng-template #dataField>
-        <span>
-          {{ element[col.key] }}
-        </span>
-        </ng-template>
+<!-- Search, Filter, and Sort Controls -->
+<div class="mb-6 bg-white rounded-lg shadow p-4">
+  <!-- Header with Search and Create Button -->
+  <div class="flex justify-between items-center mb-4">
+    <!-- Search Bar -->
+    <div class="relative flex-grow mr-4">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <mat-icon class="text-gray-400">search</mat-icon>
       </div>
-      <div *ngIf="element.isEdit">
-        <div class="btn-edit" *ngIf="col.key === 'isEdit'; else dataField">
-          <button mat-button (click)="element.isEdit = !element.isEdit">Done</button>
-        </div>
-        <ng-template #dataField>
-          <mat-form-field>
-            <input [type]="col.type" matInput [(ngModel)]="element[col.key]">
-          </mat-form-field>
-        </ng-template>
-      </div>
-    </td>
-  </ng-container>
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
+      <input
+        type="text"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
+        placeholder="Search by slug, brand, category, etc."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch(searchQuery)">
+    </div>
 
+    <!-- Create Listing Button -->
+    <button
+      (click)="createListing()"
+      class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
+      <mat-icon class="mr-1">add</mat-icon>
+      Create Listing
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Date Filter -->
+    <div>
+      <label for="dateFilter" class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
+      <select
+        id="dateFilter"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        [(ngModel)]="dateFilter"
+        (change)="applyFilters()">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+      </select>
+    </div>
+
+    <!-- Sort By -->
+    <div>
+      <label for="sortBy" class="block mb-2 text-sm font-medium text-gray-900">Sort By</label>
+      <select
+        id="sortBy"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        [(ngModel)]="sortBy"
+        (change)="applyFilters()">
+        <option value="date_desc">Date (Newest First)</option>
+        <option value="date_asc">Date (Oldest First)</option>
+        <option value="price_desc">Price (High to Low)</option>
+        <option value="price_asc">Price (Low to High)</option>
+        <option value="brand_asc">Brand (A-Z)</option>
+        <option value="brand_desc">Brand (Z-A)</option>
+        <option value="category_asc">Category (A-Z)</option>
+        <option value="category_desc">Category (Z-A)</option>
+      </select>
+    </div>
+
+    <!-- Category Filter -->
+    <div>
+      <label for="categoryFilter" class="block mb-2 text-sm font-medium text-gray-900">Category</label>
+      <select
+        id="categoryFilter"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        [(ngModel)]="categoryFilter"
+        (change)="applyFilters()">
+        <option value="all">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination Info -->
+<div class="flex justify-between items-center mb-6">
+  <div class="text-sm text-gray-700">
+    Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> to
+    <span class="font-medium">{{ Math.min(currentPage * pageSize, totalRows) }}</span> of
+    <span class="font-medium">{{ totalRows }}</span> listings
+  </div>
+</div>
+
+<!-- Card Grid with Create Card and Listing Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 3xl:grid-cols-6 gap-4 w-full">
+  <!-- Create New Listing Card -->
+  <div
+    class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col items-center justify-center w-full hover:bg-gray-50"
+    (click)="createListing()">
+    <div class="text-center">
+      <div class="flex justify-center">
+        <mat-icon class="text-brand-500 text-5xl">add_circle</mat-icon>
+      </div>
+      <p class="mt-2 text-lg font-medium text-brand-500">Create New Listing</p>
+    </div>
+  </div>
+
+  <!-- Listing Cards -->
+  <app-listing-card
+    *ngFor="let listing of listingsData"
+    [listing]="listing"
+    [canEdit]="true"
+    (cardClick)="navigateToListing($event)">
+  </app-listing-card>
+</div>
+
+<!-- Pagination Arrows -->
+<div class="flex justify-center mt-6 space-x-4">
+  <button
+    mat-icon-button
+    [disabled]="currentPage === 1"
+    (click)="goToPreviousPage()"
+    class="flex items-center justify-center"
+    aria-label="Previous page">
+    <mat-icon class="flex items-center justify-center">arrow_back</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    [disabled]="currentPage >= totalPages"
+    (click)="goToNextPage()"
+    class="flex items-center justify-center"
+    aria-label="Next page">
+    <mat-icon class="flex items-center justify-center">arrow_forward</mat-icon>
+  </button>
+</div>
