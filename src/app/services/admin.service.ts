@@ -10,6 +10,15 @@ export interface UserAdminInfo {
   signup_date: Date;
   active_package: string | null;
   database_usage: number; // in bytes
+  is_missing_costs: boolean;
+  is_missing_costs_this_month: boolean;
+}
+
+export interface PaginatedUserAdminInfo {
+  users: UserAdminInfo[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 const endpoint = `${environment.backend.baseURL}/api/admin`;
@@ -22,11 +31,15 @@ export class AdminService {
   constructor(private http: HttpClient) { }
 
   /**
-   * Get all users with admin information
-   * @returns Observable of UserAdminInfo array
+   * Get all users with admin information with pagination
+   * @param page The page number (1-based)
+   * @param limit The number of users per page
+   * @returns Observable of PaginatedUserAdminInfo
    */
-  getAllUsers(): Observable<UserAdminInfo[]> {
-    return this.http.get<UserAdminInfo[]>(`${endpoint}/users`);
+  getAllUsers(page: number = 1, limit: number = 10): Observable<PaginatedUserAdminInfo> {
+    return this.http.get<PaginatedUserAdminInfo>(`${endpoint}/users`, {
+      params: { page: page.toString(), limit: limit.toString() }
+    });
   }
 
   /**

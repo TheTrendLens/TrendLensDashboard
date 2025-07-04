@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AdminService, UserAdminInfo } from '../../services/admin.service';
+import { AdminService, UserAdminInfo, PaginatedUserAdminInfo } from '../../services/admin.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DatePipe, NgIf } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-admin',
@@ -21,15 +22,31 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     DatePipe,
     NgIf,
     MatDialogModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatPaginatorModule
   ],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.css']
 })
 export class AdminComponent implements OnInit {
   users: UserAdminInfo[] = [];
-  displayedColumns: string[] = ['email', 'lastLogin', 'signupDate', 'activePackage', 'databaseUsage', 'actions'];
+  displayedColumns: string[] = [
+    'email',
+    'lastLogin',
+    'signupDate',
+    'activePackage',
+    'databaseUsage',
+    'missingCosts',
+    'missingCostsThisMonth',
+    'actions'
+  ];
   loading = true;
+
+  // Pagination
+  totalUsers = 0;
+  pageSize = 10;
+  pageIndex = 0;
+  pageSizeOptions: number[] = [5, 10, 25, 50];
 
   constructor(
     private adminService: AdminService,
@@ -41,11 +58,14 @@ export class AdminComponent implements OnInit {
     this.loadUsers();
   }
 
-  loadUsers(): void {
+  loadUsers(page: number = 1, limit: number = this.pageSize): void {
     this.loading = true;
-    this.adminService.getAllUsers().subscribe({
-      next: (users) => {
-        this.users = users;
+    this.adminService.getAllUsers(page, limit).subscribe({
+      next: (response) => {
+        this.users = response.users;
+        this.totalUsers = response.total;
+        this.pageSize = response.limit;
+        this.pageIndex = response.page - 1; // Angular Material uses 0-based indexing
         this.loading = false;
       },
       error: (error) => {
@@ -57,6 +77,12 @@ export class AdminComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  handlePageEvent(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+    this.loadUsers(this.pageIndex + 1, this.pageSize); // +1 because backend uses 1-based indexing
   }
 
   formatBytes(bytes: number): string {
