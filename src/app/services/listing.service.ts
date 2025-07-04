@@ -46,7 +46,7 @@ export class ListingService {
       params = params.set('sortBy', sortBy);
     }
 
-    return this.http.get<PaginatedListings>(`${endpoint}/user`, { params });
+    return this.http.get<PaginatedListings>(`${environment.backend.baseURL}/api/user/listings`, { params });
   }
 
   getCategories(): Observable<string[]> {
@@ -58,11 +58,11 @@ export class ListingService {
   }
 
   create(listing: Listing): Observable<Listing> {
-    return this.http.post<Listing>(`${endpoint}`, listing);
+    return this.http.post<Listing>(`${environment.backend.baseURL}/api/user/listings`, listing);
   }
 
   update(listing: Listing): Observable<Listing> {
-    return this.http.put<Listing>(`${endpoint}/${listing.id}`, listing);
+    return this.http.put<Listing>(`${environment.backend.baseURL}/api/user/listings/${listing.id}`, listing);
   }
 
   delete(id: string): Observable<any> {

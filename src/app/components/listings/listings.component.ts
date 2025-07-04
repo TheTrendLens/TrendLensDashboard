@@ -75,7 +75,8 @@ export class ListingsComponent implements OnInit {
   }
 
   navigateToListing(listingId: string): void {
-    this.router.navigate(['/listings', listingId]);
+    // Instead of navigating to the listing detail page, open the edit dialog
+    this.editListing(listingId);
   }
 
   loadData() {
@@ -145,7 +146,8 @@ export class ListingsComponent implements OnInit {
       width: '600px',
       data: {
         listing: listingData,
-        errorMessage: errorMessage
+        errorMessage: errorMessage,
+        isEdit: false
       }
     });
 
@@ -153,8 +155,8 @@ export class ListingsComponent implements OnInit {
       if (result) {
         this.listingService.create(result).subscribe({
           next: (newListing) => {
-            // Navigate to the new listing detail page
-            this.router.navigate(['/listings', newListing.id]);
+            // Refresh the listings data
+            this.loadData();
           },
           error: (error) => {
             console.error('Error creating listing:', error);
@@ -168,6 +170,50 @@ export class ListingsComponent implements OnInit {
             }
           }
         });
+      }
+    });
+  }
+
+  /**
+   * Opens a dialog to edit an existing listing
+   */
+  editListing(listingId: string, errorMessage?: string): void {
+    // First, get the listing details
+    this.listingService.getListing(listingId).subscribe({
+      next: (listing) => {
+        const dialogRef = this.dialog.open(AddListingDialogComponent, {
+          width: '600px',
+          data: {
+            listing: listing,
+            errorMessage: errorMessage,
+            isEdit: true
+          }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+          if (result) {
+            this.listingService.update(result).subscribe({
+              next: (updatedListing) => {
+                // Refresh the listings data
+                this.loadData();
+              },
+              error: (error) => {
+                console.error('Error updating listing:', error);
+
+                // If it's a conflict error (409), reopen the dialog with the error message
+                if (error.status === 409) {
+                  this.editListing(
+                    listingId,
+                    'A listing with this date and description already exists for this user. Please change the date or description.'
+                  );
+                }
+              }
+            });
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error fetching listing details:', error);
       }
     });
   }

@@ -42,6 +42,8 @@ export class AddListingDialogComponent implements OnInit {
   listingForm: FormGroup;
   currentUser: User | null = null;
   errorMessage: string = '';
+  isEdit: boolean = false;
+  listingId: string | undefined;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -61,9 +63,24 @@ export class AddListingDialogComponent implements OnInit {
       description: ['', Validators.required]
     });
 
-    // If data contains a listing, populate the form
+    // Check if we're in edit mode
+    if (data && data.isEdit !== undefined) {
+      this.isEdit = data.isEdit;
+    }
+
+    // If data contains a listing, populate the form and store the ID if in edit mode
     if (data && data.listing) {
-      this.listingForm.patchValue(data.listing);
+      // Ensure date_listed is a Date object
+      const listing = { ...data.listing };
+      if (listing.date_listed && !(listing.date_listed instanceof Date)) {
+        listing.date_listed = new Date(listing.date_listed);
+      }
+
+      this.listingForm.patchValue(listing);
+
+      if (this.isEdit && data.listing.id) {
+        this.listingId = data.listing.id;
+      }
     }
 
     // If data contains an error message, set it
@@ -90,7 +107,7 @@ export class AddListingDialogComponent implements OnInit {
   onSave() {
     if (this.listingForm.valid) {
       if (!this.currentUser) {
-        console.error('No user found. Cannot create listing.');
+        console.error('No user found. Cannot create/update listing.');
         return;
       }
 
@@ -98,6 +115,12 @@ export class AddListingDialogComponent implements OnInit {
         ...this.listingForm.value,
         userId: this.currentUser.id // Add the user ID
       }
+
+      // If we're in edit mode, preserve the ID
+      if (this.isEdit && this.listingId) {
+        listing.id = this.listingId;
+      }
+
       this.dialogRef.close(listing);
     }
   }
