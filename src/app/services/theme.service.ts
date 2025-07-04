@@ -19,10 +19,6 @@ export class ThemeService {
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
       this.darkMode.next(savedTheme === 'true');
-    } else {
-      // Check if user prefers dark mode at OS level
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.darkMode.next(prefersDark);
     }
 
     // Apply theme immediately
