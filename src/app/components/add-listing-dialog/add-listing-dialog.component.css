@@ -1,0 +1,65 @@
+/* Dialog styling */
+:host {
+  display: block;
+}
+
+/* Make sure the dialog content doesn't overflow */
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Ensure form fields take full width */
+mat-form-field {
+  width: 100%;
+}
+
+/* Custom styling for form field outlines to match tailwind */
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: #e5e7eb; /* Tailwind gray-200 */
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  /*color: var(--brand-500, #6366f1); !* Use brand color variable or fallback to indigo-500 *!*/
+}
+
+/* Improve spacing in the form */
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+/* Ensure buttons have proper spacing */
+mat-dialog-actions button {
+  margin-left: 0.5rem;
+}
+
+/* Improve appearance of disabled button */
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ensure dialog has proper max-width */
+::ng-deep .mat-dialog-container {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  mat-dialog-content {
+    padding: 1rem;
+  }
+
+  mat-dialog-actions {
+    padding: 1rem;
+    flex-direction: column;
+  }
+
+  mat-dialog-actions button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+}
