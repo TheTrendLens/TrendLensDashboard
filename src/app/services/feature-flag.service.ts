@@ -10,28 +10,16 @@ export class FeatureFlagService {
   private experimentalFeaturesEnabled = new BehaviorSubject<boolean>(false);
 
   constructor(private userService: UserService) {
-    // Initialize from localStorage if available
-    const dbUserStr = localStorage.getItem('dbUser');
-    if (dbUserStr) {
-      try {
-        const dbUser = JSON.parse(dbUserStr);
-        if (dbUser && dbUser.experimental_features !== undefined) {
-          this.experimentalFeaturesEnabled.next(dbUser.experimental_features);
-        }
-      } catch (e) {
-        console.error('Error parsing dbUser from localStorage', e);
-      }
+    // Initialize from current user if available
+    const currentUser = this.userService.getCurrentUser();
+    if (currentUser && currentUser.experimental_features !== undefined) {
+      this.experimentalFeaturesEnabled.next(currentUser.experimental_features);
     }
 
-    // Fetch the latest value from the server
-    this.userService.get().pipe(take(1)).subscribe({
-      next: (user) => {
-        if (user && user.experimental_features !== undefined) {
-          this.experimentalFeaturesEnabled.next(user.experimental_features);
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching user:', error);
+    // Subscribe to user changes to keep experimental features flag in sync
+    this.userService.currentUser$.subscribe(user => {
+      if (user && user.experimental_features !== undefined) {
+        this.experimentalFeaturesEnabled.next(user.experimental_features);
       }
     });
   }
@@ -57,21 +45,10 @@ export class FeatureFlagService {
     this.experimentalFeaturesEnabled.next(enabled);
 
     // Update on the server
+    // The UserService.updateExperimentalFeatures method will handle updating the BehaviorSubject and localStorage
     this.userService.updateExperimentalFeatures(enabled).pipe(take(1)).subscribe({
       next: () => {
         console.log('Experimental features updated successfully');
-
-        // Update in localStorage
-        const dbUserStr = localStorage.getItem('dbUser');
-        if (dbUserStr) {
-          try {
-            const dbUser = JSON.parse(dbUserStr);
-            dbUser.experimental_features = enabled;
-            localStorage.setItem('dbUser', JSON.stringify(dbUser));
-          } catch (e) {
-            console.error('Error updating dbUser in localStorage', e);
-          }
-        }
       },
       error: (error) => {
         console.error('Error updating experimental features:', error);

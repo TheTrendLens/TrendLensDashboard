@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -6,6 +6,8 @@ import { filter } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog.component';
 import { User as DbUser } from '../../models/user';
+import { UserService } from '../../services/user.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -14,15 +16,17 @@ import { User as DbUser } from '../../models/user';
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css'
 })
-export class DashboardLayoutComponent implements OnInit {
+export class DashboardLayoutComponent implements OnInit, OnDestroy {
   isMobileSidebarOpen = false;
   currentPageTitle = 'Dashboard';
   isAdmin = false;
+  private userSubscription: Subscription | null = null;
 
   constructor(
     public authService: AuthService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private userService: UserService
   ) {}
 
   ngOnInit() {
@@ -40,12 +44,22 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   private checkAdminStatus() {
-    try {
-      const dbUser: DbUser = JSON.parse(localStorage.getItem('dbUser')!);
-      this.isAdmin = dbUser && dbUser.admin === true;
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      this.isAdmin = false;
+    // Check current user first
+    const currentUser = this.userService.getCurrentUser();
+    if (currentUser) {
+      this.isAdmin = currentUser.admin === true;
+    }
+
+    // Subscribe to user changes
+    this.userSubscription = this.userService.currentUser$.subscribe(user => {
+      this.isAdmin = user?.admin === true;
+    });
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription when component is destroyed
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
     }
   }
 

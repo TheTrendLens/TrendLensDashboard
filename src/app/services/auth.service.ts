@@ -18,7 +18,7 @@ import {take} from 'rxjs';
 export class AuthService {
   private readonly STORAGE_KEYS = {
     USER: 'user',
-    DB_USER: 'dbUser'
+    DB_USER: 'dbUser' // Kept for backward compatibility
   };
 
   constructor(
@@ -46,7 +46,8 @@ export class AuthService {
 
   private handleUserSignedOut(): void {
     localStorage.removeItem(this.STORAGE_KEYS.USER);
-    localStorage.removeItem(this.STORAGE_KEYS.DB_USER);
+    // Use the UserService to clear user data
+    this.userService.clearUserData();
   }
 
   get isAuthenticated(): boolean {
@@ -77,8 +78,8 @@ export class AuthService {
   // Changed from private to public so it can be called after email verification
   public async createUserInDatabase(uid: string, email: string): Promise<void> {
     try {
-      const userData = await this.userService.create(uid, email).pipe(take(1)).toPromise();
-      localStorage.setItem(this.STORAGE_KEYS.DB_USER, JSON.stringify(userData));
+      // UserService.create now handles updating the BehaviorSubject and localStorage
+      await this.userService.create(uid, email).pipe(take(1)).toPromise();
     } catch (error) {
       console.error('Failed to create user in database:', error);
       throw error;
@@ -232,15 +233,16 @@ export class AuthService {
   }
 
   private async fetchUserDataIfNeeded(): Promise<void> {
-    if (!localStorage.getItem(this.STORAGE_KEYS.DB_USER)) {
+    // Check if we already have user data in the BehaviorSubject
+    if (!this.userService.getCurrentUser()) {
       await this.fetchUserData();
     }
   }
 
   private async fetchUserData(): Promise<void> {
     try {
-      const userData = await this.userService.get().pipe(take(1)).toPromise();
-      localStorage.setItem(this.STORAGE_KEYS.DB_USER, JSON.stringify(userData));
+      // UserService.get now handles updating the BehaviorSubject and localStorage
+      await this.userService.get().pipe(take(1)).toPromise();
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       throw error;

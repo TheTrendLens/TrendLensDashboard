@@ -16,7 +16,7 @@ import {User as DbUser} from './models/user';
 import {CheckoutComponent} from './components/checkout/checkout.component';
 import {inject} from '@angular/core';
 import {StripeService} from './services/stripe.service';
-import {SubscriberGuard} from './utils/subscriber.guard';
+import {UserService} from './services/user.service';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
@@ -27,6 +27,7 @@ import {SaleDetailComponent} from './components/sale-detail/sale-detail.componen
 import {AnalyticsComponent} from './components/analytics/analytics.component';
 import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
+import {SubscriptionGuard} from './utils/subscription.guard';
 import {ListingsComponent} from './components/listings/listings.component';
 
 const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
@@ -67,17 +68,21 @@ const ifVerifiedEmailGoToCheckout: AuthPipeGenerator = (next, state) => switchMa
 });
 
 const redirectToSignupFlow: AuthPipeGenerator = (next, state) => switchMap((user) => {
+  const userService = inject(UserService);
+
   return of(user).pipe(
     redirectUnauthorizedTo(['login']),
     map((result) => {
       if (result) {
         if (user) {
           // We have a logged in user, go through the signup flow checks to see where they need to be redirected to
-          let dbUser: DbUser = JSON.parse(localStorage.getItem('dbUser')!);
+          const dbUser = userService.getCurrentUser();
 
-          // Checkout Check
-          if (dbUser.active_package != null || !dbUser.new_sub) {
-            return true;
+          if (dbUser) {
+            // Checkout Check
+            if (dbUser.active_package != null || !dbUser.new_sub) {
+              return true;
+            }
           }
 
           // Verify Email Check
@@ -101,12 +106,8 @@ const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
     // Anyone unauthorised gets redirected to the login page
     redirectUnauthorizedTo(['login']),
     map((result) => {
-      console.log(next.url);
-      console.log(state);
       if (result) {
         if (user) {
-          // We have a logged in user, we need to make sure they've completed the signup flow.
-          let dbUser: DbUser = JSON.parse(localStorage.getItem('dbUser')!);
 
           // Step 1: Have they verified their email?
           if (!user.emailVerified) {
@@ -120,15 +121,6 @@ const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
           // They're trying to access the signup complete page, log them out
           if (state.url === '/signup/complete') {
             return true;
-          }
-
-          // Step 2: Have they got an active package?
-          if (!dbUser.active_package) {
-            if (state.url === '/signup/checkout') {
-              return true;
-            } else {
-              return ['/signup/checkout'];
-            }
           }
 
           return true;
@@ -164,7 +156,10 @@ export const routes: Routes = [
         component: CheckoutComponent,
         canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe },
         resolve: {
-          resolvedData: () => inject(StripeService).createCustomerSession(JSON.parse(localStorage.getItem('user')!).uid),
+          resolvedData: () => {
+            const authUser = JSON.parse(localStorage.getItem('user')!);
+            return inject(StripeService).createCustomerSession(authUser.uid);
+          },
         }
       },
       {
@@ -176,23 +171,28 @@ export const routes: Routes = [
   { path: '', component: DashboardLayoutComponent, canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe }, children: [
       {
         path: 'home',
-        component: HomeComponent
+        component: HomeComponent,
+        canActivate: [SubscriptionGuard]
       },
       {
         path: 'listings',
-        component: ListingsComponent
+        component: ListingsComponent,
+        canActivate: [SubscriptionGuard]
       },
       {
         path: 'sales',
-        component: SalesComponent
+        component: SalesComponent,
+        canActivate: [SubscriptionGuard]
       },
       {
         path: 'sales/:id',
-        component: SaleDetailComponent
+        component: SaleDetailComponent,
+        canActivate: [SubscriptionGuard]
       },
       {
         path: 'analytics',
-        component: AnalyticsComponent
+        component: AnalyticsComponent,
+        canActivate: [SubscriptionGuard]
       },
       {
         path: 'account',

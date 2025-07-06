@@ -52,9 +52,11 @@ export class SalesService {
 
     let params = {};
     if (graphed !== undefined) {
+      // @ts-ignore
       params['graphed'] = graphed;
     }
     if (filterMissingCosts !== undefined) {
+      // @ts-ignore
       params['filterMissingCosts'] = filterMissingCosts;
     }
 

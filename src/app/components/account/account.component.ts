@@ -38,21 +38,28 @@ export class AccountComponent {
       this.userEmail = user.email;
     }
 
-    // Get the current currency from localStorage or user object
-    const dbUserStr = localStorage.getItem('dbUser');
-    if (dbUserStr) {
-      try {
-        const dbUser = JSON.parse(dbUserStr);
-        if (dbUser && dbUser.currency) {
-          this.selectedCurrency = dbUser.currency;
-        }
-        if (dbUser && dbUser.experimental_features !== undefined) {
-          this.experimentalFeatures = dbUser.experimental_features;
-        }
-      } catch (e) {
-        console.error('Error parsing dbUser from localStorage', e);
+    // Get the current user data from UserService
+    const currentUser = this.userService.getCurrentUser();
+    if (currentUser) {
+      if (currentUser.currency) {
+        this.selectedCurrency = currentUser.currency;
+      }
+      if (currentUser.experimental_features !== undefined) {
+        this.experimentalFeatures = currentUser.experimental_features;
       }
     }
+
+    // Subscribe to user changes
+    this.userService.currentUser$.subscribe(user => {
+      if (user) {
+        if (user.currency) {
+          this.selectedCurrency = user.currency;
+        }
+        if (user.experimental_features !== undefined) {
+          this.experimentalFeatures = user.experimental_features;
+        }
+      }
+    });
 
     // Initialize dark mode state
     this.isDarkMode = this.themeService.getCurrentTheme();

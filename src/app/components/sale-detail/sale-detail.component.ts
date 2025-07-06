@@ -229,11 +229,13 @@ export class SaleDetailComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         // Create the product
-        this.productService.create(
-          result.saleId,
-          result.listingId,
-          result.size,
-          result.itemCost
+        // @ts-ignore
+        this.productService.create({
+            sale: result.saleId,
+            listing: result.listingId,
+            size: result.size,
+            item_cost: result.itemCost
+          }
         ).subscribe({
           next: (newProduct) => {
             // Add the new product to the local array

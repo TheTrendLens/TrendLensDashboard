@@ -41,19 +41,20 @@ export class CurrencyService {
       this.currencySubject.next(storedCurrency);
     }
 
-    // Then try to get from user object
-    const dbUserStr = localStorage.getItem('dbUser');
-    if (dbUserStr) {
-      try {
-        const dbUser: User = JSON.parse(dbUserStr);
-        if (dbUser && dbUser.currencySymbol) {
-          this.currencySubject.next(dbUser.currencySymbol);
-          localStorage.setItem(this.STORAGE_KEY, dbUser.currencySymbol);
-        }
-      } catch (e) {
-        console.error('Error parsing dbUser from localStorage', e);
-      }
+    // Then try to get from user object using the UserService
+    const currentUser = this.userService.getCurrentUser();
+    if (currentUser && currentUser.currencySymbol) {
+      this.currencySubject.next(currentUser.currencySymbol);
+      localStorage.setItem(this.STORAGE_KEY, currentUser.currencySymbol);
     }
+
+    // Subscribe to user changes to keep currency in sync
+    this.userService.currentUser$.subscribe(user => {
+      if (user && user.currencySymbol) {
+        this.currencySubject.next(user.currencySymbol);
+        localStorage.setItem(this.STORAGE_KEY, user.currencySymbol);
+      }
+    });
   }
 
   public getCurrencySymbol(): string {
@@ -73,21 +74,8 @@ export class CurrencyService {
     // Update the subject
     this.currencySubject.next(currencyOption.symbol);
 
-    const dbUserStr = localStorage.getItem('dbUser');
-    if (dbUserStr) {
-      try {
-        const dbUser: User = JSON.parse(dbUserStr);
-        if (dbUser) {
-          dbUser.currency = currencyOption.code;
-          dbUser.currencySymbol = currencyOption.symbol;
-          localStorage.setItem('dbUser', JSON.stringify(dbUser));
-        }
-      } catch (e) {
-        console.error('Error parsing dbUser from localStorage', e);
-      }
-    }
-
     // Update the user in the database
+    // The UserService.updateCurrency method will handle updating the BehaviorSubject and localStorage
     return this.userService.updateCurrency(currencyOption.code, currencyOption.symbol);
   }
 
