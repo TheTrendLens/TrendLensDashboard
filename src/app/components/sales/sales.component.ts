@@ -95,7 +95,7 @@ export class SalesComponent implements OnInit {
     }
 
     // Pass filters to the service
-    this.userService.getSales(
+    this.salesService.getSales(
       this.pageSize,
       this.currentPage,
       this.searchQuery,

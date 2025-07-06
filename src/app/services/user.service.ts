@@ -78,50 +78,6 @@ export class UserService {
     return this.http.get<number>(`${endpoint}/listingscount?q=${query}`);
   }
 
-  getSales(
-    limit: number,
-    page: number,
-    query: string = '',
-    dateFilter: string = 'all',
-    sortBy: string = 'date_desc',
-    minProducts: number = 0,
-    missingCosts: boolean = false
-  ): Observable<Pagination<Sale>> {
-    let url = `${endpoint}/sales?limit=${limit}&page=${page}`;
-
-    // Add search query if provided
-    if (query && query.trim() !== '') {
-      url += `&q=${encodeURIComponent(query)}`;
-    }
-
-    // Add date filter if not 'all'
-    if (dateFilter !== 'all') {
-      url += `&dateFilter=${dateFilter}`;
-    }
-
-    // Add sort parameter
-    if (sortBy) {
-      url += `&sort=${sortBy}`;
-    }
-
-    // Add minimum products filter if specified
-    if (minProducts > 0) {
-      url += `&minProducts=${minProducts}`;
-    }
-
-    // Add missing costs filter if true
-    if (missingCosts) {
-      url += `&missingCosts=true`;
-    }
-
-    return this.http.get<Pagination<Sale>>(url);
-  }
-
-  // Keep this method for backward compatibility
-  searchSales(query: string, limit: number, page: number): Observable<Pagination<Sale>> {
-    return this.getSales(limit, page, query);
-  }
-
   getSalesWithMissingData(limit: number, page: number): Observable<Pagination<Sale>> {
     return this.http.get<Pagination<Sale>>(`${endpoint}/sales?missingData=true&limit=${limit}&page=${page}`);
   }
@@ -162,27 +118,6 @@ export class UserService {
 
     return this.http.get<number>(url);
   }
-
-  getSalesWithMissingDataCount(): Observable<number> {
-    return this.http.get<number>(`${endpoint}/salescount?missingData=true`);
-  }
-
-  getListingsWithMissingData(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${endpoint}/listings?missingData=true`);
-  }
-
-  getReports(): Observable<Report[]> {
-    return this.http.get<Report[]>(`${endpoint}/reports`);
-  }
-
-  getReportsByDate(year: number, month: number): Observable<Report[]> {
-    return this.http.get<Report[]>(`${endpoint}/reports/${year}/${month}`);
-  }
-
-  getReportByDateAndType(year: number, month: number, type: string): Observable<Report> {
-    return this.http.get<Report>(`${endpoint}/reports/${year}/${month}/${type}`);
-  }
-
   getMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
     revenue: number;
     costs: number;

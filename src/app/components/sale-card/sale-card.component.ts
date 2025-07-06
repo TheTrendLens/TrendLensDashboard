@@ -73,11 +73,14 @@ export class SaleCardComponent implements AfterViewInit {
   }
 
   calculateCosts(sale: Sale) {
-    return sale.products?.reduce((sum, product) => {
-      const itemCost = product.item_cost;
+    const result = sale.products?.reduce((sum, product) => {
+      const itemCost = +product.item_cost;
       if (itemCost === null) return sum;
       return sum + itemCost;
-    }, sale.total_fee + sale.seller_postage_cost) || 0;
+    }, +sale.total_fee + +sale.seller_postage_cost) || 0;
+
+    console.log(result);
+    return result;
   }
 
   /**

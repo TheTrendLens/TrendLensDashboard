@@ -17,7 +17,7 @@ export class StripeService {
   }
 
   createCustomerSession(userId: string): Observable<string> {
-    return this.http.get<string>(`${endpoint}/createCustomerSession/${userId}`);
+    return this.http.get<string>(`${endpoint}/createCustomerSession`);
   }
 
   /**
@@ -27,7 +27,7 @@ export class StripeService {
    */
   redirectToBillingPortal(userId: string, returnUrl?: string): void {
     // Show loading state in the component
-    const url = returnUrl ? `${endpoint}/createBillingPortalSession/${userId}?returnUrl=${encodeURIComponent(returnUrl)}` : `${endpoint}/createBillingPortalSession/${userId}`;
+    const url = returnUrl ? `${endpoint}/createBillingPortalSession?returnUrl=${encodeURIComponent(returnUrl)}` : `${endpoint}/createBillingPortalSession`;
 
     this.http.get(url, { responseType: 'text' }).subscribe({
       next: (response) => {
