@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Sale } from '../models/sale';
 
-const endpoint = `${environment.backend.baseURL}/api/sale`;
+const endpoint = `${environment.backend.baseURL}/api/sales`;
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +26,7 @@ export class SalesService {
   }
 
   update(data: Sale): Observable<Sale> {
-    return this.http.put<Sale>(`${endpoint}/${data.id}`, data);
+    return this.http.put<Sale>(`${endpoint}`, data);
   }
 
   create(data: Partial<Sale>): Observable<Sale> {
@@ -42,5 +42,22 @@ export class SalesService {
     formData.append('file', file);
     formData.append('userId', user);
     return this.http.post(`${environment.backend.baseURL}/api/csv-import/sales`, formData);
+  }
+
+  getSalesMetrics(timeframe?: string, graphed?: boolean, filterMissingCosts?: boolean): Observable<any> {
+    let url = `${endpoint}/metrics`;
+    if (timeframe) {
+      url += `/${timeframe}`;
+    }
+
+    let params = {};
+    if (graphed !== undefined) {
+      params['graphed'] = graphed;
+    }
+    if (filterMissingCosts !== undefined) {
+      params['filterMissingCosts'] = filterMissingCosts;
+    }
+
+    return this.http.get<any>(url, { params });
   }
 }

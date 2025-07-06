@@ -18,7 +18,7 @@
           <mat-label>Select Listing</mat-label>
           <mat-select formControlName="listing" required>
             <mat-option *ngFor="let listing of listings" [value]="listing.id">
-              {{ listing.name }} ({{ listing.slug }})
+              ({{ listing.slug }})
             </mat-option>
           </mat-select>
         </mat-form-field>

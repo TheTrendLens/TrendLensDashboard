@@ -3,10 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Product } from '../models/product';
-import { Sale } from '../models/sale';
-import { Listing } from '../models/listing';
 
-const endpoint = `${environment.backend.baseURL}/api/product`;
+const endpoint = `${environment.backend.baseURL}/api/products`;
 
 @Injectable({
   providedIn: 'root'
@@ -28,16 +26,11 @@ export class ProductService {
   }
 
   update(data: Product): Observable<Product> {
-    return this.http.put<Product>(`${endpoint}/${data.id}`, data);
+    return this.http.put<Product>(`${endpoint}`, data);
   }
 
-  create(saleId: string, listingId: string, size: string, itemCost: number): Observable<Product> {
-    return this.http.post<Product>(`${endpoint}`, {
-      sale: saleId,
-      listing: listingId,
-      size: size,
-      item_cost: itemCost
-    });
+  create(product: Product): Observable<Product> {
+    return this.http.post<Product>(`${endpoint}`, product);
   }
 
   delete(id: string): Observable<any> {

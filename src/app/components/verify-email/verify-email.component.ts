@@ -26,13 +26,26 @@ export class VerifyEmailComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     const user = this.authService.getSignedInUser();
     if (user) {
       this.userEmail = user.email || '';
 
-      // If the user's email is already verified, redirect to checkout
+      // If the user's email is already verified, create user in database and redirect to checkout
       if (user.emailVerified) {
+        if (user.email) {
+          try {
+            await this.authService.createUserInDatabase(user.uid, user.email);
+          } catch (error: any) {
+            // If the error is because the user already exists, we can continue
+            // Otherwise, show an error message
+            if (!error.message.includes('already exists')) {
+              this.errorMessage = 'Failed to create your account. Please try again.';
+              console.error('Failed to create user in database:', error);
+              return;
+            }
+          }
+        }
         this.router.navigate(['/signup/checkout']);
       } else {
         // Start polling to check email verification status
@@ -67,15 +80,29 @@ export class VerifyEmailComponent implements OnInit {
         // Continue until email is verified or component is destroyed
         takeWhile(isVerified => !isVerified, true)
       )
-      .subscribe(isVerified => {
+      .subscribe(async (isVerified) => {
         if (isVerified) {
           this.isChecking = false;
           this.successMessage = 'Your email has been verified!';
 
-          // Redirect to checkout after a short delay
-          setTimeout(() => {
-            this.router.navigate(['/signup/checkout']);
-          }, 1500);
+          // Create user in database now that email is verified
+          const user = this.authService.getSignedInUser();
+          if (user && user.email) {
+            try {
+              // Call the createUserInDatabase method from AuthService
+              await this.authService.createUserInDatabase(user.uid, user.email);
+
+              // Redirect to checkout after a short delay
+              setTimeout(() => {
+                this.router.navigate(['/signup/checkout']);
+              }, 1500);
+            } catch (error: any) {
+              this.errorMessage = 'Failed to create your account. Please try again.';
+              console.error('Failed to create user in database:', error);
+            }
+          } else {
+            this.errorMessage = 'User information is missing. Please try again.';
+          }
         }
       });
   }
@@ -111,6 +138,22 @@ export class VerifyEmailComponent implements OnInit {
         await user.reload();
 
         if (user.emailVerified) {
+          // Create user in database if email is verified but user hasn't been created yet
+          if (user.email) {
+            try {
+              await this.authService.createUserInDatabase(user.uid, user.email);
+            } catch (error: any) {
+              // If the error is because the user already exists, we can continue
+              // Otherwise, show an error message
+              if (!error.message.includes('already exists')) {
+                this.errorMessage = 'Failed to create your account. Please try again.';
+                console.error('Failed to create user in database:', error);
+                this.isLoading = false;
+                return;
+              }
+            }
+          }
+
           this.router.navigate(['/signup/checkout']);
         } else {
           this.errorMessage = 'Your email has not been verified yet. Please check your inbox and click the verification link.';

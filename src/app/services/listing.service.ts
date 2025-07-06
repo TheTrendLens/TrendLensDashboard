@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Listing } from '../models/listing';
 
-const endpoint = `${environment.backend.baseURL}/api/listing`;
+const endpoint = `${environment.backend.baseURL}/api/listings`;
 
 export interface PaginatedListings {
   items: Listing[];
@@ -46,7 +46,7 @@ export class ListingService {
       params = params.set('sortBy', sortBy);
     }
 
-    return this.http.get<PaginatedListings>(`${environment.backend.baseURL}/api/user/listings`, { params });
+    return this.http.get<PaginatedListings>(`${endpoint}`, { params });
   }
 
   getCategories(): Observable<string[]> {
@@ -58,11 +58,11 @@ export class ListingService {
   }
 
   create(listing: Listing): Observable<Listing> {
-    return this.http.post<Listing>(`${environment.backend.baseURL}/api/user/listings`, listing);
+    return this.http.post<Listing>(`${endpoint}`, listing);
   }
 
   update(listing: Listing): Observable<Listing> {
-    return this.http.put<Listing>(`${environment.backend.baseURL}/api/user/listings/${listing.id}`, listing);
+    return this.http.put<Listing>(`${endpoint}`, listing);
   }
 
   delete(id: string): Observable<any> {

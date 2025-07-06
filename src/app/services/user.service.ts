@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Observable, of} from "rxjs";
+import {Observable} from "rxjs";
 import {Listing} from "../models/listing";
 import {environment} from "../../environments/environment";
 import {User} from "../models/user";
 import {Sale} from "../models/sale";
 import {Report} from "../models/report";
-import {Bundle} from '../models/bundle';
 import {Pagination} from '../models/pagination';
 
 const endpoint = `${environment.backend.baseURL}/api/user`
@@ -154,7 +153,7 @@ export class UserService {
       costs: number;
       profit: number;
       numberOfSales: number;
-    }>(`${endpoint}/sales/metrics/${timeframe}${filterMissingCosts ? '?filterMissingCosts=true' : ''}`);
+    }>(`${environment.backend.baseURL}/api/sales/metrics/${timeframe}${filterMissingCosts ? '?filterMissingCosts=true' : ''}`);
   }
 
   getGraphableMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
@@ -170,7 +169,7 @@ export class UserService {
     return this.http.get<{
       labels: string[];
       series: { label: string; data: number[]; borderColor: string }[];
-    }>(`${endpoint}/sales/metrics/${timeframe}?${params.toString()}`);
+    }>(`${environment.backend.baseURL}/api/sales/metrics/${timeframe}?${params.toString()}`);
   }
 
   create(id: string, email: string): Observable<any> {

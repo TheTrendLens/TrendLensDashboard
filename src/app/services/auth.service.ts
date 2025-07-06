@@ -1,18 +1,15 @@
 import { Injectable } from '@angular/core';
-import {AngularFireAuth} from '@angular/fire/compat/auth';
 import {Router} from '@angular/router';
 import {
   Auth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  UserCredential,
   GoogleAuthProvider,
   signInWithEmailAndPassword, User, signOut, sendPasswordResetEmail, signInWithPopup,
   confirmPasswordReset, verifyPasswordResetCode, updatePassword, EmailAuthProvider, reauthenticateWithCredential,
   applyActionCode, ActionCodeSettings
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
-import {User as DbUser} from '../models/user';
 import {take} from 'rxjs';
 
 @Injectable({
@@ -64,13 +61,12 @@ export class AuthService {
     try {
       const result = await createUserWithEmailAndPassword(this.auth, email, password);
       if (result.user && result.user.email) {
-        await this.createUserInDatabase(result.user.uid, result.user.email);
+        // Don't create user in database yet - wait for email verification
 
         // Configure action code settings with our custom URL for email verification
-        const actionCodeSettings = this.getActionCodeSettings('verifyEmail');
         await sendEmailVerification(result.user);
 
-        this.router.navigate(['/signup/verify-email']);
+        await this.router.navigate(['/signup/verify-email']);
       }
     } catch (error) {
       console.error('Sign up failed:', error);
@@ -78,7 +74,8 @@ export class AuthService {
     }
   }
 
-  private async createUserInDatabase(uid: string, email: string): Promise<void> {
+  // Changed from private to public so it can be called after email verification
+  public async createUserInDatabase(uid: string, email: string): Promise<void> {
     try {
       const userData = await this.userService.create(uid, email).pipe(take(1)).toPromise();
       localStorage.setItem(this.STORAGE_KEYS.DB_USER, JSON.stringify(userData));
@@ -90,9 +87,20 @@ export class AuthService {
 
   async loginWithEmailAndPassword(email: string, password: string): Promise<void> {
     try {
+      // First authenticate with Firebase
       await signInWithEmailAndPassword(this.auth, email, password);
-      await this.fetchUserData();
-      this.router.navigate(['home']);
+
+      try {
+        // Then try to contact the backend
+        await this.fetchUserData();
+        // If both succeed, navigate to home
+        this.router.navigate(['home']);
+      } catch (backendError) {
+        // If backend contact fails, sign out from Firebase and throw an error
+        console.error('Backend contact failed:', backendError);
+        await this.logout(); // Sign out from Firebase
+        throw new Error('Login failed: Could not contact the backend. Please try again later.');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -101,10 +109,21 @@ export class AuthService {
 
   async loginWithGoogle(): Promise<void> {
     try {
+      // First authenticate with Firebase
       const provider = new GoogleAuthProvider();
       await signInWithPopup(this.auth, provider);
-      await this.fetchUserData();
-      this.router.navigate(['home']);
+
+      try {
+        // Then try to contact the backend
+        await this.fetchUserData();
+        // If both succeed, navigate to home
+        this.router.navigate(['home']);
+      } catch (backendError) {
+        // If backend contact fails, sign out from Firebase and throw an error
+        console.error('Backend contact failed:', backendError);
+        await this.logout(); // Sign out from Firebase
+        throw new Error('Login failed: Could not contact the backend. Please try again later.');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -195,9 +214,6 @@ export class AuthService {
       if (!user) {
         throw new Error('No user is currently signed in');
       }
-
-      // Configure action code settings with our custom URL for email verification
-      const actionCodeSettings = this.getActionCodeSettings('verifyEmail');
 
       await sendEmailVerification(user);
     } catch (error) {
