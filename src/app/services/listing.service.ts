@@ -53,6 +53,10 @@ export class ListingService {
     return this.http.get<string[]>(`${endpoint}/categories`);
   }
 
+  getBrands(): Observable<string[]> {
+    return this.http.get<string[]>(`${endpoint}/brands`);
+  }
+
   getListing(id: string): Observable<Listing> {
     return this.http.get<Listing>(`${endpoint}/${id}`);
   }

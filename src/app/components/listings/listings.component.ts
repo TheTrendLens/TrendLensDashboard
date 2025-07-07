@@ -15,6 +15,7 @@ import {Listing} from '../../models/listing';
 import {FeatureFlagService} from '../../services/feature-flag.service';
 import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
 import {ListingCardComponent} from '../listing-card/listing-card.component';
+import {TourService} from '../../services/tour.service';
 
 @Component({
   selector: 'app-listings',
@@ -45,13 +46,19 @@ export class ListingsComponent implements OnInit {
     public listingService: ListingService,
     public dialog: MatDialog,
     private router: Router,
-    private featureFlagService: FeatureFlagService
+    private featureFlagService: FeatureFlagService,
+    private tourService: TourService
   ) {
     // Initialize experimental features state
     this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
       this.experimentalFeaturesEnabled = enabled;
     });
+  }
+
+  // Method to manually start the tour
+  startTour(): void {
+    this.tourService.startListingsTour();
   }
 
   ngOnInit(): void {

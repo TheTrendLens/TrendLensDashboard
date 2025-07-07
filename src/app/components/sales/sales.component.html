@@ -15,14 +15,24 @@
         (keyup.enter)="onSearch(searchQuery)">
     </div>
 
-    <!-- Create Sale Button - Only shown if experimental features are enabled -->
-    <button
-      *ngIf="experimentalFeaturesEnabled"
-      (click)="createSale()"
-      class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
-      <mat-icon class="mr-1">add</mat-icon>
-      Create Sale
-    </button>
+    <!-- Tour and Create Sale Buttons -->
+    <div class="flex space-x-2">
+      <button
+        (click)="startTour()"
+        class="px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition flex items-center">
+        <mat-icon class="mr-1">help_outline</mat-icon>
+        Take Tour
+      </button>
+
+      <!-- Create Sale Button - Only shown if experimental features are enabled -->
+      <button
+        *ngIf="experimentalFeaturesEnabled"
+        (click)="createSale()"
+        class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
+        <mat-icon class="mr-1">add</mat-icon>
+        Create Sale
+      </button>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">

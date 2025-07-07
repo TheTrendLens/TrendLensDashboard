@@ -17,6 +17,7 @@ import {Product} from '../../models/product';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
 import {CreateSaleDialogComponent} from '../create-sale-dialog/create-sale-dialog.component';
 import {FeatureFlagService} from '../../services/feature-flag.service';
+import {TourService} from '../../services/tour.service';
 
 @Component({
   selector: 'app-sales',
@@ -50,13 +51,19 @@ export class SalesComponent implements OnInit {
     public productService: ProductService,
     public dialog: MatDialog,
     private router: Router,
-    private featureFlagService: FeatureFlagService
+    private featureFlagService: FeatureFlagService,
+    private tourService: TourService
   ) {
     // Initialize experimental features state
     this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
       this.experimentalFeaturesEnabled = enabled;
     });
+  }
+
+  // Method to manually start the tour
+  startTour(): void {
+    this.tourService.startSalesTour();
   }
 
   ngOnInit(): void {

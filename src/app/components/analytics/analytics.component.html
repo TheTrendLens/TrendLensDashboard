@@ -1,6 +1,32 @@
 <!-- Date Filter Controls -->
 <div class="mb-6 bg-white rounded-lg shadow p-4">
-  <h2 class="text-xl font-semibold mb-4">Sales Analytics</h2>
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold">Sales Analytics</h2>
+    <button
+      (click)="startTour()"
+      class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-300 font-medium rounded-lg text-sm px-3 py-1.5 focus:outline-none flex items-center"
+    >
+      <span class="material-icons text-sm mr-1">help_outline</span>
+      Take Tour
+    </button>
+  </div>
+
+  <!-- Time Presets -->
+  <div class="mb-4">
+    <label class="block mb-2 text-sm font-medium text-gray-900">Time Period</label>
+    <div class="flex flex-wrap gap-2">
+      <button
+        *ngFor="let preset of timePresets"
+        (click)="applyTimePreset(preset.value)"
+        class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+        [ngClass]="selectedPreset === preset.value ?
+          'bg-brand-600 text-white' :
+          'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+      >
+        {{ preset.label }}
+      </button>
+    </div>
+  </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <!-- Start Date -->
@@ -30,10 +56,11 @@
       <button
         (click)="applyDateFilter()"
         class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
-        Apply Filter
+        Apply Custom Range
       </button>
     </div>
 
+    <!-- Category Filter -->
     <div class="sm:col-span-1">
       <dt class="text-sm font-medium text-gray-500">Category</dt>
       <dd class="mt-1 text-sm text-gray-900">
@@ -50,6 +77,172 @@
         </div>
       </dd>
     </div>
+
+    <!-- Advanced Filters Toggle -->
+    <div class="sm:col-span-1">
+      <dt class="text-sm font-medium text-gray-500">Advanced Filtering</dt>
+      <dd class="mt-1 text-sm text-gray-900">
+        <div class="flex items-center space-x-2">
+          <button
+            (click)="toggleAdvancedFilters()"
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+            [ngClass]="showAdvancedFilters ?
+              'bg-brand-600 text-white' :
+              'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+          >
+            {{ showAdvancedFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters' }}
+          </button>
+        </div>
+      </dd>
+    </div>
+
+    <!-- Comparison Toggle -->
+    <div class="sm:col-span-1">
+      <dt class="text-sm font-medium text-gray-500">Compare with Previous Period</dt>
+      <dd class="mt-1 text-sm text-gray-900">
+        <div class="flex items-center space-x-2">
+          <button
+            (click)="toggleComparison()"
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+            [ngClass]="enableComparison ?
+              'bg-brand-600 text-white' :
+              'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+          >
+            {{ enableComparison ? 'Disable Comparison' : 'Enable Comparison' }}
+          </button>
+        </div>
+      </dd>
+    </div>
+
+    <!-- Comparison Type (only visible when comparison is enabled) -->
+    <div class="sm:col-span-1" *ngIf="enableComparison">
+      <dt class="text-sm font-medium text-gray-500">Comparison Type</dt>
+      <dd class="mt-1 text-sm text-gray-900">
+        <div class="flex items-center space-x-2">
+          <select
+            [(ngModel)]="selectedComparisonType"
+            (ngModelChange)="onComparisonTypeChange()"
+            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          >
+            <option *ngFor="let type of comparisonTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
+      </dd>
+    </div>
+  </div>
+
+  <!-- Custom Comparison Date Range (only visible when custom comparison is selected) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" *ngIf="enableComparison && showCustomDateRange">
+    <div>
+      <label for="customStartDate" class="block mb-2 text-sm font-medium text-gray-900">Comparison Start Date</label>
+      <input
+        type="date"
+        id="customStartDate"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        [ngModel]="customComparisonStartDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="customComparisonStartDate = $event">
+    </div>
+    <div>
+      <label for="customEndDate" class="block mb-2 text-sm font-medium text-gray-900">Comparison End Date</label>
+      <input
+        type="date"
+        id="customEndDate"
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        [ngModel]="customComparisonEndDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="customComparisonEndDate = $event">
+    </div>
+  </div>
+
+  <!-- Advanced Filters Section (only visible when advanced filters are enabled) -->
+  <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200" *ngIf="showAdvancedFilters">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Advanced Filters & Segmentation</h3>
+      <button
+        (click)="resetAdvancedFilters()"
+        class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+      >
+        Reset Filters
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Brand Filter -->
+      <div>
+        <label for="brandFilter" class="block mb-2 text-sm font-medium text-gray-900">Brand</label>
+        <select
+          id="brandFilter"
+          [(ngModel)]="selectedBrand"
+          (ngModelChange)="onBrandChange()"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        >
+          <option *ngFor="let brand of brands" [value]="brand">{{ brand }}</option>
+        </select>
+        <div *ngIf="isBrandUpdating" class="mt-1 text-xs text-gray-500">Loading brands...</div>
+      </div>
+
+      <!-- Price Range Filter -->
+      <div>
+        <label for="priceRangeFilter" class="block mb-2 text-sm font-medium text-gray-900">Price Range</label>
+        <select
+          id="priceRangeFilter"
+          [(ngModel)]="selectedPriceRange"
+          (ngModelChange)="onPriceRangeChange()"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        >
+          <option value="">All Price Ranges</option>
+          <option *ngFor="let range of priceRanges" [value]="range">{{ range }}</option>
+        </select>
+      </div>
+
+      <!-- Profit Margin Filter -->
+      <div>
+        <label for="profitMarginFilter" class="block mb-2 text-sm font-medium text-gray-900">Profit Margin</label>
+        <select
+          id="profitMarginFilter"
+          [(ngModel)]="selectedProfitMargin"
+          (ngModelChange)="onProfitMarginChange()"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        >
+          <option value="">All Profit Margins</option>
+          <option *ngFor="let margin of profitMargins" [value]="margin">{{ margin }}</option>
+        </select>
+      </div>
+
+      <!-- Sales Velocity Filter -->
+      <div>
+        <label for="salesVelocityFilter" class="block mb-2 text-sm font-medium text-gray-900">Sales Velocity</label>
+        <select
+          id="salesVelocityFilter"
+          [(ngModel)]="selectedSalesVelocity"
+          (ngModelChange)="onSalesVelocityChange()"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        >
+          <option value="">All Sales Velocities</option>
+          <option *ngFor="let velocity of salesVelocities" [value]="velocity">{{ velocity }}</option>
+        </select>
+      </div>
+
+      <!-- Sort Options -->
+      <div>
+        <label for="sortOptions" class="block mb-2 text-sm font-medium text-gray-900">Sort By</label>
+        <select
+          id="sortOptions"
+          [(ngModel)]="selectedSort"
+          (ngModelChange)="onSortChange()"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
+        >
+          <option value="">Default Sorting</option>
+          <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="mt-4 text-sm text-gray-500">
+      Use these filters to segment your sales data and gain deeper insights into your business performance.
+      Combine multiple filters to narrow down your analysis to specific segments of your inventory.
+    </p>
   </div>
 </div>
 
@@ -61,7 +254,7 @@
 <!-- Analytics Content -->
 <div *ngIf="!isLoading && analyticsData">
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
     <!-- Total Sales Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Sales</h3>
@@ -91,34 +284,401 @@
       <h3 class="text-sm font-medium text-gray-500">Average Sale Price</h3>
       <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
+
+    <!-- Average Inventory Turnover Card -->
+    <div class="bg-white rounded-lg shadow p-4" *ngIf="analyticsData.summary.averageInventoryTurnover !== undefined">
+      <h3 class="text-sm font-medium text-gray-500">Avg. Days to Sell</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageInventoryTurnover.toFixed(1) }} days</p>
+      <p class="text-xs text-gray-500 mt-1">Average time from listing to sale</p>
+    </div>
+  </div>
+
+  <!-- Comparison Metrics (only visible when comparison is enabled and data is available) -->
+  <div class="mb-6" *ngIf="enableComparison && comparisonData">
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-semibold mb-4">Comparison with Previous Period</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Sales Change -->
+        <div class="border rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <h4 class="text-sm font-medium text-gray-500">Sales</h4>
+            <div
+              [ngClass]="{
+                'text-green-600': comparisonData.changes.salesChange > 0,
+                'text-red-600': comparisonData.changes.salesChange < 0,
+                'text-gray-600': comparisonData.changes.salesChange === 0
+              }"
+              class="flex items-center text-sm font-medium"
+            >
+              <svg *ngIf="comparisonData.changes.salesChange > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+              <svg *ngIf="comparisonData.changes.salesChange < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+              {{ comparisonData.changes.salesChange > 0 ? '+' : '' }}{{ comparisonData.changes.salesChange.toFixed(1) }}%
+            </div>
+          </div>
+          <div class="mt-2 flex justify-between">
+            <div>
+              <p class="text-xs text-gray-500">Current</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalSales }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Previous</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalSales }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Change -->
+        <div class="border rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <h4 class="text-sm font-medium text-gray-500">Revenue</h4>
+            <div
+              [ngClass]="{
+                'text-green-600': comparisonData.changes.revenueChange > 0,
+                'text-red-600': comparisonData.changes.revenueChange < 0,
+                'text-gray-600': comparisonData.changes.revenueChange === 0
+              }"
+              class="flex items-center text-sm font-medium"
+            >
+              <svg *ngIf="comparisonData.changes.revenueChange > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+              <svg *ngIf="comparisonData.changes.revenueChange < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+              {{ comparisonData.changes.revenueChange > 0 ? '+' : '' }}{{ comparisonData.changes.revenueChange.toFixed(1) }}%
+            </div>
+          </div>
+          <div class="mt-2 flex justify-between">
+            <div>
+              <p class="text-xs text-gray-500">Current</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Previous</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profit Change -->
+        <div class="border rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <h4 class="text-sm font-medium text-gray-500">Profit</h4>
+            <div
+              [ngClass]="{
+                'text-green-600': comparisonData.changes.profitChange > 0,
+                'text-red-600': comparisonData.changes.profitChange < 0,
+                'text-gray-600': comparisonData.changes.profitChange === 0
+              }"
+              class="flex items-center text-sm font-medium"
+            >
+              <svg *ngIf="comparisonData.changes.profitChange > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+              <svg *ngIf="comparisonData.changes.profitChange < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+              {{ comparisonData.changes.profitChange > 0 ? '+' : '' }}{{ comparisonData.changes.profitChange.toFixed(1) }}%
+            </div>
+          </div>
+          <div class="mt-2 flex justify-between">
+            <div>
+              <p class="text-xs text-gray-500">Current</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Previous</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Average Price Change -->
+        <div class="border rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <h4 class="text-sm font-medium text-gray-500">Avg. Price</h4>
+            <div
+              [ngClass]="{
+                'text-green-600': comparisonData.changes.averagePriceChange > 0,
+                'text-red-600': comparisonData.changes.averagePriceChange < 0,
+                'text-gray-600': comparisonData.changes.averagePriceChange === 0
+              }"
+              class="flex items-center text-sm font-medium"
+            >
+              <svg *ngIf="comparisonData.changes.averagePriceChange > 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+              <svg *ngIf="comparisonData.changes.averagePriceChange < 0" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+              {{ comparisonData.changes.averagePriceChange > 0 ? '+' : '' }}{{ comparisonData.changes.averagePriceChange.toFixed(1) }}%
+            </div>
+          </div>
+          <div class="mt-2 flex justify-between">
+            <div>
+              <p class="text-xs text-gray-500">Current</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Previous</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 <!-- Charts Section -->
 <div class="mb-6">
   <!-- Sales Over Time Chart -->
-  <div class="bg-white rounded-lg shadow p-4">
-    <h3 class="text-lg font-semibold mb-4">Sales Over Time</h3>
-    <div class="w-full" style="height: 300px;">
-      <canvas id="salesChart"></canvas>
-    </div>
-  </div>
+  <app-sales-over-time-chart
+    [analyticsData]="analyticsData"
+    [comparisonData]="comparisonData"
+    [enableComparison]="enableComparison"
+    [enableForecasting]="enableForecasting"
+    [forecastPeriod]="forecastPeriod"
+    [forecastData]="forecastData"
+    (forecastingToggled)="toggleForecasting()"
+    (forecastPeriodChanged)="onForecastPeriodChanged($event)"
+  ></app-sales-over-time-chart>
 </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 gap-4 mb-6">
-    <!-- Total Sales Card -->
-    <!-- Brand Chart -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h3 class="text-lg font-semibold mb-4">Top Brands by Revenue</h3>
-      <div class="w-full flex items-center justify-center" style="height: 300px;">
-        <canvas id="brandChart"></canvas>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-2 2xl:grid-cols-2 3xl:grid-cols-2 gap-4 mb-6">
+  <!-- Brand Chart -->
+  <app-brand-chart
+    [analyticsData]="analyticsData"
+    (brandSelected)="onBrandSelected($event)"
+  ></app-brand-chart>
+
+  <!-- Category Chart -->
+  <app-category-chart
+    [analyticsData]="analyticsData"
+    (categorySelected)="onCategorySelected($event)"
+  ></app-category-chart>
+</div>
+</div>
+
+<!-- Additional Insights Section -->
+<div class="mb-6" *ngIf="analyticsData?.salesVelocity && analyticsData?.salesVelocity?.length! > 0 || enableForecasting">
+  <h2 class="text-xl font-semibold mb-4">Additional Insights</h2>
+
+  <!-- Sales Velocity Section -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Sales Velocity (Days to Sell)</h3>
+      <div class="flex space-x-2">
+        <button
+          (click)="exportDataAsCSV('sales-velocity')"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export as CSV
+        </button>
       </div>
     </div>
 
-    <!-- Brand Chart -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h3 class="text-lg font-semibold mb-4">Top Category by Sales</h3>
-      <div class="w-full flex items-center justify-center" style="height: 300px;">
-        <canvas id="categoryChart"></canvas>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time to Sell</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let item of analyticsData?.salesVelocity">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.range }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.count }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm text-gray-500 mt-4">This shows how quickly your items sell after listing. Items that sell within 0-7 days have the highest velocity.</p>
+  </div>
+
+  <!-- Price Point Analysis Section -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6" *ngIf="analyticsData?.pricePoints && analyticsData?.pricePoints?.length! > 0">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Price Point Analysis</h3>
+      <div class="flex space-x-2">
+        <button
+          (click)="exportDataAsCSV('price-points')"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export as CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Days to Sell</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let item of analyticsData?.pricePoints">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.priceRange }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.count }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.averageTurnover?.toFixed(1) }} days</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm text-gray-500 mt-4">This analysis shows how different price points perform in terms of sales count, revenue, profit, and time to sell.</p>
+  </div>
+
+  <!-- Detailed Forecast Section (only visible when forecasting is enabled) -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6" *ngIf="enableForecasting && forecastData">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Sales Forecast Analysis</h3>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Monthly Forecast -->
+      <div>
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Monthly Forecast</h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trend</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let month of getMonthlyForecast()">
+                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ month.month }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.revenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.profit | currency:getCurrencyCode():'symbol':'1.0-0' }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                  <span [ngClass]="{'text-green-600': month.trend > 0, 'text-red-600': month.trend < 0, 'text-gray-500': month.trend === 0}">
+                    {{ month.trend > 0 ? '↑' : (month.trend < 0 ? '↓' : '→') }}
+                    {{ Math.abs(month.trend).toFixed(1) }}%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+<!--      <div>-->
+<!--        <h4 class="text-sm font-medium text-gray-700 mb-2">Recommendations</h4>-->
+<!--        <div class="space-y-3">-->
+<!--          <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">-->
+<!--            <h5 class="text-sm font-medium text-blue-800">Inventory Planning</h5>-->
+<!--            <p class="text-xs text-blue-700 mt-1">-->
+<!--              {{ getInventoryRecommendation() }}-->
+<!--            </p>-->
+<!--          </div>-->
+
+<!--          <div class="p-3 bg-purple-50 rounded-lg border border-purple-100">-->
+<!--            <h5 class="text-sm font-medium text-purple-800">Pricing Strategy</h5>-->
+<!--            <p class="text-xs text-purple-700 mt-1">-->
+<!--              {{ getPricingRecommendation() }}-->
+<!--            </p>-->
+<!--          </div>-->
+
+<!--          <div class="p-3 bg-green-50 rounded-lg border border-green-100">-->
+<!--            <h5 class="text-sm font-medium text-green-800">Growth Opportunity</h5>-->
+<!--            <p class="text-xs text-green-700 mt-1">-->
+<!--              {{ getGrowthRecommendation() }}-->
+<!--            </p>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+    </div>
+
+    <p class="text-xs text-gray-500 mt-4">
+      These forecasts and recommendations are based on your historical sales data and should be used as guidance only.
+      Always consider market conditions and your business knowledge when making decisions.
+    </p>
+  </div>
+
+  <!-- Profit Margin by Category Section -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Profit Margin by Category</h3>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit Margin</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Days to Sell</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let category of analyticsData?.categories?.slice(0, 5)">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ category.category }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span [ngClass]="{'text-green-600': category.profitMargin! > 30, 'text-yellow-600': category.profitMargin! <= 30 && category.profitMargin! >= 15, 'text-red-600': category.profitMargin! < 15}">
+                  {{ category.profitMargin?.toFixed(1) }}%
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ category.averageTurnover?.toFixed(1) }} days</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Profit Margin by Brand Section -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Profit Margin by Brand</h3>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit Margin</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Days to Sell</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let brand of analyticsData?.brands?.slice(0, 5)">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ brand.brand }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span [ngClass]="{'text-green-600': brand.profitMargin! > 30, 'text-yellow-600': brand.profitMargin! <= 30 && brand.profitMargin! >= 15, 'text-red-600': brand.profitMargin! < 15}">
+                  {{ brand.profitMargin?.toFixed(1) }}%
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ brand.averageTurnover?.toFixed(1) }} days</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

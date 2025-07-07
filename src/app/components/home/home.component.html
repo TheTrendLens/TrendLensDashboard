@@ -1,2 +1,15 @@
+<div class="mb-6 bg-white rounded-lg shadow p-4">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold">Dashboard</h2>
+    <button
+      (click)="startTour()"
+      class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:ring-brand-300 font-medium rounded-lg text-sm px-3 py-1.5 focus:outline-none flex items-center"
+    >
+      <span class="material-icons text-sm mr-1">help_outline</span>
+      Take Tour
+    </button>
+  </div>
+</div>
+
 <app-stat-cards #metrics></app-stat-cards>
 <app-action-required-tables [metricsComponent]="metrics"></app-action-required-tables>
