@@ -16,7 +16,7 @@
     </div>
 
     <!-- Create Listing Button -->
-    <button
+    <button *ngIf="experimentalFeaturesEnabled"
       (click)="createListing()"
       class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
       <mat-icon class="mr-1">add</mat-icon>
@@ -89,6 +89,7 @@
   <!-- Create New Listing Card -->
   <div
     class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col items-center justify-center w-full hover:bg-gray-50"
+    *ngIf="experimentalFeaturesEnabled"
     (click)="createListing()">
     <div class="text-center">
       <div class="flex justify-center">

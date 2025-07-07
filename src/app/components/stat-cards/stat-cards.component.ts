@@ -196,7 +196,12 @@ export class StatCardsComponent implements OnInit {
     // Get metrics with filterMissingCosts=true to only include sales with complete cost data
     this.userService.getMetrics(this.selectedTimeframe, true).pipe(take(1)).subscribe({
       next: (metrics) => {
-        this.metrics = metrics;
+        this.metrics = {
+          revenue: metrics.revenue,
+          costs: metrics.costs,
+          profit: metrics.profit,
+          numberOfSales: metrics.numberOfSales,
+        };
       },
       error: (error) => {
         console.error(error);

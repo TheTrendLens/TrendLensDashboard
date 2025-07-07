@@ -18,7 +18,7 @@ import {ListingCardComponent} from '../listing-card/listing-card.component';
 
 @Component({
   selector: 'app-listings',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, ListingCardComponent],
+  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, ListingCardComponent, NgIf],
   templateUrl: './listings.component.html',
   styleUrl: './listings.component.css'
 })

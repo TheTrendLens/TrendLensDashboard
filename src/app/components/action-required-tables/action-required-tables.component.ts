@@ -12,6 +12,7 @@ import {Router} from '@angular/router';
 import {Product} from '../../models/product';
 import {ProductService} from '../../services/product.service';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
+import {SalesService} from '../../services/sales.service';
 
 @Component({
   selector: 'app-action-required-tables',
@@ -42,6 +43,7 @@ export class ActionRequiredTablesComponent implements OnInit {
 
   constructor(
     public userService: UserService,
+    public salesService: SalesService,
     public dialog: MatDialog,
     private router: Router,
     private productService: ProductService
@@ -79,7 +81,7 @@ export class ActionRequiredTablesComponent implements OnInit {
   loadData() {
     this.salesIsLoading = true;
 
-    this.userService.getSalesWithMissingData(this.salesPageSize, this.salesCurrentPage).pipe(take(1)).subscribe({
+    this.salesService.getSales(this.salesPageSize, this.salesCurrentPage, '', 'all', 'date_desc', 0, true).pipe(take(1)).subscribe({
       next: (paginatedSales) => {
         this.salesData = paginatedSales.items;
         this.salesTotalRows = paginatedSales.meta.totalItems;
@@ -171,5 +173,19 @@ export class ActionRequiredTablesComponent implements OnInit {
         this.metricsComponent.updateStats();
       }
     })
+  }
+
+  onSaleUpdated(sale: Sale): void {
+    // Update the stat-cards component when a sale is updated
+    if (this.metricsComponent) {
+      this.metricsComponent.updateStats();
+    }
+  }
+
+  onProductUpdated(product: Product): void {
+    // Update the stat-cards component when a product is updated
+    if (this.metricsComponent) {
+      this.metricsComponent.updateStats();
+    }
   }
 }

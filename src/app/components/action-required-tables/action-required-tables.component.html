@@ -11,6 +11,8 @@
     [sale]="sale"
     [itemCount]="saleItemCounts[sale.id]"
     [canEdit]="true"
-    (cardClick)="navigateToSale($event)">
+    (cardClick)="navigateToSale($event)"
+    (saleUpdated)="onSaleUpdated($event)"
+    (productUpdated)="onProductUpdated($event)">
   </app-sale-card>
 </div>

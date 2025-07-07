@@ -1,16 +1,16 @@
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
+  EventEmitter,
   Input,
   Output,
-  EventEmitter,
-  ElementRef,
+  QueryList,
   ViewChild,
-  AfterViewInit,
-  ViewChildren, QueryList
+  ViewChildren
 } from '@angular/core';
-import {NgForOf, NgIf, DatePipe, NgClass, CurrencyPipe} from '@angular/common';
-import { Sale } from '../../models/sale';
-import { MatIcon } from '@angular/material/icon';
+import {CurrencyPipe, DatePipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {Sale} from '../../models/sale';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Product} from '../../models/product';
 import {ActivatedRoute} from '@angular/router';
@@ -31,6 +31,8 @@ export class SaleCardComponent implements AfterViewInit {
   @Input() itemCount: number | undefined;
   @Input() canEdit: boolean = false;
   @Output() cardClick = new EventEmitter<string>();
+  @Output() saleUpdated = new EventEmitter<Sale>();
+  @Output() productUpdated = new EventEmitter<Product>();
   editingPostage = false;
   originalPostageCost: number | null = null;
   editingItemCost: { [key: string]: boolean } = {};
@@ -73,14 +75,11 @@ export class SaleCardComponent implements AfterViewInit {
   }
 
   calculateCosts(sale: Sale) {
-    const result = sale.products?.reduce((sum, product) => {
+    return sale.products?.reduce((sum, product) => {
       const itemCost = +product.item_cost;
       if (itemCost === null) return sum;
       return sum + itemCost;
     }, +sale.total_fee + +sale.seller_postage_cost) || 0;
-
-    console.log(result);
-    return result;
   }
 
   /**
@@ -177,9 +176,13 @@ export class SaleCardComponent implements AfterViewInit {
     if (!this.sale) return;
     this.salesService.update(this.sale).subscribe({
       next: (updatedSale) => {
+        let products = this.sale.products;
         this.sale = updatedSale;
+        this.sale.products = products;
         this.editingPostage = false;
         this.originalPostageCost = null;
+        // Emit the updated sale
+        this.saleUpdated.emit(this.sale);
       },
       error: (error) => {
         console.error('Error updating postage cost:', error);
@@ -243,6 +246,9 @@ export class SaleCardComponent implements AfterViewInit {
 
         this.editingItemCost[product.id] = false;
         delete this.originalItemCosts[product.id];
+
+        // Emit the updated product
+        this.productUpdated.emit(updatedProduct);
       },
       error: (error) => {
         console.error('Error updating item cost:', error);

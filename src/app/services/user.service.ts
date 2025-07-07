@@ -78,10 +78,6 @@ export class UserService {
     return this.http.get<number>(`${endpoint}/listingscount?q=${query}`);
   }
 
-  getSalesWithMissingData(limit: number, page: number): Observable<Pagination<Sale>> {
-    return this.http.get<Pagination<Sale>>(`${endpoint}/sales?missingData=true&limit=${limit}&page=${page}`);
-  }
-
   getSalesCount(
     query: string = '',
     dateFilter: string = 'all',
@@ -137,7 +133,6 @@ export class UserService {
     series: { label: string; data: number[]; borderColor: string }[];
   }> {
     const params = new URLSearchParams();
-    params.append('graphed', 'true');
     if (filterMissingCosts) {
       params.append('filterMissingCosts', 'true');
     }
@@ -145,7 +140,7 @@ export class UserService {
     return this.http.get<{
       labels: string[];
       series: { label: string; data: number[]; borderColor: string }[];
-    }>(`${environment.backend.baseURL}/api/sales/metrics/${timeframe}?${params.toString()}`);
+    }>(`${environment.backend.baseURL}/api/sales/graphed-metrics/${timeframe}?${params.toString()}`);
   }
 
   create(id: string, email: string): Observable<any> {

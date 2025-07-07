@@ -6,6 +6,7 @@ import { AnalyticsService, AnalyticsData } from '../../services/analytics.servic
 import { Chart, registerables } from 'chart.js';
 import { CurrencyService } from '../../services/currency.service';
 import {UserService} from '../../services/user.service';
+import {ListingService} from '../../services/listing.service';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -34,7 +35,7 @@ export class AnalyticsComponent implements OnInit {
 
   constructor(
     private analyticsService: AnalyticsService,
-    private userService: UserService,
+    private listingService: ListingService,
     private currencyService: CurrencyService
   ) {
     // Set default date range to last 30 days
@@ -71,7 +72,7 @@ export class AnalyticsComponent implements OnInit {
   loadCategories(): void {
     this.isCategoryUpdating = true;
 
-    this.userService.getCategories().subscribe({
+    this.listingService.getCategories().subscribe({
       next: (data) => {
         this.categories = data;
         this.categories.unshift('All');
