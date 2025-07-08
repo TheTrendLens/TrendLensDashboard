@@ -1,15 +1,16 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Output, EventEmitter } from '@angular/core';
-import { NgIf, NgForOf, NgClass, CurrencyPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { BubbleDataPoint, Chart, ChartTypeRegistry, Point, TooltipItem } from 'chart.js';
-import { CurrencyService } from '../../../../services/currency.service';
-import { AnalyticsData, ComparisonData } from '../../../../services/analytics.service';
+import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
+import {CurrencyPipe, NgClass, NgIf} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {BubbleDataPoint, Chart, ChartTypeRegistry, Point, TooltipItem} from 'chart.js';
+import {CurrencyService} from '../../../../services/currency.service';
+import {AnalyticsData, ComparisonData} from '../../../../services/analytics.service';
+import {FeatureAccessDirective} from '../../../../directives/feature-access.directive';
 
 @Component({
   selector: 'app-sales-over-time-chart',
   templateUrl: './sales-over-time-chart.component.html',
   styleUrls: ['./sales-over-time-chart.component.css'],
-  imports: [FormsModule, NgIf, NgClass, CurrencyPipe],
+  imports: [FormsModule, NgIf, NgClass, CurrencyPipe, FeatureAccessDirective],
   standalone: true
 })
 export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy {
@@ -217,8 +218,7 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
             labels: {
               usePointStyle: true,
               generateLabels: (chart: Chart<keyof ChartTypeRegistry, (number | [number, number] | Point | BubbleDataPoint | null)[], unknown>) => {
-                const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                return originalLabels;
+                return Chart.defaults.plugins.legend.labels.generateLabels(chart);
               }
             }
           }

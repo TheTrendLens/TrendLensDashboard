@@ -4,6 +4,7 @@ export interface User {
   stripe_customer_id: string;
   depop_id?: string | "";
   active_package: string;
+  addons?: string[];
   admin: boolean;
   new_sub: boolean;
   currency: string;

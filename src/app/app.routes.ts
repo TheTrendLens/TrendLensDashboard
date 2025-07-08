@@ -29,78 +29,8 @@ import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
 import {SubscriptionGuard} from './utils/subscription.guard';
 import {ListingsComponent} from './components/listings/listings.component';
-
-const redirectUnauthorisedToLogin: AuthPipeGenerator = () => redirectUnauthorizedTo(['login']);
+import {FeatureAccessGuard} from './utils/feature-access.guard';
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
-
-const verifyEmailCheck: AuthPipeGenerator = (next, state) => switchMap((user) => {
-  return of(user).pipe(
-    redirectUnauthorizedTo(['login']),
-    map((result) => {
-      if (result) {
-        if (user && user.emailVerified) {
-          return true;
-        } else {
-          return ['/signup/verify-email'];
-        }
-      } else {
-        return result;
-      }
-    })
-  )
-});
-
-const ifVerifiedEmailGoToCheckout: AuthPipeGenerator = (next, state) => switchMap((user) => {
-  return of(user).pipe(
-    redirectUnauthorizedTo(['login']),
-    map((result) => {
-      if (result) {
-        if (user && user.emailVerified) {
-          return ['/signup/checkout'];
-        } else {
-          return true;
-        }
-      } else {
-        return result;
-      }
-    })
-  )
-});
-
-const redirectToSignupFlow: AuthPipeGenerator = (next, state) => switchMap((user) => {
-  const userService = inject(UserService);
-
-  return of(user).pipe(
-    redirectUnauthorizedTo(['login']),
-    map((result) => {
-      if (result) {
-        if (user) {
-          // We have a logged in user, go through the signup flow checks to see where they need to be redirected to
-          const dbUser = userService.getCurrentUser();
-
-          if (dbUser) {
-            // Checkout Check
-            if (dbUser.active_package != null || !dbUser.new_sub) {
-              return true;
-            }
-          }
-
-          // Verify Email Check
-          if (user.emailVerified) {
-            return ['/signup/checkout'];
-          } else {
-            return ['/signup/verify-email'];
-          }
-        } else {
-          return ['/login'];
-        }
-      } else {
-        return result;
-      }
-    })
-  )
-});
-
 const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
   return of(user).pipe(
     // Anyone unauthorised gets redirected to the login page
@@ -192,7 +122,8 @@ export const routes: Routes = [
       {
         path: 'analytics',
         component: AnalyticsComponent,
-        canActivate: [SubscriptionGuard]
+        canActivate: [SubscriptionGuard, FeatureAccessGuard],
+        data: { featureId: 'analytics-base' }
       },
       {
         path: 'account',

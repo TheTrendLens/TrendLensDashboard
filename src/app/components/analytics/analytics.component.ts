@@ -3,14 +3,14 @@ import {DatePipe, NgIf, CurrencyPipe, NgForOf, NgClass} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData, ComparisonData, AnalyticsFilter } from '../../services/analytics.service';
-import { BubbleDataPoint, Chart, ChartTypeRegistry, Point, registerables, TooltipItem} from 'chart.js';
+import { Chart, registerables} from 'chart.js';
 import {CurrencyService} from '../../services/currency.service';
-import {UserService} from '../../services/user.service';
 import {ListingService} from '../../services/listing.service';
 import { SalesOverTimeChartComponent } from './charts/sales-over-time-chart/sales-over-time-chart.component';
 import { BrandChartComponent } from './charts/brand-chart/brand-chart.component';
 import { CategoryChartComponent } from './charts/category-chart/category-chart.component';
 import { TourService } from '../../services/tour.service';
+import {FeatureAccessDirective} from '../../directives/feature-access.directive';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -29,7 +29,8 @@ Chart.register(...registerables);
     NgClass,
     SalesOverTimeChartComponent,
     BrandChartComponent,
-    CategoryChartComponent
+    CategoryChartComponent,
+    FeatureAccessDirective
   ],
   standalone: true
 })
@@ -777,7 +778,7 @@ export class AnalyticsComponent implements OnInit {
 
     const trend = this.getForecastTrend(this.forecastData.revenue);
 
-    let recommendation = '';
+    let recommendation;
 
     if (trend > 5) {
       recommendation = `With positive growth trends (${trend.toFixed(1)}%), focus on scaling your most profitable segments. `;
@@ -816,7 +817,6 @@ export class AnalyticsComponent implements OnInit {
 
   /**
    * Export data as CSV
-   * @param data The data to export
    * @param fileName The name of the file to download
    */
   exportDataAsCSV(fileName: string): void {

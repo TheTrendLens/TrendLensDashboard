@@ -70,16 +70,32 @@
             (ngModelChange)="onCategoryChange()"
             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:max-w-xs sm:text-sm sm:leading-6"
           >
-            <option *ngFor="let option of categories" [value]="option">
-              {{ option }}
-            </option>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
           </select>
+          <div *ngIf="isCategoryUpdating" class="mt-1 text-xs text-gray-500">Loading categories...</div>
+        </div>
+      </dd>
+    </div>
+
+    <!-- Brand Filter -->
+    <div class="sm:col-span-1">
+      <dt class="text-sm font-medium text-gray-500">Brand</dt>
+      <dd class="mt-1 text-sm text-gray-900">
+        <div class="flex items-center space-x-2">
+          <select
+            [(ngModel)]="selectedBrand"
+            (ngModelChange)="onBrandChange()"
+            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          >
+            <option *ngFor="let brand of brands" [value]="brand">{{ brand }}</option>
+          </select>
+          <div *ngIf="isBrandUpdating" class="mt-1 text-xs text-gray-500">Loading brands...</div>
         </div>
       </dd>
     </div>
 
     <!-- Advanced Filters Toggle -->
-    <div class="sm:col-span-1">
+    <div *appFeatureAccess="'analytics-advanced-filters'" class="sm:col-span-1">
       <dt class="text-sm font-medium text-gray-500">Advanced Filtering</dt>
       <dd class="mt-1 text-sm text-gray-900">
         <div class="flex items-center space-x-2">
@@ -97,7 +113,7 @@
     </div>
 
     <!-- Comparison Toggle -->
-    <div class="sm:col-span-1">
+    <div *appFeatureAccess="'analytics-comparison'" class="sm:col-span-1">
       <dt class="text-sm font-medium text-gray-500">Compare with Previous Period</dt>
       <dd class="mt-1 text-sm text-gray-900">
         <div class="flex items-center space-x-2">
@@ -168,19 +184,6 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <!-- Brand Filter -->
-      <div>
-        <label for="brandFilter" class="block mb-2 text-sm font-medium text-gray-900">Brand</label>
-        <select
-          id="brandFilter"
-          [(ngModel)]="selectedBrand"
-          (ngModelChange)="onBrandChange()"
-          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        >
-          <option *ngFor="let brand of brands" [value]="brand">{{ brand }}</option>
-        </select>
-        <div *ngIf="isBrandUpdating" class="mt-1 text-xs text-gray-500">Loading brands...</div>
-      </div>
 
       <!-- Price Range Filter -->
       <div>
