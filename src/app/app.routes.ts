@@ -123,7 +123,7 @@ export const routes: Routes = [
         path: 'analytics',
         component: AnalyticsComponent,
         canActivate: [SubscriptionGuard, FeatureAccessGuard],
-        data: { featureId: 'analytics-base' }
+        data: { requiredFeature: 'analytics-base' }
       },
       {
         path: 'account',
