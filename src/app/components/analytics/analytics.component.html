@@ -95,7 +95,7 @@
     </div>
 
     <!-- Advanced Filters Toggle -->
-    <div *appFeatureAccess="'analytics-advanced-filters'" class="sm:col-span-1">
+    <div *appFeatureAccess="'ANALYTICS_ADVANCED_FILTERS'" class="sm:col-span-1">
       <dt class="text-sm font-medium text-gray-500">Advanced Filtering</dt>
       <dd class="mt-1 text-sm text-gray-900">
         <div class="flex items-center space-x-2">
@@ -113,7 +113,7 @@
     </div>
 
     <!-- Comparison Toggle -->
-    <div *appFeatureAccess="'analytics-comparison'" class="sm:col-span-1">
+    <div *appFeatureAccess="'ANALYTICS_COMPARISON'" class="sm:col-span-1">
       <dt class="text-sm font-medium text-gray-500">Compare with Previous Period</dt>
       <dd class="mt-1 text-sm text-gray-900">
         <div class="flex items-center space-x-2">
@@ -255,7 +255,7 @@
 </div>
 
 <!-- Analytics Content -->
-<div *ngIf="!isLoading && analyticsData">
+<div *ngIf="!isLoading && analyticsData && analyticsData.summary.totalSales > 0">
   <!-- Summary Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
     <!-- Total Sales Card -->
@@ -272,7 +272,7 @@
 
     <!-- Total Fees Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Total Fees</h3>
+      <h3 class="text-sm font-medium text-gray-500">Total Costs</h3>
       <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalFees | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
 
@@ -468,7 +468,7 @@
 </div>
 
 <!-- Additional Insights Section -->
-<div class="mb-6" *ngIf="analyticsData?.salesVelocity && analyticsData?.salesVelocity?.length! > 0 || enableForecasting">
+<div class="mb-6" *ngIf="(analyticsData?.salesVelocity && analyticsData?.salesVelocity?.length! > 0 || enableForecasting) && analyticsData?.summary?.totalSales! > 0">
   <h2 class="text-xl font-semibold mb-4">Additional Insights</h2>
 
   <!-- Sales Velocity Section -->
@@ -688,7 +688,7 @@
 </div>
 
 <!-- No Data Message -->
-<div *ngIf="!isLoading && !analyticsData" class="bg-white rounded-lg shadow p-8 text-center">
-  <h3 class="text-lg font-medium text-gray-900 mb-2">No Analytics Data Available</h3>
-  <p class="text-gray-500">Try adjusting your date range or check back later.</p>
+<div *ngIf="!isLoading && (!analyticsData || analyticsData.summary.totalSales === 0)" class="bg-white rounded-lg shadow p-8 text-center">
+  <h3 class="text-lg font-medium text-gray-900 mb-2">No Sales For This Period</h3>
+  <p class="text-gray-500">Try adjusting your date range or filters to see sales data.</p>
 </div>

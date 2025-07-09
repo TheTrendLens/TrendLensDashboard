@@ -53,6 +53,58 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
     }
   }
 
+  /**
+   * Aggregates time series data based on the specified time unit
+   * @param timeSeries The original time series data
+   * @param timeUnit The time unit to aggregate by ('day', 'month', 'year')
+   * @returns Aggregated time series data
+   */
+  aggregateTimeSeriesData(timeSeries: {x: Date, y: number}[], timeUnit: string): {x: Date, y: number}[] {
+    if (timeUnit === 'day') {
+      // No aggregation needed for daily data
+      return timeSeries;
+    }
+
+    // Create a map to store aggregated data
+    const aggregatedData = new Map<string, {date: Date, total: number}>();
+
+    // Aggregate data based on time unit
+    timeSeries.forEach(item => {
+      const date = item.x;
+      let key: string;
+
+      if (timeUnit === 'month') {
+        // Group by year and month
+        key = `${date.getFullYear()}-${date.getMonth()}`;
+      } else { // year
+        // Group by year
+        key = `${date.getFullYear()}`;
+      }
+
+      if (aggregatedData.has(key)) {
+        // Add to existing entry
+        aggregatedData.get(key)!.total += item.y;
+      } else {
+        // Create new entry
+        let aggregatedDate: Date;
+        if (timeUnit === 'month') {
+          // Set to first day of month
+          aggregatedDate = new Date(date.getFullYear(), date.getMonth(), 1);
+        } else { // year
+          // Set to first day of year
+          aggregatedDate = new Date(date.getFullYear(), 0, 1);
+        }
+        aggregatedData.set(key, {date: aggregatedDate, total: item.y});
+      }
+    });
+
+    // Convert map back to array
+    return Array.from(aggregatedData.values()).map(item => ({
+      x: item.date,
+      y: item.total
+    })).sort((a, b) => a.x.getTime() - b.x.getTime()); // Sort by date
+  }
+
   initSalesChart(): void {
     if (!this.analyticsData) return;
 
@@ -64,16 +116,32 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
     const ctx = document.getElementById('salesChart') as HTMLCanvasElement;
     if (!ctx) return;
 
+    // Calculate date range in days
+    const dateRange = (new Date(this.analyticsData.timeSeries[this.analyticsData.timeSeries.length - 1].date).getTime() -
+      new Date(this.analyticsData.timeSeries[0].date).getTime()) / (1000 * 60 * 60 * 24);
+
+    // Determine time unit based on date range
+    let timeUnit = 'day';
+    if (dateRange > 365) {
+      timeUnit = 'year';
+    } else if (dateRange >= 32) {
+      timeUnit = 'month';
+    }
+
     // Convert current period data to {x, y} format for proper date handling
-    const currentRevenueData = this.analyticsData.timeSeries.map(item => ({
+    const rawRevenueData = this.analyticsData.timeSeries.map(item => ({
       x: new Date(item.date),
       y: item.revenue
     }));
 
-    const currentProfitData = this.analyticsData.timeSeries.map(item => ({
+    const rawProfitData = this.analyticsData.timeSeries.map(item => ({
       x: new Date(item.date),
       y: item.profit
     }));
+
+    // Aggregate data based on time unit
+    const currentRevenueData = this.aggregateTimeSeriesData(rawRevenueData, timeUnit);
+    const currentProfitData = this.aggregateTimeSeriesData(rawProfitData, timeUnit);
 
     // Create datasets array
     const datasets = [
@@ -81,87 +149,137 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
         label: 'Revenue',
         data: currentRevenueData,
         borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.1,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: 'rgb(75, 192, 192)'
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderWidth: 1,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       },
       {
         label: 'Profit',
         data: currentProfitData,
         borderColor: 'rgb(153, 102, 255)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        tension: 0.1,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: 'rgb(153, 102, 255)'
+        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+        borderWidth: 1,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       }
     ];
 
     // Add comparison data if available
     if (this.comparisonData && this.enableComparison) {
-      // Convert previous period data to {x, y} format to ensure proper date alignment
-      const previousRevenueData = this.comparisonData.previous.timeSeries.map(item => ({
-        x: new Date(item.date),
-        y: item.revenue
-      }));
 
-      const previousProfitData = this.comparisonData.previous.timeSeries.map(item => ({
-        x: new Date(item.date),
-        y: item.profit
-      }));
+      // Convert previous period data to {x, y} format with normalized dates
+      const rawPreviousRevenueData = this.comparisonData.previous.timeSeries.map((item, index) => {
+        const itemDate = new Date(item.date);
+        // @ts-ignore
+        const currentDate = new Date(this.analyticsData.timeSeries[Math.min(index, this.analyticsData.timeSeries.length - 1)].date);
 
-      // Add previous period datasets with dashed lines
+        // Create a normalized date based on the time unit
+        let normalizedDate;
+        if (timeUnit === 'day') {
+          // Keep the day, but use month/year from current period
+          normalizedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), itemDate.getDate());
+        } else if (timeUnit === 'month') {
+          // Keep the month, but use year from current period
+          normalizedDate = new Date(currentDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+        } else {
+          // Use the date as is for year comparison
+          normalizedDate = itemDate;
+        }
+
+        return {
+          x: normalizedDate,
+          y: item.revenue
+        };
+      });
+
+      const rawPreviousProfitData = this.comparisonData.previous.timeSeries.map((item, index) => {
+        const itemDate = new Date(item.date);
+        // @ts-ignore
+        const currentDate = new Date(this.analyticsData.timeSeries[Math.min(index, this.analyticsData.timeSeries.length - 1)].date);
+
+        // Create a normalized date based on the time unit
+        let normalizedDate;
+        if (timeUnit === 'day') {
+          // Keep the day, but use month/year from current period
+          normalizedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), itemDate.getDate());
+        } else if (timeUnit === 'month') {
+          // Keep the month, but use year from current period
+          normalizedDate = new Date(currentDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+        } else {
+          // Use the date as is for year comparison
+          normalizedDate = itemDate;
+        }
+
+        return {
+          x: normalizedDate,
+          y: item.profit
+        };
+      });
+
+      // Aggregate previous period data based on time unit
+      const previousRevenueData = this.aggregateTimeSeriesData(rawPreviousRevenueData, timeUnit);
+      const previousProfitData = this.aggregateTimeSeriesData(rawPreviousProfitData, timeUnit);
+
+      // Add previous period datasets
       // @ts-ignore
       datasets.push(
         {
           label: 'Previous Revenue',
           data: previousRevenueData,
           borderColor: 'rgb(75,91,192)',
-          backgroundColor: 'rgba(75,91,192,0.1)',
-          tension: 0.1,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: 'rgb(75,91,192)'
+          backgroundColor: 'rgba(75,91,192,0.4)',
+          borderWidth: 1,
+          barPercentage: 0.8,
+          categoryPercentage: 0.9
         },
         {
           label: 'Previous Profit',
           data: previousProfitData,
           borderColor: 'rgb(255,102,166)',
-          backgroundColor: 'rgba(255,102,166, 0.1)',
-          tension: 0.1,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: 'rgb(255,102,166)'
+          backgroundColor: 'rgba(255,102,166, 0.4)',
+          borderWidth: 1,
+          barPercentage: 0.8,
+          categoryPercentage: 0.9
         }
       );
     }
 
     // Add forecast data if available and forecasting is enabled
     if (this.forecastData && this.enableForecasting) {
-      // Add forecast datasets with dotted lines
+      // Aggregate forecast data based on time unit
+      const forecastRevenueData = this.aggregateTimeSeriesData(this.forecastData.revenue, timeUnit);
+      const forecastProfitData = this.aggregateTimeSeriesData(this.forecastData.profit, timeUnit);
+
+      // Add forecast datasets
       datasets.push(
         {
           label: 'Forecast Revenue',
-          data: this.forecastData.revenue,
+          data: forecastRevenueData,
           borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0)',
-          tension: 0.1,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: 'rgb(75, 192, 192)'
+          backgroundColor: 'rgba(75, 192, 192, 0.3)',
+          borderWidth: 1,
+          // @ts-ignore
+          borderDash: [5, 5],
+          barPercentage: 0.8,
+          categoryPercentage: 0.9
         },
         {
           label: 'Forecast Profit',
-          data: this.forecastData.profit,
+          data: forecastProfitData,
           borderColor: 'rgb(153, 102, 255)',
-          backgroundColor: 'rgba(153, 102, 255, 0)',
-          tension: 0.1,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: 'rgb(153, 102, 255)'
+          backgroundColor: 'rgba(153, 102, 255, 0.3)',
+          borderWidth: 1,
+          borderDash: [5, 5],
+          barPercentage: 0.8,
+          categoryPercentage: 0.9
         }
       );
     }
 
     // @ts-ignore
     this.salesChart = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         datasets: datasets
       },
@@ -172,9 +290,11 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
           x: {
             type: 'time',
             time: {
-              unit: 'day',
+              unit: timeUnit,
               displayFormats: {
-                day: 'MMM d'
+                day: 'MMM d',
+                month: 'MMM yyyy',
+                year: 'yyyy'
               }
             },
             title: {
@@ -184,6 +304,7 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
           },
           y: {
             beginAtZero: true,
+            stacked: false,
             ticks: {
               callback: (value: string | number) => this.ticksCallback(value)
             }

@@ -30,6 +30,7 @@ import {AdminGuard} from './utils/admin.guard';
 import {SubscriptionGuard} from './utils/subscription.guard';
 import {ListingsComponent} from './components/listings/listings.component';
 import {FeatureAccessGuard} from './utils/feature-access.guard';
+import {SalesUploadComponent} from './components/sales-upload/sales-upload.component';
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
 const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
   return of(user).pipe(
@@ -65,75 +66,84 @@ const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
 })
 
 
+// Route configuration constants
+const AUTH_GUARD_CONFIG = {
+    redirectLoggedIn: {
+        canActivate: [AuthGuard],
+        data: {authGuardPipe: redirectLoggedInToDashboard}
+    },
+    requireAuth: {
+        canActivate: [AuthGuard],
+        data: {authGuardPipe: authGuardPipe}
+    }
+};
+
+const SUBSCRIPTION_GUARD_CONFIG = {
+    canActivate: [SubscriptionGuard]
+};
+
+const FEATURE_ROUTES = {
+    ANALYTICS: 'ANALYTICS_BASE'
+};
+
+// Helper functions for route creation
+const createAuthRoute = (path: string, component: any, redirectLoggedIn = false) => ({
+    path,
+    component,
+    ...(redirectLoggedIn ? AUTH_GUARD_CONFIG.redirectLoggedIn : AUTH_GUARD_CONFIG.requireAuth)
+});
+
+const createProtectedRoute = (path: string, component: any, additionalGuards: any[] = []) => ({
+    path,
+    component,
+    canActivate: [SubscriptionGuard, ...additionalGuards]
+});
+
+const createCheckoutResolver = () => ({
+    resolvedData: () => {
+        const authUser = JSON.parse(localStorage.getItem('user')!);
+        return inject(StripeService).createCustomerSession(authUser.uid);
+    }
+});
+
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent, canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
-  { path: 'forgot-password',  component: ForgotPasswordComponent,  canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }},
-  { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'auth-action', component: AuthActionComponent },
-  { path: 'signup', component: SignupFlowComponent, children: [
-      {
+    createAuthRoute('login', LoginComponent, true),
+    createAuthRoute('forgot-password', ForgotPasswordComponent, true),
+    {path: 'reset-password', component: ResetPasswordComponent},
+    {path: 'auth-action', component: AuthActionComponent},
+
+    {
+        path: 'signup',
+        component: SignupFlowComponent,
+        children: [
+            createAuthRoute('', SignupComponent, true),
+            createAuthRoute('verify-email', VerifyEmailComponent),
+            {
+                ...createAuthRoute('checkout', CheckoutComponent),
+                resolve: createCheckoutResolver()
+            },
+            createAuthRoute('complete', SignupCompleteComponent)
+        ]
+    },
+
+    {
         path: '',
-        component: SignupComponent,
-        canActivate: [AuthGuard], data: { authGuardPipe: redirectLoggedInToDashboard }
-      },
-      {
-        path: 'verify-email',
-        component: VerifyEmailComponent,
-        canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe }
-      },
-      {
-        path: 'checkout',
-        component: CheckoutComponent,
-        canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe },
-        resolve: {
-          resolvedData: () => {
-            const authUser = JSON.parse(localStorage.getItem('user')!);
-            return inject(StripeService).createCustomerSession(authUser.uid);
-          },
-        }
-      },
-      {
-        path: 'complete',
-        component: SignupCompleteComponent,
-        canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe }
-      }
-    ] },
-  { path: '', component: DashboardLayoutComponent, canActivate: [AuthGuard], data: { authGuardPipe: authGuardPipe }, children: [
-      {
-        path: 'home',
-        component: HomeComponent,
-        canActivate: [SubscriptionGuard]
-      },
-      {
-        path: 'listings',
-        component: ListingsComponent,
-        canActivate: [SubscriptionGuard]
-      },
-      {
-        path: 'sales',
-        component: SalesComponent,
-        canActivate: [SubscriptionGuard]
-      },
-      {
-        path: 'sales/:id',
-        component: SaleDetailComponent,
-        canActivate: [SubscriptionGuard]
-      },
-      {
-        path: 'analytics',
-        component: AnalyticsComponent,
-        canActivate: [SubscriptionGuard, FeatureAccessGuard],
-        data: { requiredFeature: 'analytics-base' }
-      },
-      {
-        path: 'account',
-        component: AccountComponent
-      },
-      {
-        path: 'admin',
-        component: AdminComponent,
-        canActivate: [AdminGuard]
-      }
-    ] },
-  { path: '**', redirectTo: '', },
+        component: DashboardLayoutComponent,
+        ...AUTH_GUARD_CONFIG.requireAuth,
+        children: [
+            createProtectedRoute('home', HomeComponent),
+            createProtectedRoute('listings', ListingsComponent),
+            createProtectedRoute('sales', SalesComponent),
+            createProtectedRoute('sales/:id', SaleDetailComponent),
+            {
+                ...createProtectedRoute('analytics', AnalyticsComponent, [FeatureAccessGuard]),
+                data: {requiredFeature: FEATURE_ROUTES.ANALYTICS}
+            },
+            createProtectedRoute('sales-upload', SalesUploadComponent),
+            {path: 'account', component: AccountComponent},
+            {path: 'admin', component: AdminComponent, canActivate: [AdminGuard]}
+        ]
+    },
+
+    {path: '**', redirectTo: ''}
 ];
