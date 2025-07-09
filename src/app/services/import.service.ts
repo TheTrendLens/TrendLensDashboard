@@ -53,8 +53,28 @@ export class ImportService {
     return this.http.get<any>(`${this.endpoint}/${id}`);
   }
 
+  /**
+   * Synchronous delete method (kept for backward compatibility)
+   */
   deleteImport(id: string): Observable<any> {
     return this.http.delete<any>(`${this.endpoint}/${id}`);
+  }
+
+  /**
+   * Initiates asynchronous deletion of an import
+   * @param id The ID of the import to delete
+   * @returns Observable with the response
+   */
+  initiateAsyncDelete(id: string): Observable<any> {
+    return this.http.post<any>(`${this.endpoint}/${id}/delete`, {});
+  }
+
+  /**
+   * Checks if any deletion is currently in progress
+   * @returns Observable with the deletion status
+   */
+  getDeletionStatus(): Observable<{deletionInProgress: boolean}> {
+    return this.http.get<{deletionInProgress: boolean}>(`${this.endpoint}/deletion-status`);
   }
 
   getImportStatus(id: string): Observable<any> {

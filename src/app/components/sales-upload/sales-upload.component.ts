@@ -25,9 +25,11 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
   queuedImports: ImportQueueItem[] = [];
   activeImports: any[] = [];
+  deletingImport: any = null;
 
   private queueSubscription: Subscription | null = null;
   private activeImportsSubscription: Subscription | null = null;
+  private deletionStatusSubscription: Subscription | null = null;
 
   selectedFiles: FileList | null = null;
 
@@ -59,6 +61,10 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
     if (this.activeImportsSubscription) {
       this.activeImportsSubscription.unsubscribe();
+    }
+
+    if (this.deletionStatusSubscription) {
+      this.deletionStatusSubscription.unsubscribe();
     }
   }
 
@@ -130,21 +136,138 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   }
 
   deleteImport(id: string): void {
-    if (confirm('Are you sure you want to delete this import?')) {
-      this.importService.deleteImport(id).subscribe({
-        next: () => {
-          this.snackBar.open('Import deleted successfully!', 'Close', {duration: 3000, panelClass: ['success-snackbar']});
-          this.loadImports();
+    // Check if a deletion is already in progress
+    this.importService.getDeletionStatus().subscribe({
+      next: (status) => {
+        if (status.deletionInProgress) {
+          this.snackBar.open('A deletion is already in progress. Please wait for it to complete.', 'Close', {
+            duration: 5000,
+            panelClass: ['warning-snackbar']
+          });
+          return;
+        }
+
+        // If no deletion is in progress, confirm and proceed
+        if (confirm('Are you sure you want to delete this import?')) {
+          this.importService.initiateAsyncDelete(id).subscribe({
+            next: (response) => {
+              // Store the deleting import info
+              this.deletingImport = {
+                id: response.id,
+                status: response.status,
+                progress: 0,
+                filename: this.imports.find(imp => imp.id === id)?.filename || 'Unknown'
+              };
+
+              // Add to active imports to show progress
+              this.activeImports = [...this.activeImports, this.deletingImport];
+
+              // Start polling for status
+              this.pollDeletionStatus(id);
+
+              this.snackBar.open('Deletion initiated. You can track the progress in the Processing section.', 'Close', {
+                duration: 5000,
+                panelClass: ['success-snackbar']
+              });
+            },
+            error: (error) => {
+              console.error('Error initiating deletion:', error);
+              this.snackBar.open('Error initiating deletion: ' + (error.message || 'Unknown error'), 'Close', {
+                duration: 5000,
+                panelClass: ['error-snackbar']
+              });
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error checking deletion status:', error);
+        this.snackBar.open('Error checking deletion status: ' + (error.message || 'Unknown error'), 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  /**
+   * Polls the status of a deleting import
+   * @param id The ID of the import being deleted
+   */
+  private pollDeletionStatus(id: string): void {
+    // Clear any existing subscription
+    if (this.deletionStatusSubscription) {
+      this.deletionStatusSubscription.unsubscribe();
+    }
+
+    // Create a new interval subscription
+    this.deletionStatusSubscription = interval(1000)
+      .pipe(
+        switchMap(() => this.importService.getImportStatus(id)),
+        takeWhile(status => status.status === 'deleting', true) // Include the last emission
+      )
+      .subscribe({
+        next: (status) => {
+          // Update the deleting import status
+          if (this.deletingImport && this.deletingImport.id === id) {
+            this.deletingImport.progress = status.progress;
+            this.deletingImport.status = status.status;
+
+            // Update in active imports array
+            const index = this.activeImports.findIndex(imp => imp.id === id);
+            if (index !== -1) {
+              this.activeImports[index] = {...this.deletingImport};
+              this.activeImports = [...this.activeImports]; // Trigger change detection
+            }
+
+            // If deletion is complete or failed
+            if (status.status === 'deleted' || status.status === 'failed') {
+              // Show appropriate message
+              if (status.status === 'deleted') {
+                this.snackBar.open('Import deleted successfully!', 'Close', {
+                  duration: 3000,
+                  panelClass: ['success-snackbar']
+                });
+              } else {
+                this.snackBar.open('Deletion failed: ' + (status.error_message || 'Unknown error'), 'Close', {
+                  duration: 5000,
+                  panelClass: ['error-snackbar']
+                });
+              }
+
+              // Remove from active imports after a delay
+              setTimeout(() => {
+                this.activeImports = this.activeImports.filter(imp => imp.id !== id);
+                this.deletingImport = null;
+                this.loadImports();
+              }, 3000);
+
+              // Unsubscribe from polling
+              if (this.deletionStatusSubscription) {
+                this.deletionStatusSubscription.unsubscribe();
+                this.deletionStatusSubscription = null;
+              }
+            }
+          }
         },
         error: (error) => {
-          console.error('Error deleting import:', error);
-          this.snackBar.open('Error deleting import: ' + (error.message || 'Unknown error'), 'Close', {
+          console.error('Error polling deletion status:', error);
+          this.snackBar.open('Error tracking deletion: ' + (error.message || 'Unknown error'), 'Close', {
             duration: 5000,
             panelClass: ['error-snackbar']
-          })
+          });
+
+          // Clean up
+          this.activeImports = this.activeImports.filter(imp => imp.id !== id);
+          this.deletingImport = null;
+
+          // Unsubscribe from polling
+          if (this.deletionStatusSubscription) {
+            this.deletionStatusSubscription.unsubscribe();
+            this.deletionStatusSubscription = null;
+          }
         }
-      })
-    }
+      });
   }
 
   getStatusColorClass(status: string): string {
