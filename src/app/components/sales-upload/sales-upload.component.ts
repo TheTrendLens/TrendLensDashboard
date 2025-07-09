@@ -3,14 +3,15 @@ import {SalesService} from '../../services/sales.service';
 import {ImportService} from '../../services/import.service';
 import {UserService} from '../../services/user.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {DatePipe, NgForOf} from '@angular/common';
+import {DatePipe, NgForOf, NgIf} from '@angular/common';
 
 @Component({
   selector: 'app-sales-upload',
   templateUrl: './sales-upload.component.html',
   imports: [
     NgForOf,
-    DatePipe
+    DatePipe,
+    NgIf
   ],
   styleUrl: './sales-upload.component.css'
 })
