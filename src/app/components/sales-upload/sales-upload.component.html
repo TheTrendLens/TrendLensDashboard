@@ -45,21 +45,17 @@
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Records</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listings</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
         </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
         <tr *ngFor="let importRecord of imports">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ importRecord.filename }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.created_at | date:'medium' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.total_records }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.created_at | date:'longDate' }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.sales_created }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.listings_created }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.products_created }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
             <button
               (click)="deleteImport(importRecord.id)"
