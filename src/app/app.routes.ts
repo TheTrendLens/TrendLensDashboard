@@ -25,7 +25,6 @@ import {AccountComponent} from './components/account/account.component';
 import {SalesComponent} from './components/sales/sales.component';
 import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
 import {AnalyticsComponent} from './components/analytics/analytics.component';
-import {StockAnalysisComponent} from './components/stock-analysis/stock-analysis.component';
 import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
 import {SubscriptionGuard} from './utils/subscription.guard';
@@ -139,10 +138,6 @@ export const routes: Routes = [
             createProtectedRoute('sales/:id', SaleDetailComponent),
             {
                 ...createProtectedRoute('analytics', AnalyticsComponent, [FeatureAccessGuard]),
-                data: {requiredFeature: FEATURE_ROUTES.ANALYTICS}
-            },
-            {
-                ...createProtectedRoute('stock-analysis', StockAnalysisComponent, [FeatureAccessGuard]),
                 data: {requiredFeature: FEATURE_ROUTES.ANALYTICS}
             },
             createProtectedRoute('sales-upload', SalesUploadComponent),
