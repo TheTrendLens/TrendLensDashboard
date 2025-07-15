@@ -66,7 +66,7 @@ export class ListingService {
   }
 
   update(listing: Listing): Observable<Listing> {
-    return this.http.put<Listing>(`${endpoint}`, listing);
+    return this.http.post<Listing>(`${endpoint}`, listing);
   }
 
   delete(id: string): Observable<any> {
