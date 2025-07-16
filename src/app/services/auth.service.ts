@@ -112,7 +112,10 @@ export class AuthService {
     try {
       // First authenticate with Firebase
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(this.auth, provider);
+      const result = await signInWithPopup(this.auth, provider);
+      if (result && result.user && result.user.email) {
+        await this.createUserInDatabase(result.user.uid, result.user.email);
+      }
 
       try {
         // Then try to contact the backend
