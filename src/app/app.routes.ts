@@ -133,7 +133,7 @@ export const routes: Routes = [
         ...AUTH_GUARD_CONFIG.requireAuth,
         children: [
             createProtectedRoute('home', HomeComponent),
-            createProtectedRoute('listings', ListingsComponent),
+            {path: 'listings', component: ListingsComponent, canActivate: [AdminGuard]},
             createProtectedRoute('sales', SalesComponent),
             createProtectedRoute('sales/:id', SaleDetailComponent),
             {

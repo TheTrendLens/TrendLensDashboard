@@ -8,6 +8,7 @@ import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog
 import { User as DbUser } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { Subscription } from 'rxjs';
+import { FeatureAccessService } from '../../services/feature-access.service';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -20,13 +21,16 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   isMobileSidebarOpen = false;
   currentPageTitle = 'Dashboard';
   isAdmin = false;
+  hasAnalyticsAccess = false;
   private userSubscription: Subscription | null = null;
+  private featureSubscription: Subscription | null = null;
 
   constructor(
     public authService: AuthService,
     private router: Router,
     private dialog: MatDialog,
-    private userService: UserService
+    private userService: UserService,
+    private featureAccessService: FeatureAccessService
   ) {}
 
   ngOnInit() {
@@ -41,6 +45,19 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 
     // Check if user is admin
     this.checkAdminStatus();
+
+    // Check if user has access to analytics
+    this.checkAnalyticsAccess();
+  }
+
+  private checkAnalyticsAccess() {
+    // Load initial features
+    this.featureAccessService.loadUserFeatures().subscribe();
+
+    // Subscribe to feature changes
+    this.featureSubscription = this.featureAccessService.userFeatures$.subscribe(features => {
+      this.hasAnalyticsAccess = features.includes('ANALYTICS_BASE');
+    });
   }
 
   private checkAdminStatus() {
@@ -57,9 +74,13 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Clean up subscription when component is destroyed
+    // Clean up subscriptions when component is destroyed
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
+    }
+
+    if (this.featureSubscription) {
+      this.featureSubscription.unsubscribe();
     }
   }
 
