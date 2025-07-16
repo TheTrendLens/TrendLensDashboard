@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChangePasswordComponent } from '../change-password/change-password.component';
@@ -17,7 +17,7 @@ import { QuickBooksService } from '../../services/quickbooks.service';
   templateUrl: './account.component.html',
   styleUrl: './account.component.css'
 })
-export class AccountComponent {
+export class AccountComponent implements OnInit, OnDestroy {
   userEmail: string = '';
   isLoading: boolean = false;
   selectedCurrency: string = 'GBP';
@@ -31,6 +31,12 @@ export class AccountComponent {
   isQuickBooksLoading: boolean = false;
   isQuickBooksSyncing: boolean = false;
   quickBooksCompanyId: string | null = null;
+  isQuickBooksTokenValid: boolean = false;
+  quickBooksTokenExpiresIn: number | null = null;
+  quickBooksStatusMessage: string | null = null;
+
+  // Timer for refreshing QuickBooks token status
+  private tokenStatusRefreshInterval: any;
 
   constructor(
     private authService: AuthService,
@@ -81,8 +87,45 @@ export class AccountComponent {
       this.experimentalFeatures = enabled;
     });
 
+    // Initial check of QuickBooks connection status will be done in ngOnInit
+  }
+
+  ngOnInit(): void {
     // Check QuickBooks connection status
     this.checkQuickBooksConnectionStatus();
+
+    // Start periodic refresh of token status
+    this.startTokenStatusRefresh();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up the refresh interval when component is destroyed
+    this.stopTokenStatusRefresh();
+  }
+
+  /**
+   * Starts periodic refresh of QuickBooks token status
+   * Checks every 5 minutes (300000 ms)
+   */
+  startTokenStatusRefresh(): void {
+    // Clear any existing interval
+    this.stopTokenStatusRefresh();
+
+    // Set up new interval (every 5 minutes)
+    this.tokenStatusRefreshInterval = setInterval(() => {
+      console.log('Refreshing QuickBooks token status...');
+      this.checkQuickBooksConnectionStatus();
+    }, 300000); // 5 minutes
+  }
+
+  /**
+   * Stops periodic refresh of QuickBooks token status
+   */
+  stopTokenStatusRefresh(): void {
+    if (this.tokenStatusRefreshInterval) {
+      clearInterval(this.tokenStatusRefreshInterval);
+      this.tokenStatusRefreshInterval = null;
+    }
   }
 
   /**
@@ -166,13 +209,26 @@ export class AccountComponent {
     this.isQuickBooksLoading = true;
     this.quickBooksService.getConnectionStatus(user.uid).subscribe({
       next: (response) => {
+        // Store basic connection info
         this.isQuickBooksConnected = response.connected;
         this.quickBooksCompanyId = response.companyId;
+
+        // Store enhanced token status info
+        this.isQuickBooksTokenValid = response.valid || false;
+        this.quickBooksTokenExpiresIn = response.expiresIn || null;
+        this.quickBooksStatusMessage = response.message || null;
+
+        console.log('QuickBooks connection status:', response);
         this.isQuickBooksLoading = false;
       },
       error: (error) => {
         console.error('Error checking QuickBooks connection status:', error);
         this.isQuickBooksLoading = false;
+
+        // Reset token status on error
+        this.isQuickBooksTokenValid = false;
+        this.quickBooksTokenExpiresIn = null;
+        this.quickBooksStatusMessage = `Error: ${error.message}`;
       }
     });
   }
@@ -188,8 +244,18 @@ export class AccountComponent {
     }
 
     this.isQuickBooksLoading = true;
+
+    // Reset token status before redirecting
+    this.isQuickBooksTokenValid = false;
+    this.quickBooksTokenExpiresIn = null;
+    this.quickBooksStatusMessage = 'Connecting to QuickBooks...';
+
+    // Redirect to QuickBooks authorization page
     this.quickBooksService.connectToQuickBooks(user.uid);
     // Note: The page will redirect, so we don't need to set isQuickBooksLoading to false
+
+    // When the user returns after authorization, the token status will be refreshed
+    // via the periodic refresh that was set up in ngOnInit
   }
 
   /**
@@ -202,15 +268,29 @@ export class AccountComponent {
       return;
     }
 
+    // Check if token is valid before attempting to sync
+    if (!this.isQuickBooksConnected || !this.isQuickBooksTokenValid) {
+      console.error('Cannot sync sales: QuickBooks token is invalid or missing');
+      // Refresh the token status to get the latest information
+      this.checkQuickBooksConnectionStatus();
+      return;
+    }
+
     this.isQuickBooksSyncing = true;
     this.quickBooksService.syncSalesToQuickBooks(user.uid).subscribe({
       next: (response) => {
         console.log('Sales synced successfully:', response);
         this.isQuickBooksSyncing = false;
+
+        // Refresh token status after successful sync
+        this.checkQuickBooksConnectionStatus();
       },
       error: (error) => {
         console.error('Error syncing sales to QuickBooks:', error);
         this.isQuickBooksSyncing = false;
+
+        // Refresh token status after error to check if it's a token issue
+        this.checkQuickBooksConnectionStatus();
       }
     });
   }
@@ -225,15 +305,29 @@ export class AccountComponent {
       return;
     }
 
+    // Check if token is valid before attempting to sync
+    if (!this.isQuickBooksConnected || !this.isQuickBooksTokenValid) {
+      console.error('Cannot sync listings: QuickBooks token is invalid or missing');
+      // Refresh the token status to get the latest information
+      this.checkQuickBooksConnectionStatus();
+      return;
+    }
+
     this.isQuickBooksSyncing = true;
     this.quickBooksService.syncListingsToQuickBooks(user.uid).subscribe({
       next: (response) => {
         console.log('Listings synced successfully:', response);
         this.isQuickBooksSyncing = false;
+
+        // Refresh token status after successful sync
+        this.checkQuickBooksConnectionStatus();
       },
       error: (error) => {
         console.error('Error syncing listings to QuickBooks:', error);
         this.isQuickBooksSyncing = false;
+
+        // Refresh token status after error to check if it's a token issue
+        this.checkQuickBooksConnectionStatus();
       }
     });
   }

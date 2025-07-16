@@ -14,10 +14,22 @@ export class QuickBooksService {
   /**
    * Gets the QuickBooks connection status for a user
    * @param userId The user ID
-   * @returns An Observable with the connection status
+   * @returns An Observable with the connection status and token information
    */
-  getConnectionStatus(userId: string): Observable<{ connected: boolean; companyId: string | null }> {
-    return this.http.get<{ connected: boolean; companyId: string | null }>(`${endpoint}/status/${userId}`);
+  getConnectionStatus(userId: string): Observable<{
+    connected: boolean;
+    companyId: string | null;
+    valid?: boolean;
+    expiresIn?: number;
+    message?: string;
+  }> {
+    return this.http.get<{
+      connected: boolean;
+      companyId: string | null;
+      valid?: boolean;
+      expiresIn?: number;
+      message?: string;
+    }>(`${endpoint}/status/${userId}`);
   }
 
   /**
