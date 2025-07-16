@@ -12,7 +12,7 @@ console.log(`Heroku app name: ${appName}`);
 let configuration = 'production';
 if (appName.includes('staging')) {
   console.log('Detected staging environment, using development configuration');
-  configuration = 'development';
+  configuration = 'staging';
 } else {
   console.log('Using production configuration');
 }

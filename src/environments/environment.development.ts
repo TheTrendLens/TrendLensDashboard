@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
   backend: {
-    baseURL: "https://dev.thetrendlens.co.uk"
+    baseURL: "http://localhost:3000"
   },
   firebaseConfig: {
     apiKey: "AIzaSyAe4OWrwydmxI6pYtI0FpJv_ZXxtXUZ1-4",
