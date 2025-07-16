@@ -300,7 +300,10 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
             title: {
               display: true,
               text: 'Date'
-            }
+            },
+            // Set min and max to prevent extra month at the end of the year
+            min: currentRevenueData.length > 0 ? currentRevenueData[0].x : undefined,
+            max: currentRevenueData.length > 0 ? currentRevenueData[currentRevenueData.length - 1].x : undefined
           },
           y: {
             beginAtZero: true,

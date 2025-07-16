@@ -93,7 +93,7 @@ export class StatCardsComponent implements OnInit {
           autoSkip: false,
           stepSize: 1
         },
-        bounds: 'ticks',
+        bounds: 'data',
       }
     },
     plugins: {
@@ -154,11 +154,11 @@ export class StatCardsComponent implements OnInit {
           }
         },
         ticks: {
-          source: 'labels',
+          source: 'data',
           autoSkip: false,
           stepSize: 1
         },
-        bounds: 'ticks',
+        bounds: 'data',
       }
     },
     plugins: {
@@ -350,11 +350,6 @@ export class StatCardsComponent implements OnInit {
   }
 
 
-  /**
-   * Creates a time scale configuration for chart x-axis
-   * @param format The time unit format ('day' or 'month')
-   * @returns Time scale configuration object
-   */
   private createTimeScale(format: 'day' | 'month'): any {
     const now = new Date();
     let min: Date | undefined = undefined;
@@ -363,23 +358,67 @@ export class StatCardsComponent implements OnInit {
     // Set min and max dates based on the selected timeframe
     if (format === 'month') {
       if (this.selectedTimeframe === 'year') {
-        // This year: Jan 1 to Dec 31
+        // This year: Jan 1 to current month (not beyond current month)
         min = new Date(now.getFullYear(), 0, 1);
-        max = new Date(now.getFullYear(), 11, 31);
+        max = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
       } else if (this.selectedTimeframe === 'lastyear') {
-        // Last year: Jan 1 to Dec 31 of last year
+        // Last year: Jan 1 to Dec 1 of last year (not Dec 31st to avoid duplicate)
         min = new Date(now.getFullYear() - 1, 0, 1);
-        max = new Date(now.getFullYear() - 1, 11, 31);
+        max = new Date(now.getFullYear() - 1, 11, 1); // December 1st of last year
       }
     } else if (format === 'day') {
       if (this.selectedTimeframe === 'month') {
-        // This month: 1st to last day of current month
+        // This month: 1st to current day (not beyond current day)
         min = new Date(now.getFullYear(), now.getMonth(), 1);
-        max = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
+        max = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Current day
       } else if (this.selectedTimeframe === 'lastmonth') {
         // Last month: 1st to last day of previous month
         min = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         max = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
+      }
+    }
+
+    // If we have chart data but no min/max set yet, use the data range
+    if ((!min || !max) && this.chartData.labels && this.chartData.labels.length > 0) {
+      // Get the first and last dates from the labels
+      const firstLabel = this.chartData.labels[0];
+      const lastLabel = this.chartData.labels[this.chartData.labels.length - 1];
+
+      // Only set if we don't already have values
+      if (!min && firstLabel) {
+        min = new Date(firstLabel.toString());
+      }
+      if (!max && lastLabel) {
+        const dataMax = new Date(lastLabel.toString());
+        // Ensure we don't go beyond the current date
+        if (format === 'day') {
+          max = dataMax > now ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : dataMax;
+        } else if (format === 'month') {
+          const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          max = dataMax > currentMonth ? currentMonth : dataMax;
+        }
+      }
+    }
+
+    // If we still don't have min/max and have bar chart data, use that range
+    if ((!min || !max) && this.barChartData.labels && this.barChartData.labels.length > 0) {
+      // Get the first and last dates from the bar chart labels
+      const firstLabel = this.barChartData.labels[0];
+      const lastLabel = this.barChartData.labels[this.barChartData.labels.length - 1];
+
+      // Only set if we don't already have values
+      if (!min && firstLabel) {
+        min = new Date(firstLabel.toString());
+      }
+      if (!max && lastLabel) {
+        const dataMax = new Date(lastLabel.toString());
+        // Ensure we don't go beyond the current date
+        if (format === 'day') {
+          max = dataMax > now ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : dataMax;
+        } else if (format === 'month') {
+          const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          max = dataMax > currentMonth ? currentMonth : dataMax;
+        }
       }
     }
 
@@ -395,11 +434,11 @@ export class StatCardsComponent implements OnInit {
       min: min,
       max: max,
       ticks: {
-        source: 'ticks',
+        source: 'data',
         autoSkip: false,
         stepSize: 1
       },
-      bounds: 'ticks',
+      bounds: 'data',
       distribution: 'linear'
     };
   }

@@ -15,16 +15,8 @@
         (keyup.enter)="onSearch(searchQuery)">
     </div>
 
-    <!-- Tour and Create Sale Buttons -->
+    <!-- Create Sale Button -->
     <div class="flex space-x-2">
-      <button
-        (click)="startTour()"
-        class="px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition flex items-center">
-        <mat-icon class="mr-1">help_outline</mat-icon>
-        Take Tour
-      </button>
-
-      <!-- Create Sale Button - Only shown if experimental features are enabled -->
       <button
         *ngIf="experimentalFeaturesEnabled"
         (click)="createSale()"
