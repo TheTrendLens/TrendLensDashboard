@@ -8,6 +8,7 @@ import { CurrencyService } from '../../services/currency.service';
 import { ThemeService } from '../../services/theme.service';
 import { UserService } from '../../services/user.service';
 import { FeatureFlagService } from '../../services/feature-flag.service';
+import { QuickBooksService } from '../../services/quickbooks.service';
 
 @Component({
   selector: 'app-account',
@@ -25,13 +26,20 @@ export class AccountComponent {
   experimentalFeatures: boolean = false;
   isExperimentalFeaturesUpdating: boolean = false;
 
+  // QuickBooks integration
+  isQuickBooksConnected: boolean = false;
+  isQuickBooksLoading: boolean = false;
+  isQuickBooksSyncing: boolean = false;
+  quickBooksCompanyId: string | null = null;
+
   constructor(
     private authService: AuthService,
     private stripeService: StripeService,
     public currencyService: CurrencyService,
     public themeService: ThemeService,
     private userService: UserService,
-    public featureFlagService: FeatureFlagService
+    public featureFlagService: FeatureFlagService,
+    private quickBooksService: QuickBooksService
   ) {
     const user = this.authService.getSignedInUser();
     if (user && user.email) {
@@ -72,6 +80,9 @@ export class AccountComponent {
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
       this.experimentalFeatures = enabled;
     });
+
+    // Check QuickBooks connection status
+    this.checkQuickBooksConnectionStatus();
   }
 
   /**
@@ -140,5 +151,90 @@ export class AccountComponent {
     setTimeout(() => {
       this.isExperimentalFeaturesUpdating = false;
     }, 500); // Add a small delay to show the loading state
+  }
+
+  /**
+   * Checks the QuickBooks connection status for the current user
+   */
+  checkQuickBooksConnectionStatus(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isQuickBooksLoading = true;
+    this.quickBooksService.getConnectionStatus(user.uid).subscribe({
+      next: (response) => {
+        this.isQuickBooksConnected = response.connected;
+        this.quickBooksCompanyId = response.companyId;
+        this.isQuickBooksLoading = false;
+      },
+      error: (error) => {
+        console.error('Error checking QuickBooks connection status:', error);
+        this.isQuickBooksLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Initiates the QuickBooks OAuth flow
+   */
+  connectToQuickBooks(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isQuickBooksLoading = true;
+    this.quickBooksService.connectToQuickBooks(user.uid);
+    // Note: The page will redirect, so we don't need to set isQuickBooksLoading to false
+  }
+
+  /**
+   * Syncs sales data to QuickBooks
+   */
+  syncSalesToQuickBooks(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isQuickBooksSyncing = true;
+    this.quickBooksService.syncSalesToQuickBooks(user.uid).subscribe({
+      next: (response) => {
+        console.log('Sales synced successfully:', response);
+        this.isQuickBooksSyncing = false;
+      },
+      error: (error) => {
+        console.error('Error syncing sales to QuickBooks:', error);
+        this.isQuickBooksSyncing = false;
+      }
+    });
+  }
+
+  /**
+   * Syncs listings data to QuickBooks
+   */
+  syncListingsToQuickBooks(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isQuickBooksSyncing = true;
+    this.quickBooksService.syncListingsToQuickBooks(user.uid).subscribe({
+      next: (response) => {
+        console.log('Listings synced successfully:', response);
+        this.isQuickBooksSyncing = false;
+      },
+      error: (error) => {
+        console.error('Error syncing listings to QuickBooks:', error);
+        this.isQuickBooksSyncing = false;
+      }
+    });
   }
 }
