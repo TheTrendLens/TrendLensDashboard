@@ -29,7 +29,7 @@
       <div>
         <p class="text-xs text-gray-500">Category</p>
         <ul *ngFor="let product of getLimitedProducts(sale.products, saleCard); let i = index">
-          <p #productRow *ngIf="i === 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'slug', type: 'lastWord'}) }}</p>
+          <p #productRow *ngIf="i === 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'category'}) }}</p>
           <p *ngIf="i > 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'category'}) }}</p>
         </ul>
         <p *ngIf="hasMoreProducts(sale.products, saleCard)" class="text-sm font-medium text-gray-500">...</p>
