@@ -10,7 +10,7 @@ import {
   applyActionCode, ActionCodeSettings
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
-import {take} from 'rxjs';
+import {take, firstValueFrom} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -79,7 +79,7 @@ export class AuthService {
   public async createUserInDatabase(uid: string, email: string): Promise<void> {
     try {
       // UserService.create now handles updating the BehaviorSubject and localStorage
-      await this.userService.create(uid, email).pipe(take(1)).toPromise();
+      await firstValueFrom(this.userService.create(uid, email).pipe(take(1)));
     } catch (error) {
       console.error('Failed to create user in database:', error);
       throw error;
@@ -117,15 +117,13 @@ export class AuthService {
       if (result && result.user && result.user.email) {
         try {
           // First try to fetch existing user data
-          await this.userService.get().pipe(take(1)).toPromise();
-        } catch (error) {
-          // If user doesn't exist in database, create new user
-          // @ts-ignore
-          if (error.status === 404) {
+          let user = await firstValueFrom(this.userService.get().pipe(take(1)));
+
+          if (!user || !user.id || !user.email || user.email !== result.user.email) {
             await this.createUserInDatabase(result.user.uid, result.user.email);
-          } else {
-            throw error;
           }
+        } catch (error) {
+          await this.createUserInDatabase(result.user.uid, result.user.email);
         }
       }
 
@@ -257,7 +255,7 @@ export class AuthService {
   private async fetchUserData(): Promise<void> {
     try {
       // UserService.get now handles updating the BehaviorSubject and localStorage
-      await this.userService.get().pipe(take(1)).toPromise();
+      await firstValueFrom(this.userService.get().pipe(take(1)));
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       throw error;
