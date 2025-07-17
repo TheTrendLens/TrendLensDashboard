@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
-import { Observable, of, switchMap, map, catchError, tap, firstValueFrom } from 'rxjs';
+import {Observable, of, switchMap, map, catchError, tap, firstValueFrom, from} from 'rxjs';
 import { UserService } from '../services/user.service';
 import { StripeService } from '../services/stripe.service';
 import { AuthService } from '../services/auth.service';
@@ -50,10 +50,12 @@ export class SubscriptionGuard implements CanActivate {
         // Now get the current user from the BehaviorSubject
         const user = this.userService.getCurrentUser();
 
-        // If still no user after fetching, redirect to login
+        // If still no user after fetching, sign out and redirect to login
         if (!user) {
-          console.log('No user data found after fetch, redirecting to login');
-          return of(this.router.createUrlTree(['/login']));
+          console.log('No user data found after fetch, signing out and redirecting to login');
+          return from(this.authService.logout()).pipe(
+            map(() => this.router.createUrlTree(['/login']))
+          );
         }
 
         // First check if user has active_package in the user object
