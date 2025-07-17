@@ -70,7 +70,14 @@ export class SalesComponent implements OnInit {
     this.loadData(); // This will update totalRows from the pagination response
   }
 
-  // Add these navigation methods
+  // Navigation methods
+  goToFirstPage(): void {
+    if (this.currentPage !== 1) {
+      this.currentPage = 1;
+      this.loadData();
+    }
+  }
+
   goToPreviousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
@@ -81,6 +88,20 @@ export class SalesComponent implements OnInit {
   goToNextPage(): void {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+      this.loadData();
+    }
+  }
+
+  goToLastPage(): void {
+    if (this.currentPage !== this.totalPages) {
+      this.currentPage = this.totalPages;
+      this.loadData();
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
       this.loadData();
     }
   }

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Sale } from '../models/sale';
-import {Pagination} from '../models/pagination';
+import { Pagination } from '../models/pagination';
+import { SaleSearch, SortField, SortDirection, DateFilterOption } from '../models/sale-search';
 
 const endpoint = `${environment.backend.baseURL}/api/sales`;
 
@@ -14,6 +15,10 @@ export class SalesService {
 
   constructor(private http: HttpClient) { }
 
+  /**
+   * Get sales with various filter options
+   * This method now uses the enhanced search endpoint
+   */
   getSales(
     limit: number,
     page: number,
@@ -23,34 +28,23 @@ export class SalesService {
     minProducts: number = 0,
     missingCosts: boolean = false
   ): Observable<Pagination<Sale>> {
-    let url = `${endpoint}?limit=${limit}&page=${page}`;
+    // Parse the sort parameter
+    const [sortField, sortDirection] = sortBy.split('_');
 
-    // Add search query if provided
-    if (query && query.trim() !== '') {
-      url += `&q=${encodeURIComponent(query)}`;
-    }
+    // Create a search params object
+    const searchParams: SaleSearch = {
+      limit,
+      page,
+      q: query,
+      dateFilter: dateFilter as DateFilterOption,
+      sortField: sortField as SortField,
+      sortDirection: sortDirection as SortDirection,
+      minProducts: minProducts > 0 ? minProducts : undefined,
+      missingCosts: missingCosts || undefined
+    };
 
-    // Add date filter if not 'all'
-    if (dateFilter !== 'all') {
-      url += `&dateFilter=${dateFilter}`;
-    }
-
-    // Add sort parameter
-    if (sortBy) {
-      url += `&sort=${sortBy}`;
-    }
-
-    // Add minimum products filter if specified
-    if (minProducts > 0) {
-      url += `&minProducts=${minProducts}`;
-    }
-
-    // Add missing costs filter if true
-    if (missingCosts) {
-      url += `&missingCosts=true`;
-    }
-
-    return this.http.get<Pagination<Sale>>(url);
+    // Use the enhanced search method
+    return this.searchSalesEnhanced(searchParams);
   }
 
   findOne(id: string): Observable<Sale> {
@@ -69,9 +63,41 @@ export class SalesService {
     return this.http.delete(`${endpoint}/${id}`);
   }
 
-  // Keep this method for backward compatibility
+  /**
+   * Enhanced search method that uses the new /api/sales/search endpoint
+   * @param searchParams The search parameters
+   */
+  searchSalesEnhanced(searchParams: SaleSearch): Observable<Pagination<Sale>> {
+    const url = `${endpoint}/search`;
+
+    // Convert the search params object to HttpParams
+    let params = new HttpParams();
+
+    // Add all non-undefined parameters
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined) {
+        // Handle arrays (brands, categories, paymentTypes)
+        if (Array.isArray(value)) {
+          value.forEach(item => {
+            params = params.append(key, item);
+          });
+        } else {
+          params = params.append(key, value.toString());
+        }
+      }
+    });
+
+    return this.http.get<Pagination<Sale>>(url, { params });
+  }
+
+  // Updated to use the enhanced search
   searchSales(query: string, limit: number, page: number): Observable<Pagination<Sale>> {
-    return this.getSales(limit, page, query);
+    const searchParams: SaleSearch = {
+      q: query,
+      limit: limit,
+      page: page
+    };
+    return this.searchSalesEnhanced(searchParams);
   }
 
   uploadCSVSales(file: File, user: string): Observable<any> {

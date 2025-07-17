@@ -91,12 +91,15 @@
   </div>
 </div>
 
-<!-- Pagination Arrows -->
-<div class="flex justify-between items-center mb-6">
+<!-- Pagination Info -->
+<div *ngIf="salesData.length > 0" class="flex justify-between items-center mb-6">
   <div class="text-sm text-gray-700">
     Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> to
     <span class="font-medium">{{ Math.min(currentPage * pageSize, totalRows) }}</span> of
     <span class="font-medium">{{ totalRows }}</span> sales
+  </div>
+  <div class="text-sm text-gray-700">
+    Page <span class="font-medium">{{ currentPage }}</span> of <span class="font-medium">{{ totalPages }}</span>
   </div>
 </div>
 
@@ -111,8 +114,33 @@
   </app-sale-card>
 </div>
 
-<!-- Pagination Arrows Above Cards -->
-<div class="flex justify-center mb-6 space-x-4">
+<!-- No Data Display -->
+<div *ngIf="!isLoading && salesData.length === 0" class="flex flex-col items-center justify-center py-12 px-4 w-full">
+  <mat-icon class="text-gray-400 text-6xl mb-4">search_off</mat-icon>
+  <h3 class="text-xl font-medium text-gray-900 mb-2">No sales found</h3>
+  <p class="text-gray-600 text-center max-w-md mb-4">
+    We couldn't find any sales matching your search criteria. Try adjusting your filters or search terms.
+  </p>
+  <button
+    (click)="searchQuery = ''; dateFilter = 'all'; sortBy = 'date_desc'; itemsFilter = 'all'; missingCosts = false; applyFilters()"
+    class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition">
+    Reset Filters
+  </button>
+</div>
+
+<!-- Enhanced Pagination Controls -->
+<div *ngIf="salesData.length > 0" class="flex justify-center mb-6 space-x-2 items-center">
+  <!-- First Page Button -->
+  <button
+    mat-icon-button
+    [disabled]="currentPage === 1"
+    (click)="goToFirstPage()"
+    class="flex items-center justify-center"
+    aria-label="First page">
+    <mat-icon class="flex items-center justify-center">first_page</mat-icon>
+  </button>
+
+  <!-- Previous Page Button -->
   <button
     mat-icon-button
     [disabled]="currentPage === 1"
@@ -121,6 +149,21 @@
     aria-label="Previous page">
     <mat-icon class="flex items-center justify-center">arrow_back</mat-icon>
   </button>
+
+  <!-- Page Number Input -->
+  <div class="flex items-center mx-2">
+    <input
+      type="number"
+      [min]="1"
+      [max]="totalPages"
+      [(ngModel)]="currentPage"
+      (change)="goToPage(currentPage)"
+      class="w-12 h-8 text-center border border-gray-300 rounded-md"
+      aria-label="Page number">
+    <span class="mx-2 text-gray-600">of {{ totalPages }}</span>
+  </div>
+
+  <!-- Next Page Button -->
   <button
     mat-icon-button
     [disabled]="currentPage >= totalPages"
@@ -128,5 +171,15 @@
     class="flex items-center justify-center"
     aria-label="Next page">
     <mat-icon class="flex items-center justify-center">arrow_forward</mat-icon>
+  </button>
+
+  <!-- Last Page Button -->
+  <button
+    mat-icon-button
+    [disabled]="currentPage >= totalPages"
+    (click)="goToLastPage()"
+    class="flex items-center justify-center"
+    aria-label="Last page">
+    <mat-icon class="flex items-center justify-center">last_page</mat-icon>
   </button>
 </div>
