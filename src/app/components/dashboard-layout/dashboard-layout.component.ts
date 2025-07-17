@@ -4,8 +4,6 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { filter } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import { UploadCsvDialogComponent } from '../upload-csv-dialog/upload-csv-dialog.component';
-import { User as DbUser } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { Subscription } from 'rxjs';
 import { FeatureAccessService } from '../../services/feature-access.service';
@@ -64,7 +62,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
     // Check current user first
     const currentUser = this.userService.getCurrentUser();
     if (currentUser) {
-      this.isAdmin = currentUser.admin === true;
+      this.isAdmin = currentUser.admin;
     }
 
     // Subscribe to user changes
@@ -109,20 +107,5 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 
   closeMobileSidebar() {
     this.isMobileSidebarOpen = false;
-  }
-
-  openUploadSalesDialog() {
-    const dialogRef = this.dialog.open(UploadCsvDialogComponent, {
-      width: '90%',
-      maxWidth: '600px',
-      panelClass: 'responsive-dialog'
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && result.success) {
-        // Optionally refresh data or show a success message
-        console.log('Upload successful:', result.data);
-      }
-    });
   }
 }

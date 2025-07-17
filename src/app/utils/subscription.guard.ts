@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
-import {Observable, of, switchMap, map, catchError, tap, firstValueFrom, from} from 'rxjs';
+import {Observable, of, switchMap, map, catchError, from} from 'rxjs';
 import { UserService } from '../services/user.service';
 import { StripeService } from '../services/stripe.service';
 import { AuthService } from '../services/auth.service';
@@ -32,7 +32,6 @@ export class SubscriptionGuard implements CanActivate {
     // Get the current Firebase auth user
     const firebaseUser = this.authService.getSignedInUser();
     if (!firebaseUser) {
-      console.log('No Firebase user found, redirecting to login');
       return of(this.router.createUrlTree(['/login']));
     }
 
@@ -40,7 +39,6 @@ export class SubscriptionGuard implements CanActivate {
     if (this.lastCheck &&
         (Date.now() - this.lastCheck.timestamp) < this.CACHE_DURATION &&
         this.lastCheck.userId === firebaseUser.uid) {
-      console.log('Using cached subscription check result');
       return of(this.lastCheck.result ? true : this.router.createUrlTree(['/signup/checkout']));
     }
 
@@ -52,7 +50,6 @@ export class SubscriptionGuard implements CanActivate {
 
         // If still no user after fetching, sign out and redirect to login
         if (!user) {
-          console.log('No user data found after fetch, signing out and redirecting to login');
           return from(this.authService.logout()).pipe(
             map(() => this.router.createUrlTree(['/login']))
           );
@@ -60,19 +57,15 @@ export class SubscriptionGuard implements CanActivate {
 
         // First check if user has active_package in the user object
         if (user.active_package) {
-          console.log('User has active package:', user.active_package);
           // Cache the result
           this.lastCheck = { timestamp: Date.now(), result: true, userId: user.id };
           return of(true);
         }
 
-        console.log('No active package found, checking subscription status with Stripe');
         // If not, make an API call to check the subscription status
         return this.stripeService.getSubscriptionStatus(user.id).pipe(
-          tap(subscription => console.log('Subscription status:', subscription)),
           map(subscription => {
-            const hasActiveSubscription = subscription && subscription.status === 'active';
-            console.log('Has active subscription:', hasActiveSubscription);
+            const hasActiveSubscription = subscription && subscription.status === 'active'
 
             // Cache the result
             this.lastCheck = { timestamp: Date.now(), result: hasActiveSubscription, userId: user.id };

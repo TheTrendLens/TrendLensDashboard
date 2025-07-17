@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +10,6 @@ export class TourService {
 
   constructor(private router: Router) {
     // Tour service is disabled
-    console.log('Tour service is disabled');
     // No initialization of Shepherd.js
     // No event subscription for route changes
   }
@@ -68,28 +66,24 @@ export class TourService {
   // Start the analytics page tour
   public startAnalyticsTour(): void {
     // Tour service is disabled
-    console.log('Tour service is disabled');
     return;
   }
 
   // Start the sales page tour
   public startSalesTour(): void {
     // Tour service is disabled
-    console.log('Tour service is disabled');
     return;
   }
 
   // Start the listings page tour
   public startListingsTour(): void {
     // Tour service is disabled
-    console.log('Tour service is disabled');
     return;
   }
 
   // Start the home page tour
   public startHomeTour(): void {
     // Tour service is disabled
-    console.log('Tour service is disabled');
     return;
   }
 }

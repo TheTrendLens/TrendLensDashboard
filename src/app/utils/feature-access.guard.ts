@@ -23,7 +23,7 @@ export class FeatureAccessGuard {
     return this.featureAccessService.hasAccess(requiredFeature).pipe(
       tap(hasAccess => {
         if (!hasAccess) {
-          console.log(`Access denied to feature: ${requiredFeature}`);
+
         }
       }),
       map(hasAccess => {

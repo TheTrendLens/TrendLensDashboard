@@ -7,12 +7,6 @@ const PORT = process.env.PORT || 8080;
 // Get the correct dist path
 const distPath = path.join(__dirname, 'dist/trendlens-frontend/browser');
 
-// Log the directory contents for debugging
-console.log('Directory exists:', fs.existsSync(distPath));
-if (fs.existsSync(distPath)) {
-  console.log('Files in directory:', fs.readdirSync(distPath));
-}
-
 // Configure proper MIME types
 app.use((req, res, next) => {
   // For ES modules
@@ -53,5 +47,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
 });

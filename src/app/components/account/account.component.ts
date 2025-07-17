@@ -170,11 +170,9 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.currencyService.setCurrency(this.selectedCurrency)
       .subscribe({
         next: () => {
-          console.log('Currency updated successfully');
           this.isCurrencyUpdating = false;
         },
         error: (error) => {
-          console.error('Error updating currency:', error);
           this.isCurrencyUpdating = false;
         }
       });

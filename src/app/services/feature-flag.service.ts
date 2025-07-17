@@ -48,10 +48,8 @@ export class FeatureFlagService {
     // The UserService.updateExperimentalFeatures method will handle updating the BehaviorSubject and localStorage
     this.userService.updateExperimentalFeatures(enabled).pipe(take(1)).subscribe({
       next: () => {
-        console.log('Experimental features updated successfully');
       },
       error: (error) => {
-        console.error('Error updating experimental features:', error);
         // Revert the local value if the server update fails
         this.experimentalFeaturesEnabled.next(!enabled);
       }
