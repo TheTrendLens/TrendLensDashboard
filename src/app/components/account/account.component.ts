@@ -92,15 +92,15 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Check QuickBooks connection status
-    this.checkQuickBooksConnectionStatus();
+    // this.checkQuickBooksConnectionStatus();
 
     // Start periodic refresh of token status
-    this.startTokenStatusRefresh();
+    // this.startTokenStatusRefresh();
   }
 
   ngOnDestroy(): void {
     // Clean up the refresh interval when component is destroyed
-    this.stopTokenStatusRefresh();
+    // this.stopTokenStatusRefresh();
   }
 
   /**

@@ -113,8 +113,20 @@ export class AuthService {
       // First authenticate with Firebase
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(this.auth, provider);
+
       if (result && result.user && result.user.email) {
-        await this.createUserInDatabase(result.user.uid, result.user.email);
+        try {
+          // First try to fetch existing user data
+          await this.userService.get().pipe(take(1)).toPromise();
+        } catch (error) {
+          // If user doesn't exist in database, create new user
+          // @ts-ignore
+          if (error.status === 404) {
+            await this.createUserInDatabase(result.user.uid, result.user.email);
+          } else {
+            throw error;
+          }
+        }
       }
 
       try {
