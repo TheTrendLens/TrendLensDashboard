@@ -4,14 +4,12 @@ import {ImportService} from '../../services/import.service';
 import {UserService} from '../../services/user.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, TitleCasePipe} from '@angular/common';
-import {catchError, interval, of, Subscription, switchMap, throwError} from 'rxjs';
-import {takeWhile} from 'rxjs/operators';
+import {interval, Subscription} from 'rxjs';
 import {NewSaleDto} from '../../models/new-sale-dto';
 import {NewListingDto} from '../../models/new-listing-dto';
 import {NewProductDto} from '../../models/new-product-dto';
 import * as papaparse from 'papaparse';
 import {FormsModule} from "@angular/forms";
-import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
   selector: 'app-sales-upload',
@@ -63,10 +61,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   loadImports(): void {
     this.importService.getImports().subscribe({
       next: (imports) => {
-        this.imports = imports.filter(imp =>
-          imp.status !== 'pending' &&
-          imp.status !== 'processing'
-        );
+        this.imports = imports;
       },
       error: (error) => {
         console.error('Error loading imports:', error);
@@ -312,20 +307,15 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
         // If no deletion is in progress, confirm and proceed
         if (confirm('Are you sure you want to delete this import?')) {
-          this.importService.initiateAsyncDelete(id).subscribe({
-            next: (response) => {
-              // Store the deleting import info
-              this.deletingImport = {
-                id: response.id,
-                status: response.status,
-                progress: 0,
-                filename: this.imports.find(imp => imp.id === id)?.filename || 'Unknown'
-              };
+// Find and update the import status locally
+          const importToDelete = this.imports.find(imp => imp.id === id);
+          if (importToDelete) {
+            importToDelete.status = 'deleting';
+          }
 
-              // Start polling for status
-              this.pollDeletionStatus(id);
-
-              this.snackBar.open('Deletion initiated. You can track the progress in the Processing section.', 'Close', {
+          this.importService.deleteImport(id).subscribe({
+            next: () => {
+              this.snackBar.open('Deletion queued', 'Close', {
                 duration: 5000,
                 panelClass: ['success-snackbar']
               });
@@ -348,84 +338,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
         });
       }
     });
-  }
-
-  /**
-   * Polls the status of a deleting import
-   * @param id The ID of the import being deleted
-   */
-  private pollDeletionStatus(id: string): void {
-    // Clear any existing subscription
-    if (this.deletionStatusSubscription) {
-      this.deletionStatusSubscription.unsubscribe();
-    }
-
-    // Create a new interval subscription
-    this.deletionStatusSubscription = interval(1000)
-      .pipe(
-        switchMap(() => this.importService.getImportStatus(id)),
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) {
-            return of({ status: 'deleted', progress: 100 });
-          }
-
-          return throwError(() => error);
-        }),
-        takeWhile(status => status.status === 'deleting', true) // Include the last emission
-      )
-      .subscribe({
-        next: (status) => {
-          // Update the deleting import status
-          if (this.deletingImport && this.deletingImport.id === id) {
-            this.deletingImport.progress = status.progress;
-            this.deletingImport.status = status.status;
-
-            // If deletion is complete or failed
-            if (status.status === 'deleted' || status.status === 'failed') {
-              // Show appropriate message
-              if (status.status === 'deleted') {
-                this.snackBar.open('Import deleted successfully!', 'Close', {
-                  duration: 3000,
-                  panelClass: ['success-snackbar']
-                });
-              } else {
-                this.snackBar.open('Deletion failed: ' + (status.error_message || 'Unknown error'), 'Close', {
-                  duration: 5000,
-                  panelClass: ['error-snackbar']
-                });
-              }
-
-              // Remove from active imports after a delay
-              setTimeout(() => {
-                this.deletingImport = null;
-                this.loadImports();
-              }, 3000);
-
-              // Unsubscribe from polling
-              if (this.deletionStatusSubscription) {
-                this.deletionStatusSubscription.unsubscribe();
-                this.deletionStatusSubscription = null;
-              }
-            }
-          }
-        },
-        error: (error) => {
-          console.error('Error polling deletion status:', error);
-          this.snackBar.open('Error tracking deletion: ' + (error.message || 'Unknown error'), 'Close', {
-            duration: 5000,
-            panelClass: ['error-snackbar']
-          });
-
-          // Clean up
-          this.deletingImport = null;
-
-          // Unsubscribe from polling
-          if (this.deletionStatusSubscription) {
-            this.deletionStatusSubscription.unsubscribe();
-            this.deletionStatusSubscription = null;
-          }
-        }
-      });
   }
 
   getStatusColorClass(status: string): string {

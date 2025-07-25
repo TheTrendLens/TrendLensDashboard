@@ -103,11 +103,9 @@ export class SubscriptionGuard implements CanActivate {
     const currentUser = this.userService.getCurrentUser();
 
     if (currentUser) {
-      console.log('Using existing user data');
       return of(undefined);
     }
 
-    console.log('Fetching latest user data from backend');
     // If not, fetch it from the backend
     return this.userService.get().pipe(
       map(() => undefined),

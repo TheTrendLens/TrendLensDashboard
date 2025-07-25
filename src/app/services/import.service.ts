@@ -21,12 +21,11 @@ export class ImportService {
   }
 
   getImports(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.endpoint}`).pipe(
-      tap(imports => {
-        imports.filter(importItem =>
-          importItem.status === 'pending' || importItem.status === 'processing');
-      })
-    )
+    return this.http.get<any[]>(`${this.endpoint}`);
+  }
+
+  deleteImport(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.endpoint}/${id}`);
   }
 
   /**

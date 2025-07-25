@@ -11,6 +11,7 @@ import {
 } from '@angular/fire/auth';
 import {UserService} from './user.service';
 import {take, firstValueFrom} from 'rxjs';
+import {NotificationService} from './notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +25,8 @@ export class AuthService {
   constructor(
     public auth: Auth,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {
     this.setupAuthStateListener();
   }
@@ -42,9 +44,11 @@ export class AuthService {
   private handleUserSignedIn(user: User): void {
     localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(user));
     this.fetchUserDataIfNeeded();
+    this.notificationService.connect();
   }
 
   private handleUserSignedOut(): void {
+    this.notificationService.disconnect();
     localStorage.removeItem(this.STORAGE_KEYS.USER);
     // Use the UserService to clear user data
     this.userService.clearUserData();
