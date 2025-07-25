@@ -115,6 +115,10 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  isValidDate(date: any): boolean {
+    return date instanceof Date;
+  }
+
   /**
    * Trigger file input click
    * @param userId The user ID

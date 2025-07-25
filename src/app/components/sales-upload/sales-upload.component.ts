@@ -1,11 +1,17 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {SalesService} from '../../services/sales.service';
-import {ImportQueueItem, ImportService} from '../../services/import.service';
+import {ImportService} from '../../services/import.service';
 import {UserService} from '../../services/user.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {DatePipe, DecimalPipe, NgClass, NgForOf, NgIf, TitleCasePipe} from '@angular/common';
-import {interval, Subscription, switchMap} from 'rxjs';
+import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, TitleCasePipe} from '@angular/common';
+import {catchError, interval, of, Subscription, switchMap, throwError} from 'rxjs';
 import {takeWhile} from 'rxjs/operators';
+import {NewSaleDto} from '../../models/new-sale-dto';
+import {NewListingDto} from '../../models/new-listing-dto';
+import {NewProductDto} from '../../models/new-product-dto';
+import * as papaparse from 'papaparse';
+import {FormsModule} from "@angular/forms";
+import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
   selector: 'app-sales-upload',
@@ -15,23 +21,25 @@ import {takeWhile} from 'rxjs/operators';
     NgIf,
     NgClass,
     TitleCasePipe,
-    DecimalPipe
+    FormsModule,
+    DatePipe,
+    SlicePipe
   ],
   styleUrl: './sales-upload.component.css'
 })
 export class SalesUploadComponent implements OnInit, OnDestroy {
 
   imports: any[] = [];
-
-  queuedImports: ImportQueueItem[] = [];
-  activeImports: any[] = [];
   deletingImport: any = null;
 
-  private queueSubscription: Subscription | null = null;
-  private activeImportsSubscription: Subscription | null = null;
   private deletionStatusSubscription: Subscription | null = null;
 
-  selectedFiles: FileList | null = null;
+  selectedFile: File | null = null;
+  processedSales: any[] = [];
+  step: 'upload' | 'review' = 'upload';
+  currentReviewIndex: number = 0;
+  expandedDescriptions: { [key: string]: boolean } = {};
+  isUploading: boolean = false;
 
   constructor(private salesService: SalesService,
               private importService: ImportService,
@@ -41,28 +49,12 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadImports();
 
-    this.queueSubscription = this.importService.importQueue$.subscribe(queue => {
-      this.queuedImports = queue;
-    });
-
-    this.activeImportsSubscription = this.importService.activeImports$.subscribe(imports => {
-      this.activeImports = imports;
-    });
-
     interval(10000).subscribe(() => {
       this.loadImports();
     })
   }
 
   ngOnDestroy(): void {
-    if (this.queueSubscription) {
-      this.queueSubscription.unsubscribe();
-    }
-
-    if (this.activeImportsSubscription) {
-      this.activeImportsSubscription.unsubscribe();
-    }
-
     if (this.deletionStatusSubscription) {
       this.deletionStatusSubscription.unsubscribe();
     }
@@ -71,10 +63,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   loadImports(): void {
     this.importService.getImports().subscribe({
       next: (imports) => {
-        // Filter out active imports to avoid duplication
-        const activeImportIds = this.activeImports.map(imp => imp.id);
         this.imports = imports.filter(imp =>
-          !activeImportIds.includes(imp.id) &&
           imp.status !== 'pending' &&
           imp.status !== 'processing'
         );
@@ -90,49 +79,223 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: Event): void {
-    this.selectedFiles = (event.target as HTMLInputElement).files;
+    const files = (event.target as HTMLInputElement).files;
+    if (files && files.length > 0) {
+      this.selectedFile = files[0];
+      this.parseSelectedFiles();
+    }
   }
 
-  uploadFiles(): void {
-    if (!this.selectedFiles || this.selectedFiles.length === 0) {
-      this.snackBar.open('Please select files to upload', 'Close', {duration: 5000});
+  parseSelectedFiles(): void {
+    if (!this.selectedFile) {
+      this.snackBar.open('No file selected', 'Close', {duration: 5000});
       return;
     }
 
-    // Convert FileList to array
-    const files = Array.from(this.selectedFiles);
-
-    // Filter for CSV files only
-    const csvFiles = files.filter(file =>
-      file.type === 'text/csv' || file.name.endsWith('.csv')
-    );
-
-    if (csvFiles.length === 0) {
-      this.snackBar.open('Please select CSV files only', 'Close', {duration: 5000});
+    if (!this.selectedFile.type.includes('csv') && !this.selectedFile.name.endsWith('.csv')) {
+      this.snackBar.open('Please select a CSV file only', 'Close', {duration: 5000});
       return;
     }
 
-    // Add files to queue
-    this.importService.addToQueue(csvFiles);
-
-    // Reset file input
-    (document.getElementById('fileInput') as HTMLInputElement).value = '';
-    this.selectedFiles = null;
-
-    this.snackBar.open(`Added ${csvFiles.length} files to the upload queue`, 'Close', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
+    papaparse.parse(this.selectedFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        this.processedSales = this.transformDataToSales(results.data);
+        if (this.processedSales.length > 0) {
+          this.currentReviewIndex = 0;
+          this.step = 'review';
+        } else {
+          this.snackBar.open('No valid sales data found in the selected file.', 'Close', {duration: 5000});
+          this.resetUpload();
+        }
+      },
+      error: (error) => {
+        console.error(`Error parsing file ${this.selectedFile?.name}:`, error);
+        this.snackBar.open(`Error parsing file ${this.selectedFile?.name}: ` + error.message, 'Close', {duration: 5000});
+        this.resetUpload();
+      }
     });
   }
 
-  removeFromQueue(index: number): void {
-    this.importService.removeFromQueue(index);
+  uploadProcessedSales(): void {
+    if (this.processedSales.length === 0) {
+      this.snackBar.open('No sales data to upload.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isUploading = true;
+    this.snackBar.open('Uploading sales data, please wait...', 'Close', { duration: 5000 });
+
+    this.salesService.uploadSales(this.processedSales).subscribe({
+      next: () => {
+        this.snackBar.open('Sales data uploaded successfully!', 'Close', { duration: 5000 });
+        this.loadImports();
+        this.resetUpload();
+        this.isUploading = false;
+      },
+      error: (error: { message: any; }) => {
+        console.error('Error uploading sales data:', error);
+        this.snackBar.open('Error uploading sales data: ' + (error.message || 'Unknown error'), 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
+        this.isUploading = false;
+        this.resetUpload();
+      }
+    });
   }
 
-  clearQueue(): void {
-    if (confirm('Are you sure you want to clear the upload queue?')) {
-      this.importService.clearQueue();
+  toggleDescription(prodIndex: number): void {
+    const key = `${this.currentReviewIndex}-${prodIndex}`;
+    this.expandedDescriptions[key] = !this.expandedDescriptions[key];
+  }
+
+  isDescriptionExpanded(prodIndex: number): boolean {
+    const key = `${this.currentReviewIndex}-${prodIndex}`;
+    return this.expandedDescriptions[key] || false;
+  }
+
+  cancelReview(): void {
+    this.resetUpload();
+  }
+
+  private resetUpload(): void {
+    this.processedSales = [];
+    this.selectedFile = null;
+    this.step = 'upload';
+    this.currentReviewIndex = 0;
+    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
     }
+    this.expandedDescriptions = {};
+    this.isUploading = false;
+  }
+
+  nextSale(): void {
+    if (this.currentReviewIndex < this.processedSales.length - 1) {
+      this.currentReviewIndex++;
+    }
+  }
+
+  previousSale(): void {
+    if (this.currentReviewIndex > 0) {
+      this.currentReviewIndex--;
+    }
+  }
+
+  private sanitizeFloatValue(value: string): number {
+    if (!value) return 0;
+    // Remove all non-numeric characters except decimal point and negative sign
+    const cleanValue = value.replace(/[^0-9.-]/g, '');
+    // Convert to float and round to 2 decimal places
+    return parseFloat(parseFloat(cleanValue).toFixed(2)) || 0;
+  }
+
+  transformDataToSales(data: any[]): any[] {
+    const salesMap = new Map<string, NewSaleDto>();
+
+    try {
+      data.forEach(row => {
+        // Validate date format
+        const dateParts = row['Date of sale']?.split('/');
+        if (!dateParts || dateParts.length !== 3 || parseInt(dateParts[0]) > 31 || parseInt(dateParts[1]) > 12) {
+          this.snackBar.open('Dates must be in DD/MM/YYYY format', 'Close', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
+          throw new Error('Invalid date format');
+        }
+        const saleId = row['Date of sale'] + ' | ' + row['Time of sale'] + ' | ' + row['Buyer'];
+
+        if (!salesMap.has(saleId)) {
+          const refundedToBuyer = this.sanitizeFloatValue(row['Refunded to buyer amount']);
+          const refundedToSeller = this.sanitizeFloatValue(row['Fees refunded to seller']);
+
+          if (refundedToBuyer !== 0 || refundedToSeller !== 0) {
+            return;
+          }
+
+          const platformFee = this.sanitizeFloatValue(row['Platform fee']);
+          const paymentFee = this.sanitizeFloatValue(row['Depop Payments fee']);
+          const boostingFee = this.sanitizeFloatValue(row['Boosting fee']);
+          const total = this.sanitizeFloatValue(row['Total']);
+          const totalFeeVAT = this.sanitizeFloatValue(row['Total fee VAT']);
+          const soldPrice = this.sanitizeFloatValue(row['Item price']);
+          const totalFeeExVAT = this.sanitizeFloatValue(row['Total fee excl. VAT']);
+          const usSalesTax = this.sanitizeFloatValue(row['US Sales tax']);
+          const postageCost = this.sanitizeFloatValue(row['USPS Cost']);
+
+          const sale: NewSaleDto = {
+            date_sold: this.parseDate(row['Date of sale']),
+            time_sold: row['Time of sale'] || '00:00:00',
+            buyer: row['Buyer'],
+            platform_fee: platformFee,
+            seller_postage_cost: postageCost,
+            total: parseFloat((total - usSalesTax).toFixed(2)) || 0.00,
+            payment_fee: paymentFee,
+            boosting_fee: boostingFee,
+            total_fee: parseFloat((totalFeeVAT + totalFeeExVAT).toFixed(2)) || 0.00,
+            payment_type: row['Payment type'],
+            refunded_to_buyer: refundedToBuyer,
+            refunded_to_seller: refundedToSeller,
+            sold_price: soldPrice,
+            offer: false,
+            products: [],
+          };
+          salesMap.set(saleId, sale);
+        }
+
+        const sale = salesMap.get(saleId);
+
+        if (!sale) return; // Safety check
+
+        const listing: NewListingDto = {
+          brand: row['Brand'] === 'N/A' ? 'Other' : row['Brand'],
+          category: row['Category'] || 'Uncategorized',
+          date_listed: this.parseDate(row['Date of listing']),
+          description: row['Description'],
+          item_cost: row['Item cost'] ? this.sanitizeFloatValue(row['Item cost']) : null,
+          listed_price: this.sanitizeFloatValue(row['Item price']),
+          quantity: 0,
+          source: 'CSV Import',
+        }
+
+        const product: NewProductDto = {
+          listing: listing,
+          item_cost: row['Item cost'] ? this.sanitizeFloatValue(row['Item cost']) : null,
+          size: row['Size'] || 'One size'
+        }
+
+        sale.products.push(product);
+      });
+    } catch (error: any) {
+      console.error('Error transforming data to sales:', error);
+      this.snackBar.open('Error processing CSV data: ' + (error.message || 'Unknown error'), 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return [];
+    }
+
+    return Array.from(salesMap.values());
+  }
+
+  parseDate(dateStr: string): Date {
+    const parts = dateStr.split('/').map((num) => parseInt(num, 10));
+
+    if (parts.length !== 3 || parts.some(isNaN)) {
+      throw new Error('Date must be in DD/MM/YYYY format');
+    }
+
+    const [day, month, year] = parts;
+
+    if (month > 12 || day > 31) {
+      throw new Error('Invalid date: Day must be 1-31 and month must be 1-12');
+    }
+
+    return new Date(year, month - 1, day);
   }
 
   deleteImport(id: string): void {
@@ -158,9 +321,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
                 progress: 0,
                 filename: this.imports.find(imp => imp.id === id)?.filename || 'Unknown'
               };
-
-              // Add to active imports to show progress
-              this.activeImports = [...this.activeImports, this.deletingImport];
 
               // Start polling for status
               this.pollDeletionStatus(id);
@@ -204,6 +364,13 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     this.deletionStatusSubscription = interval(1000)
       .pipe(
         switchMap(() => this.importService.getImportStatus(id)),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return of({ status: 'deleted', progress: 100 });
+          }
+
+          return throwError(() => error);
+        }),
         takeWhile(status => status.status === 'deleting', true) // Include the last emission
       )
       .subscribe({
@@ -212,13 +379,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
           if (this.deletingImport && this.deletingImport.id === id) {
             this.deletingImport.progress = status.progress;
             this.deletingImport.status = status.status;
-
-            // Update in active imports array
-            const index = this.activeImports.findIndex(imp => imp.id === id);
-            if (index !== -1) {
-              this.activeImports[index] = {...this.deletingImport};
-              this.activeImports = [...this.activeImports]; // Trigger change detection
-            }
 
             // If deletion is complete or failed
             if (status.status === 'deleted' || status.status === 'failed') {
@@ -237,7 +397,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
               // Remove from active imports after a delay
               setTimeout(() => {
-                this.activeImports = this.activeImports.filter(imp => imp.id !== id);
                 this.deletingImport = null;
                 this.loadImports();
               }, 3000);
@@ -258,7 +417,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
           });
 
           // Clean up
-          this.activeImports = this.activeImports.filter(imp => imp.id !== id);
           this.deletingImport = null;
 
           // Unsubscribe from polling

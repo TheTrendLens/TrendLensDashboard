@@ -3,16 +3,15 @@
   <h1 class="text-2xl font-bold mb-6">Sales Upload</h1>
 
   <!-- Upload Section -->
-  <div class="bg-white rounded-lg shadow p-6 mb-8">
+  <div *ngIf="step === 'upload'" class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-xl font-semibold mb-4">Upload Sales CSV</h2>
 
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select CSV Files</label>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Select Salas CSV</label>
       <input
         id="fileInput"
         type="file"
         accept=".csv"
-        multiple
         (change)="onFileSelected($event)"
         class="block w-full text-sm text-gray-500
                file:mr-4 file:py-2 file:px-4
@@ -21,101 +20,105 @@
                file:bg-brand-50 file:text-brand-700
                hover:file:bg-brand-100"
       >
-      <p class="mt-1 text-sm text-gray-500">You can select multiple CSV files or a folder of CSV files</p>
     </div>
-
-    <button
-      (click)="uploadFiles()"
-      [disabled]="!selectedFiles"
-      class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      Add to Upload Queue
-    </button>
-
   </div>
 
-  <!-- Previous Imports Section -->
-  <div class="bg-white rounded-lg shadow p-6 mb-8" *ngIf="queuedImports.length > 0 || activeImports.length > 0">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">Current and Upcoming Imports</h2>
-      <button
-        *ngIf="queuedImports.length > 0"
-        (click)="clearQueue()"
-        class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
-      >
-        Clear Queue
-      </button>
-    </div>
-
-    <!-- Active Imports -->
-    <div *ngIf="activeImports.length > 0" class="mb-6">
-      <h3 class="text-lg font-medium mb-2">Processing</h3>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-          </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let importRecord of activeImports">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ importRecord.filename }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm" [ngClass]="getStatusColorClass(importRecord.status)">
-              {{ importRecord.status | titlecase }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div class="bg-brand-600 h-2.5 rounded-full" [style.width.%]="importRecord.progress"></div>
-              </div>
-              <span class="text-xs text-gray-500">{{ importRecord.progress }}%</span>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+  <!-- Review Section: Step 2 -->
+  <div *ngIf="step === 'review' && processedSales.length > 0">
+    <div *ngIf="processedSales[currentReviewIndex] as sale" class="bg-white rounded-lg shadow p-6 mb-8">
+      <!-- Card Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Review and Add Missing Data</h2>
+        <span class="text-sm font-medium text-gray-600">
+          Sale {{ currentReviewIndex + 1 }} of {{ processedSales.length }}
+        </span>
       </div>
-    </div>
 
-    <!-- Queued Imports -->
-    <div *ngIf="queuedImports.length > 0">
-      <h3 class="text-lg font-medium mb-2">Queue</h3>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let item of queuedImports; let i = index">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.file.name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.file.size | number }} bytes</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm" [ngClass]="getStatusColorClass(item.status)">
-              {{ item.status | titlecase }}
-              <div *ngIf="item.error" class="text-xs text-red-500">{{ item.error }}</div>
-              <div *ngIf="item.status === 'processing'" class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                <div class="bg-brand-600 h-2.5 rounded-full" [style.width.%]="item.progress"></div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button
-                *ngIf="item.status === 'queued'"
-                (click)="removeFromQueue(i)"
-                class="text-red-600 hover:text-red-900"
+      <!-- Navigation and Actions -->
+      <div class="flex justify-between items-center py-4 border-t border-b border-gray-200 my-4">
+        <button (click)="cancelReview()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">Cancel Upload</button>
+
+        <div class="flex gap-4">
+          <button (click)="previousSale()" [disabled]="currentReviewIndex === 0" class="px-4 py-2 bg-white text-gray-800 rounded-lg border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+
+          <button *ngIf="currentReviewIndex < processedSales.length - 1" (click)="nextSale()" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition">Next</button>
+
+          <button (click)="uploadProcessedSales()"
+                  [disabled]="isUploading"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center disabled:bg-green-400 disabled:cursor-not-allowed">
+            <svg *ngIf="isUploading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span *ngIf="isUploading">Uploading...</span>
+            <span *ngIf="!isUploading">Upload {{ processedSales.length }} Sales</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Sale Details -->
+      <p class="text-gray-600 mb-6">Review the parsed sales data below. You can add missing item costs and adjust postage before proceeding to the next sale.</p>
+
+      <div class="p-4 border border-gray-200 rounded-lg">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Sale to {{ sale.buyer }} on {{ sale.date_sold | date:'dd/MM/yyyy' }}</h3>
+          <span class="text-sm text-gray-500">{{sale.products.length}} item(s)</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label for="seller_postage_cost" class="block text-sm font-medium text-gray-700">Postage Cost</label>
+            <input
+              type="number"
+              id="seller_postage_cost"
+              name="seller_postage_cost"
+              [(ngModel)]="sale.seller_postage_cost"
+              placeholder="Enter postage cost"
+              step="0.01"
+              min="0"
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+            >
+          </div>
+        </div>
+
+
+        <div class="mt-4 space-y-4">
+          <div *ngFor="let product of sale.products; let prodIndex = index" class="p-3 bg-gray-50 rounded-md">
+            <p class="font-medium">
+              <ng-container *ngIf="product.listing.description as desc; else noDescription">
+                <span>
+                    {{ (isDescriptionExpanded(prodIndex) || desc.length <= 100) ? desc : (desc | slice:0:100) + '...' }}
+                </span>
+                <button *ngIf="desc.length > 100" (click)="toggleDescription(prodIndex)" class="text-brand-600 hover:underline text-sm ml-2">
+                  {{ isDescriptionExpanded(prodIndex) ? 'Show less' : 'Show more' }}
+                </button>
+              </ng-container>
+              <ng-template #noDescription>No description</ng-template>
+            </p>
+            <span class="text-sm text-gray-600">Size: {{ product.size }}</span>
+            &nbsp;
+            <span class="text-sm text-gray-600">Brand: {{ product.listing.brand }}</span>
+
+            <div class="mt-2">
+              <label for="item_cost_{{prodIndex}}" class="block text-sm font-medium text-gray-700">Item Cost</label>
+              <input
+                type="number"
+                id="item_cost_{{prodIndex}}"
+                name="item_cost_{{prodIndex}}"
+                [(ngModel)]="product.item_cost"
+                placeholder="Enter cost"
+                step="0.01"
+                min="0"
+                class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
               >
-                Remove
-              </button>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
 
   <!-- Previous Imports Section -->
   <div class="bg-white rounded-lg shadow p-6">
@@ -130,7 +133,7 @@
         <thead class="bg-gray-50">
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
-<!--          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>-->
+          <!--          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>-->
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listings</th>
@@ -140,7 +143,7 @@
         <tbody class="bg-white divide-y divide-gray-200">
         <tr *ngFor="let importRecord of imports">
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ importRecord.filename }}</td>
-<!--          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.created_at | date:'longDate' }}</td>-->
+          <!--          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ importRecord.created_at | date:'dd/MM/yyyy' }}</td>-->
           <td class="px-6 py-4 whitespace-nowrap text-sm" [ngClass]="getStatusColorClass(importRecord.status)">
             {{ importRecord.status | titlecase }}
             <div *ngIf="importRecord.error_message" class="text-xs text-red-500">{{ importRecord.error_message }}</div>

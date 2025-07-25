@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 export interface UserAdminInfo {
   id: string;
   email: string;
-  last_login_date: Date | null;
+  last_login_date: Date;
   signup_date: Date;
   active_package: string | null;
   database_usage: number; // in bytes

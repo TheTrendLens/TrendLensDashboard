@@ -26,7 +26,9 @@ export class SalesService {
     dateFilter: string = 'all',
     sortBy: string = 'date_desc',
     minProducts: number = 0,
-    missingCosts: boolean = false
+    missingCosts: boolean = false,
+    startDateString?: string,
+    endDateString?: string
   ): Observable<Pagination<Sale>> {
     // Parse the sort parameter
     const [sortField, sortDirection] = sortBy.split('_');
@@ -37,6 +39,8 @@ export class SalesService {
       page,
       q: query,
       dateFilter: dateFilter as DateFilterOption,
+      startDate: startDateString ? startDateString : undefined,
+      endDate: endDateString ? endDateString : undefined,
       sortField: sortField as SortField,
       sortDirection: sortDirection as SortDirection,
       minProducts: minProducts > 0 ? minProducts : undefined,
@@ -100,11 +104,8 @@ export class SalesService {
     return this.searchSalesEnhanced(searchParams);
   }
 
-  uploadCSVSales(file: File, user: string): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('userId', user);
-    return this.http.post(`${environment.backend.baseURL}/api/csv-import/sales`, formData);
+  uploadSales(sales: Sale[]): Observable<Sale[]> {
+    return this.http.post<Sale[]>(`${environment.backend.baseURL}/api/csv-import/sales`, sales);
   }
 
   getSalesMetrics(timeframe?: string, graphed?: boolean, filterMissingCosts?: boolean): Observable<any> {

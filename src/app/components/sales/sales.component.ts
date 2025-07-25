@@ -18,12 +18,19 @@ import {SaleCardComponent} from '../sale-card/sale-card.component';
 import {CreateSaleDialogComponent} from '../create-sale-dialog/create-sale-dialog.component';
 import {FeatureFlagService} from '../../services/feature-flag.service';
 import {TourService} from '../../services/tour.service';
+import {
+  MatDatepickerToggle,
+  MatDateRangeInput,
+  MatDateRangePicker,
+  MatEndDate,
+  MatStartDate
+} from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-sales',
-  imports: [MatTableModule, NgForOf, NgIf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent],
+  imports: [MatTableModule, NgForOf, NgIf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent, MatDateRangeInput, MatDatepickerToggle, MatDateRangePicker, MatEndDate, MatStartDate],
   templateUrl: './sales.component.html',
-  styleUrl: './sales.component.css'
+  styleUrl: './sales.component.scss'
 })
 export class SalesComponent implements OnInit {
   public salesData: Sale[] = [];
@@ -32,11 +39,14 @@ export class SalesComponent implements OnInit {
   totalPages: number = 0;
 
   // New properties for filtering and sorting
-  dateFilter: string = 'all';
   sortBy: string = 'date_desc';
+  dateFilter: string = 'all';
   itemsFilter: string = 'all';
   minProducts: number = 0;
   missingCosts: boolean = false;
+  startDate?: Date;
+  endDate?: Date;
+
   Math = Math; // Make Math available to the template
 
   isLoading: boolean = false;
@@ -122,6 +132,9 @@ export class SalesComponent implements OnInit {
       this.minProducts = 0; // No minimum for 'all'
     }
 
+    const startDateString = this.startDate ? new Date(this.startDate.setHours(0, 0, 0, 0)).toISOString() : undefined;
+    const endDateString = this.endDate ? new Date(this.endDate.setHours(23, 59, 59, 999)).toISOString() : undefined;
+
     // Pass filters to the service
     this.salesService.getSales(
       this.pageSize,
@@ -130,7 +143,9 @@ export class SalesComponent implements OnInit {
       this.dateFilter,
       this.sortBy,
       this.minProducts,
-      this.missingCosts
+      this.missingCosts,
+      startDateString,
+      endDateString
     ).pipe(take(1)).subscribe({
       next: (paginatedSales) => {
         this.salesData = paginatedSales.items;
@@ -152,6 +167,11 @@ export class SalesComponent implements OnInit {
    */
   applyFilters() {
     this.currentPage = 1; // Reset to first page when filters change
+    if (this.startDate && this.endDate) {
+      this.dateFilter = 'custom';
+    } else if (!this.startDate && !this.endDate) {
+      this.dateFilter = 'all';
+    }
     this.loadData();
   }
 

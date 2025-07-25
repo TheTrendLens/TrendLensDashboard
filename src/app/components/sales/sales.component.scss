@@ -1,0 +1,47 @@
+@theme {
+  --color-midnight: #121063;
+  --color-tahiti: #3ab7bf;
+  --color-bermuda: #78dcca;
+  --breakpoint-3xl: 90rem;
+}
+
+::ng-deep .tailwind-datepicker {
+
+// Target the main container of the form field's appearance.
+.mat-mdc-text-field-wrapper {
+// Reset background and add a border to match Tailwind inputs.
+background-color: #f9fafb;     /* Equivalent to bg-gray-50 */
+  border: 1px solid #d1d5db;     /* Equivalent to border-gray-300 */
+  border-radius: 0.5rem;         /* Equivalent to rounded-lg */
+  padding: 0 0.75rem;
+}
+
+// Hide the default Material Design bottom border/ripple.
+.mdc-line-ripple {
+  display: none;
+}
+
+// Adjust padding and vertical alignment.
+.mat-mdc-form-field-flex {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: -4px;
+  align-items: center;
+  height: 42px; // Matches the height of your other inputs (p-2.5)
+}
+
+// Style the component when it's focused.
+&.mat-focused {
+  .mat-mdc-text-field-wrapper {
+  // NOTE: Replace #6366F1 with your actual brand-500 color if it's different.
+  border-color: #6366F1;
+    box-shadow: 0 0 0 1px #6366F1; // Creates the ring effect
+  }
+}
+
+// Remove the underline from the datepicker toggle icon.
+.mat-mdc-icon-button {
+  text-decoration: none;
+}
+}
+

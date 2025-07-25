@@ -10,7 +10,7 @@
       <input
         type="text"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
-        placeholder="Search by buyer name, date, etc."
+        placeholder="Search by buyer name, brand, etc."
         [(ngModel)]="searchQuery"
         (keyup.enter)="onSearch(searchQuery)">
     </div>
@@ -30,19 +30,18 @@
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <!-- Date Filter -->
     <div>
-      <label for="dateFilter" class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
-      <select
-        id="dateFilter"
-        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="dateFilter"
-        (change)="applyFilters()">
-        <option value="all">All Time</option>
-        <option value="today">Today</option>
-        <option value="week">This Week</option>
-        <option value="month">This Month</option>
-        <option value="year">This Year</option>
-      </select>
+      <label class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
+      <mat-form-field appearance="fill" class="w-full tailwind-datepicker">
+        <mat-date-range-input [rangePicker]="picker">
+          <input matStartDate placeholder="Start date" [(ngModel)]="startDate" (dateChange)="applyFilters()">
+          <input matEndDate placeholder="End date" [(ngModel)]="endDate" (dateChange)="applyFilters()">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
     </div>
+
+
 
     <!-- Sort By -->
     <div>
@@ -122,7 +121,7 @@
     We couldn't find any sales matching your search criteria. Try adjusting your filters or search terms.
   </p>
   <button
-    (click)="searchQuery = ''; dateFilter = 'all'; sortBy = 'date_desc'; itemsFilter = 'all'; missingCosts = false; applyFilters()"
+    (click)="searchQuery = ''; dateFilter = 'all'; sortBy = 'date_desc'; itemsFilter = 'all'; missingCosts = false; startDate = undefined; endDate = undefined; applyFilters()"
     class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition">
     Reset Filters
   </button>

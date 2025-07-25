@@ -1,8 +1,6 @@
-import { User } from './user';
-import { Product } from './product';
+import {NewProductDto} from './new-product-dto';
 
-export interface Sale {
-  id: string;
+export interface NewSaleDto {
   date_sold: Date;
   time_sold: string;
   buyer: string;
@@ -17,6 +15,5 @@ export interface Sale {
   refunded_to_seller: number;
   offer: boolean;
   sold_price: number;
-  products: Product[];
-  user: User;
+  products: NewProductDto[];
 }
