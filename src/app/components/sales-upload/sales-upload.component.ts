@@ -286,7 +286,14 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
       throw new Error('Invalid date: Day must be 1-31 and month must be 1-12');
     }
 
-    return new Date(year, month - 1, day);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    // Ensure the date components haven't been modified by timezone offsets
+    if (date.getUTCDate() !== day || date.getUTCMonth() !== month - 1 || date.getUTCFullYear() !== year) {
+      throw new Error('Date was modified by timezone conversion');
+    }
+
+    return date;
   }
 
   deleteImport(id: string): void {
