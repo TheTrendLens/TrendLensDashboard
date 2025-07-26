@@ -46,10 +46,6 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadImports();
-
-    interval(10000).subscribe(() => {
-      this.loadImports();
-    })
   }
 
   ngOnDestroy(): void {
