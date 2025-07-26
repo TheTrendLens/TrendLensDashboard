@@ -3,12 +3,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { io, Socket } from 'socket.io-client';
 import {UserService} from './user.service';
 import {environment} from '../../environments/environment';
+import {Observable, Subject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
   private socket: Socket | undefined;
+  private importStatusSubject = new Subject<any>();
 
   constructor(private userService: UserService, private snackBar: MatSnackBar) {}
 
@@ -37,6 +39,7 @@ export class NotificationService {
         duration: 10000,
         panelClass: [panelClass]
       });
+      this.importStatusSubject.next(data);
     });
 
     this.socket.on('disconnect', () => {
@@ -49,4 +52,9 @@ export class NotificationService {
       this.socket.disconnect();
     }
   }
+
+  onImportStatusChange(): Observable<any> {
+    return this.importStatusSubject.asObservable();
+  }
+
 }

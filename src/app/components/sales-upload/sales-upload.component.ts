@@ -5,6 +5,7 @@ import {UserService} from '../../services/user.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, TitleCasePipe} from '@angular/common';
 import {interval, Subscription} from 'rxjs';
+import {NotificationService} from '../../services/notification.service';
 import {NewSaleDto} from '../../models/new-sale-dto';
 import {NewListingDto} from '../../models/new-listing-dto';
 import {NewProductDto} from '../../models/new-product-dto';
@@ -31,6 +32,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   deletingImport: any = null;
 
   private deletionStatusSubscription: Subscription | null = null;
+  private notificationSubscription: Subscription | null = null;
 
   selectedFile: File | null = null;
   processedSales: any[] = [];
@@ -42,7 +44,12 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   constructor(private salesService: SalesService,
               private importService: ImportService,
               private userService: UserService,
-              private snackBar: MatSnackBar) {}
+              private notificationService: NotificationService,
+              private snackBar: MatSnackBar) {
+    this.notificationSubscription = this.notificationService.onImportStatusChange().subscribe(() => {
+      this.loadImports();
+    });
+  }
 
   ngOnInit() {
     this.loadImports();
@@ -51,6 +58,9 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.deletionStatusSubscription) {
       this.deletionStatusSubscription.unsubscribe();
+    }
+    if (this.notificationSubscription) {
+      this.notificationSubscription.unsubscribe();
     }
   }
 
