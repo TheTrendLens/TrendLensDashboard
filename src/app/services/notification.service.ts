@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Injectable, signal, computed } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import {UserService} from './user.service';
-import {environment} from '../../environments/environment';
-import {Observable, Subject} from 'rxjs';
+import { UserService } from './user.service';
+import { environment } from '../../environments/environment';
+import { Observable, Subject } from 'rxjs';
+import { Toast, ToastType } from '../components/toast/toast.component';
 
 @Injectable({
   providedIn: 'root',
@@ -11,8 +11,12 @@ import {Observable, Subject} from 'rxjs';
 export class NotificationService {
   private socket: Socket | undefined;
   private importStatusSubject = new Subject<any>();
+  private toastsSignal = signal<Toast[]>([]);
 
-  constructor(private userService: UserService, private snackBar: MatSnackBar) {}
+  // Public readonly signal for components to subscribe to
+  public toasts = this.toastsSignal.asReadonly();
+
+  constructor(private userService: UserService) {}
 
   connect() {
     const user = this.userService.getCurrentUser()!;
@@ -33,12 +37,10 @@ export class NotificationService {
     this.socket.on('import-status', (data) => {
       console.log('Notification received:', data);
 
-      const panelClass = data.status === 'completed' ? 'success-snackbar' : 'error-snackbar';
-
-      this.snackBar.open(data.message, 'Close', {
-        duration: 10000,
-        panelClass: [panelClass]
-      });
+      if (data.status === 'completed' || data.status === 'failed') {
+        const type: ToastType = data.status === 'completed' ? 'success' : 'error';
+        this.show(data.message, type, 10000);
+      }
       this.importStatusSubject.next(data);
     });
 
@@ -57,4 +59,77 @@ export class NotificationService {
     return this.importStatusSubject.asObservable();
   }
 
+  /**
+   * Show a toast notification
+   */
+  show(message: string, type: ToastType = 'info', duration: number = 5000, action?: string): string {
+    const id = this.generateId();
+    const toast: Toast = {
+      id,
+      message,
+      type,
+      duration,
+      action
+    };
+
+    this.toastsSignal.update(toasts => [...toasts, toast]);
+
+    // Auto-remove toast after duration
+    if (duration > 0) {
+      setTimeout(() => {
+        this.remove(id);
+      }, duration);
+    }
+
+    return id;
+  }
+
+  /**
+   * Show success notification
+   */
+  success(message: string, duration: number = 5000, action?: string): string {
+    return this.show(message, 'success', duration, action);
+  }
+
+  /**
+   * Show error notification
+   */
+  error(message: string, duration: number = 10000, action?: string): string {
+    return this.show(message, 'error', duration, action);
+  }
+
+  /**
+   * Show warning notification
+   */
+  warning(message: string, duration: number = 7000, action?: string): string {
+    return this.show(message, 'warning', duration, action);
+  }
+
+  /**
+   * Show info notification
+   */
+  info(message: string, duration: number = 5000, action?: string): string {
+    return this.show(message, 'info', duration, action);
+  }
+
+  /**
+   * Remove a specific toast
+   */
+  remove(id: string): void {
+    this.toastsSignal.update(toasts => toasts.filter(toast => toast.id !== id));
+  }
+
+  /**
+   * Clear all toasts
+   */
+  clear(): void {
+    this.toastsSignal.set([]);
+  }
+
+  /**
+   * Generate unique ID for toasts
+   */
+  private generateId(): string {
+    return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
 }

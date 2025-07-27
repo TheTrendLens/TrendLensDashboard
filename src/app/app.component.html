@@ -1,1 +1,7 @@
 <router-outlet />
+
+<app-toast
+  [toasts]="notificationService.toasts()"
+  (onClose)="notificationService.remove($event)"
+  (onAction)="notificationService.remove($event)"
+/>

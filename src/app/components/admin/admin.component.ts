@@ -3,12 +3,12 @@ import { AdminService, UserAdminInfo, PaginatedUserAdminInfo } from '../../servi
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DatePipe, NgIf } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-admin',
@@ -17,7 +17,6 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule,
     MatProgressSpinnerModule,
     DatePipe,
     NgIf,
@@ -51,7 +50,7 @@ export class AdminComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private snackBar: MatSnackBar,
+    private notificationService: NotificationService,
     private dialog: MatDialog
   ) { }
 
@@ -71,10 +70,7 @@ export class AdminComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading users:', error);
-        this.snackBar.open('Error loading users. Please try again.', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error('Error loading users. Please try again.');
         this.loading = false;
       }
     });
@@ -99,18 +95,12 @@ export class AdminComponent implements OnInit {
   deleteUser(user: UserAdminInfo): void {
     this.adminService.deleteUser(user.id).subscribe({
       next: (response) => {
-        this.snackBar.open(response.message, 'Close', {
-          duration: 5000,
-          panelClass: ['success-snackbar']
-        });
+        this.notificationService.success(response.message);
         this.loadUsers(); // Reload the user list
       },
       error: (error) => {
         console.error('Error deleting user:', error);
-        this.snackBar.open('Error deleting user. Please try again.', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error('Error deleting user. Please try again.');
       }
     });
   }
@@ -155,27 +145,18 @@ export class AdminComponent implements OnInit {
    */
   uploadPdfReport(userId: string, file: File): void {
     if (!file.type.includes('pdf')) {
-      this.snackBar.open('Only PDF files are allowed.', 'Close', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.notificationService.error('Only PDF files are allowed.');
       return;
     }
 
     this.adminService.sendReportToUser(userId, file).subscribe({
       next: (response) => {
-        this.snackBar.open(response.message, 'Close', {
-          duration: 5000,
-          panelClass: ['success-snackbar']
-        });
+        this.notificationService.success(response.message);
         this.loadUsers(); // Reload the user list to update the sent_report status
       },
       error: (error) => {
         console.error('Error uploading PDF report:', error);
-        this.snackBar.open(error.error?.message || 'Error uploading PDF report. Please try again.', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error(error.error?.message || 'Error uploading PDF report. Please try again.');
       }
     });
   }

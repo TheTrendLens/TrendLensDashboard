@@ -2,7 +2,6 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {SalesService} from '../../services/sales.service';
 import {ImportService} from '../../services/import.service';
 import {UserService} from '../../services/user.service';
-import {MatSnackBar} from '@angular/material/snack-bar';
 import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, TitleCasePipe} from '@angular/common';
 import {interval, Subscription} from 'rxjs';
 import {NotificationService} from '../../services/notification.service';
@@ -44,8 +43,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   constructor(private salesService: SalesService,
               private importService: ImportService,
               private userService: UserService,
-              private notificationService: NotificationService,
-              private snackBar: MatSnackBar) {
+              private notificationService: NotificationService) {
     this.notificationSubscription = this.notificationService.onImportStatusChange().subscribe(() => {
       this.loadImports();
     });
@@ -71,10 +69,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading imports:', error);
-        this.snackBar.open('Error loading imports: ' + (error.message || 'Unknown error'), 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error('Error loading imports: ' + (error.message || 'Unknown error'));
       }
     });
   }
@@ -89,12 +84,12 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
   parseSelectedFiles(): void {
     if (!this.selectedFile) {
-      this.snackBar.open('No file selected', 'Close', {duration: 5000});
+      this.notificationService.error('No file selected');
       return;
     }
 
     if (!this.selectedFile.type.includes('csv') && !this.selectedFile.name.endsWith('.csv')) {
-      this.snackBar.open('Please select a CSV file only', 'Close', {duration: 5000});
+      this.notificationService.error('Please select a CSV file only');
       return;
     }
 
@@ -107,13 +102,13 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
           this.currentReviewIndex = 0;
           this.step = 'review';
         } else {
-          this.snackBar.open('No valid sales data found in the selected file.', 'Close', {duration: 5000});
+          this.notificationService.error('No valid sales data found in the selected file.');
           this.resetUpload();
         }
       },
       error: (error) => {
         console.error(`Error parsing file ${this.selectedFile?.name}:`, error);
-        this.snackBar.open(`Error parsing file ${this.selectedFile?.name}: ` + error.message, 'Close', {duration: 5000});
+        this.notificationService.error(`Error parsing file ${this.selectedFile?.name}: ` + error.message);
         this.resetUpload();
       }
     });
@@ -121,26 +116,23 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
   uploadProcessedSales(): void {
     if (this.processedSales.length === 0) {
-      this.snackBar.open('No sales data to upload.', 'Close', { duration: 3000 });
+      this.notificationService.error('No sales data to upload.');
       return;
     }
 
     this.isUploading = true;
-    this.snackBar.open('Uploading sales data, please wait...', 'Close', { duration: 5000 });
+    this.notificationService.info('Uploading sales data, please wait...');
 
     this.salesService.uploadSales(this.processedSales).subscribe({
       next: () => {
-        this.snackBar.open('Sales data uploaded successfully!', 'Close', { duration: 5000 });
+        this.notificationService.success('Sales data uploaded successfully!');
         this.loadImports();
         this.resetUpload();
         this.isUploading = false;
       },
       error: (error: { message: any; }) => {
         console.error('Error uploading sales data:', error);
-        this.snackBar.open('Error uploading sales data: ' + (error.message || 'Unknown error'), 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error('Error uploading sales data: ' + (error.message || 'Unknown error'));
         this.isUploading = false;
         this.resetUpload();
       }
@@ -202,10 +194,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
         // Validate date format
         const dateParts = row['Date of sale']?.split('/');
         if (!dateParts || dateParts.length !== 3 || parseInt(dateParts[0]) > 31 || parseInt(dateParts[1]) > 12) {
-          this.snackBar.open('Dates must be in DD/MM/YYYY format', 'Close', {
-            duration: 5000,
-            panelClass: ['error-snackbar']
-          });
+          this.notificationService.error('Dates must be in DD/MM/YYYY format');
           throw new Error('Invalid date format');
         }
         const saleId = row['Date of sale'] + ' | ' + row['Time of sale'] + ' | ' + row['Buyer'];
@@ -273,10 +262,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
       });
     } catch (error: any) {
       console.error('Error transforming data to sales:', error);
-      this.snackBar.open('Error processing CSV data: ' + (error.message || 'Unknown error'), 'Close', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.notificationService.error('Error processing CSV data: ' + (error.message || 'Unknown error'));
       return [];
     }
 
@@ -307,16 +293,15 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   }
 
   deleteImport(id: string): void {
+    // Check if there are new imports in progress
+    if (this.hasNewImportsInProgress) {
+      this.notificationService.warning('Cannot delete imports while new imports are in progress. Please wait for current imports to complete.');
+      return;
+    }
+
     // Check if a deletion is already in progress
     this.importService.getDeletionStatus().subscribe({
       next: (status) => {
-        if (status.deletionInProgress) {
-          this.snackBar.open('A deletion is already in progress. Please wait for it to complete.', 'Close', {
-            duration: 5000,
-            panelClass: ['warning-snackbar']
-          });
-          return;
-        }
 
         // If no deletion is in progress, confirm and proceed
         if (confirm('Are you sure you want to delete this import?')) {
@@ -328,27 +313,18 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
           this.importService.deleteImport(id).subscribe({
             next: () => {
-              this.snackBar.open('Deletion queued', 'Close', {
-                duration: 5000,
-                panelClass: ['success-snackbar']
-              });
+              this.notificationService.success('Deletion queued');
             },
             error: (error) => {
               console.error('Error initiating deletion:', error);
-              this.snackBar.open('Error initiating deletion: ' + (error.message || 'Unknown error'), 'Close', {
-                duration: 5000,
-                panelClass: ['error-snackbar']
-              });
+              this.notificationService.error('Error initiating deletion: ' + (error.message || 'Unknown error'));
             }
           });
         }
       },
       error: (error) => {
         console.error('Error checking deletion status:', error);
-        this.snackBar.open('Error checking deletion status: ' + (error.message || 'Unknown error'), 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        this.notificationService.error('Error checking deletion status: ' + (error.message || 'Unknown error'));
       }
     });
   }
@@ -363,8 +339,63 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
         return 'text-blue-600';
       case 'pending':
         return 'text-yellow-600';
+      case 'deleting':
+        return 'text-red-600';
       default:
         return 'text-gray-600';
+    }
+  }
+
+  // Get current imports (pending, processing, deleting - excludes completed and failed)
+  get currentImports(): any[] {
+    return this.imports.filter(imp => imp.status !== 'completed' && imp.status !== 'failed');
+  }
+
+  // Get previous imports (completed and failed imports)
+  get completedImports(): any[] {
+    return this.imports.filter(imp => imp.status === 'completed' || imp.status === 'failed');
+  }
+
+  // Check if there's a delete in progress
+  get hasDeleteInProgress(): boolean {
+    return this.imports.some(imp => imp.status === 'deleting');
+  }
+
+  // Check if there are new imports in progress (pending/processing, excluding deleting)
+  get hasNewImportsInProgress(): boolean {
+    return this.imports.some(imp => imp.status === 'pending' || imp.status === 'processing');
+  }
+
+  // Check if uploads should be disabled
+  get isUploadDisabled(): boolean {
+    return this.isUploading || this.hasDeleteInProgress;
+  }
+
+  // Check if deletions should be disabled
+  get isDeleteDisabled(): boolean {
+    return this.hasNewImportsInProgress;
+  }
+
+  // Get progress percentage for an import
+  getImportProgress(importRecord: any): number {
+    return parseFloat(((importRecord.processed_records / importRecord.total_records) * 100 || 0).toFixed(2));
+  }
+
+  // Get progress bar color class
+  getProgressColorClass(status: string): string {
+    switch (status) {
+      case 'processing':
+        return 'bg-blue-600';
+      case 'deleting':
+        return 'bg-red-600';
+      case 'pending':
+        return 'bg-yellow-600';
+      case 'completed':
+        return 'bg-green-600';
+      case 'failed':
+        return 'bg-red-600';
+      default:
+        return 'bg-gray-600';
     }
   }
 
