@@ -194,7 +194,7 @@ export class StatCardsComponent implements OnInit {
 
   public updateStats() {
     // Get metrics with filterMissingCosts=true to only include sales with complete cost data
-    this.userService.getMetrics(this.selectedTimeframe, true).pipe(take(1)).subscribe({
+    this.userService.getMetrics(this.selectedTimeframe, false).pipe(take(1)).subscribe({
       next: (metrics) => {
         this.metrics = {
           revenue: metrics.revenue,
@@ -210,7 +210,7 @@ export class StatCardsComponent implements OnInit {
 
 
     // Get graphable metrics with filterMissingCosts=true to only include sales with complete cost data
-    this.userService.getGraphableMetrics(this.selectedTimeframe, true).pipe(take(1)).subscribe({
+    this.userService.getGraphableMetrics(this.selectedTimeframe, false).pipe(take(1)).subscribe({
       next: (metrics) => {
         // Set labels based on date range
         this.chartData.labels = metrics.labels;

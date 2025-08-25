@@ -33,6 +33,7 @@ export class ActionRequiredTablesComponent implements OnInit {
   saleItemCounts: { [saleId: string]: number } = {};
 
   salesIsLoading: boolean = false;
+  isMassEditMode: boolean = false;
   salesTotalRows = 1000;
   salesPageSize = 32; // Set to 32 as per requirements
   salesCurrentPage = 1;
@@ -187,5 +188,24 @@ export class ActionRequiredTablesComponent implements OnInit {
     if (this.metricsComponent) {
       this.metricsComponent.updateStats();
     }
+  }
+
+  toggleMassEditMode(): void {
+    if (this.isMassEditMode) {
+      // Exiting mass edit mode - save all changes
+      this.saveMassEditChanges();
+    } else {
+      // Entering mass edit mode
+      this.isMassEditMode = true;
+    }
+  }
+
+  private saveMassEditChanges(): void {
+    // In mass edit mode, all changes are saved automatically by individual sale cards
+    // We just need to exit mass edit mode
+    this.isMassEditMode = false;
+
+    // Refresh the data to ensure we have the latest state
+    this.loadData();
   }
 }

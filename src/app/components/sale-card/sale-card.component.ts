@@ -30,6 +30,7 @@ export class SaleCardComponent implements AfterViewInit {
   @Input() sale!: Sale;
   @Input() itemCount: number | undefined;
   @Input() canEdit: boolean = false;
+  @Input() isMassEditMode: boolean = false;
   @Output() cardClick = new EventEmitter<string>();
   @Output() saleUpdated = new EventEmitter<Sale>();
   @Output() productUpdated = new EventEmitter<Product>();
@@ -69,7 +70,7 @@ export class SaleCardComponent implements AfterViewInit {
   }
 
   onCardClick(): void {
-    if (!this.isEditing) {
+    if (!this.isEditing && !this.isMassEditMode) {
       this.cardClick.emit(this.sale.id);
     }
   }

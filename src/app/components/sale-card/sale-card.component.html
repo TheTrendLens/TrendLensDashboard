@@ -1,10 +1,11 @@
 <div #saleCard
      class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col w-full"
-     [ngClass]="{ 'cursor-pointer': !isEditing, 'cursor-default': isEditing }"
+     [ngClass]="{ 'cursor-pointer': !isEditing && !isMassEditMode, 'cursor-default': isEditing || isMassEditMode }"
      (click)="onCardClick()">
 
-  <div *ngIf="isEditing" class="absolute top-0 right-0 bg-brand-100 text-brand-800 text-xs font-medium px-2.5 py-0.5 rounded">
-    Editing
+  <div *ngIf="isEditing || isMassEditMode" class="absolute top-0 right-0 text-xs font-medium px-2.5 py-0.5 rounded"
+       [ngClass]="isMassEditMode ? 'bg-blue-100 text-blue-800' : 'bg-brand-100 text-brand-800'">
+    {{ isMassEditMode ? 'Mass Edit' : 'Editing' }}
   </div>
 
   <div class="p-3 flex-1 flex flex-col h-full">
@@ -38,16 +39,17 @@
         <p class="text-xs text-gray-500">Item Cost</p>
         <ul *ngFor="let product of getLimitedProducts(sale.products, saleCard); let i = index">
           <div class="flex items-center justify-between">
-            <p *ngIf="!editingItemCost[product.id]" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
-            <input *ngIf="editingItemCost[product.id]"
+            <p *ngIf="!editingItemCost[product.id] && !isMassEditMode" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <input *ngIf="editingItemCost[product.id] || isMassEditMode"
                    type="number"
                    step="0.01"
                    [(ngModel)]="product.item_cost"
                    (keydown.enter)="saveItemCost(product, $event)"
+                   (blur)="isMassEditMode ? saveItemCost(product, $event) : null"
                    #itemCostInput
                    [attr.data-product-id]="product.id"
                    class="text-sm font-medium border-b border-gray-300 focus:outline-none focus:border-brand-400 w-20">
-            <div>
+            <div *ngIf="!isMassEditMode">
               <button *ngIf="!editingItemCost[product.id] && this.canEdit"
                       (click)="startEditingItemCost(product.id, $event)"
                       class="text-gray-500 hover:text-brand-500">
@@ -108,9 +110,16 @@
         <span class="font-medium text-gray-500">Postage Cost</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
           <div class="flex items-center justify-between">
-            <p *ngIf="!editingPostage" class="text-sm font-medium">{{ sale.seller_postage_cost | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
-            <input *ngIf="editingPostage" type="number" step="0.01" [(ngModel)]="sale.seller_postage_cost" (keydown.enter)="savePostage($event)" #postageCostInput class="text-sm font-medium border-b border-gray-300 focus:outline-none focus:border-brand-400 w-20">
-            <div>
+            <p *ngIf="!editingPostage && !isMassEditMode" class="text-sm font-medium">{{ sale.seller_postage_cost | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <input *ngIf="editingPostage || isMassEditMode"
+                   type="number"
+                   step="0.01"
+                   [(ngModel)]="sale.seller_postage_cost"
+                   (keydown.enter)="savePostage($event)"
+                   (blur)="isMassEditMode ? savePostage($event) : null"
+                   #postageCostInput
+                   class="text-sm font-medium border-b border-gray-300 focus:outline-none focus:border-brand-400 w-20">
+            <div *ngIf="!isMassEditMode">
               <button *ngIf="!editingPostage && this.canEdit"
                       (click)="startEditingPostage($event)"
                       class="text-gray-500 hover:text-brand-500">
