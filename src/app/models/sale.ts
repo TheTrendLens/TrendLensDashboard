@@ -13,6 +13,7 @@ export interface Sale {
   boosting_fee: number;
   total_fee: number;
   payment_type: string;
+  sales_tax?: number;
   refunded_to_buyer: number;
   refunded_to_seller: number;
   offer: boolean;

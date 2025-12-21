@@ -4,9 +4,6 @@ import {BehaviorSubject, Observable, tap} from "rxjs";
 import {Listing} from "../models/listing";
 import {environment} from "../../environments/environment";
 import {User} from "../models/user";
-import {Sale} from "../models/sale";
-import {Report} from "../models/report";
-import {Pagination} from '../models/pagination';
 
 const endpoint = `${environment.backend.baseURL}/api/user`
 const USER_STORAGE_KEY = 'dbUser';
@@ -18,9 +15,23 @@ export class UserService {
   private currentUserSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
   public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
 
+  // Local user preference for showing sales tax in analytics
+  private static readonly SHOW_SALES_TAX_KEY = 'showSalesTax';
+  private showSalesTaxSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
   constructor(private http: HttpClient) {
     // Initialize from localStorage if available
     this.loadUserFromStorage();
+
+    // Initialize preference for showing sales tax
+    try {
+      const storedPref = localStorage.getItem(UserService.SHOW_SALES_TAX_KEY);
+      if (storedPref !== null) {
+        this.showSalesTaxSubject.next(storedPref === 'true');
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
   }
 
   private loadUserFromStorage(): void {
@@ -114,27 +125,39 @@ export class UserService {
 
     return this.http.get<number>(url);
   }
-  getMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
+  getMetrics(timeframe: string, filterMissingCosts: boolean = true, includeSalesTax?: boolean): Observable<{
     revenue: number;
     costs: number;
     profit: number;
     numberOfSales: number;
+    salesTax?: number;
   }> {
+    const params = new URLSearchParams();
+    if (filterMissingCosts) params.append('filterMissingCosts', 'true');
+    const include = includeSalesTax ?? this.getShowSalesTaxEnabled();
+    if (include) params.append('includeSalesTax', 'true');
+
+    const url = `${environment.backend.baseURL}/api/sales/metrics/${timeframe}${params.toString() ? `?${params.toString()}` : ''}`;
     return this.http.get<{
       revenue: number;
       costs: number;
       profit: number;
       numberOfSales: number;
-    }>(`${environment.backend.baseURL}/api/sales/metrics/${timeframe}${filterMissingCosts ? '?filterMissingCosts=true' : ''}`);
+      salesTax?: number;
+    }>(url);
   }
 
-  getGraphableMetrics(timeframe: string, filterMissingCosts: boolean = true): Observable<{
+  getGraphableMetrics(timeframe: string, filterMissingCosts: boolean = true, includeSalesTax?: boolean): Observable<{
     labels: string[];
     series: { label: string; data: number[]; borderColor: string }[];
   }> {
     const params = new URLSearchParams();
     if (filterMissingCosts) {
       params.append('filterMissingCosts', 'true');
+    }
+    const include = includeSalesTax ?? this.getShowSalesTaxEnabled();
+    if (include) {
+      params.append('includeSalesTax', 'true');
     }
 
     return this.http.get<{
@@ -207,5 +230,23 @@ export class UserService {
 
   getCategories(): Observable<string[]> {
     return this.http.get<string[]>(`${endpoint}/categories`);
+  }
+
+  // --- Sales tax preference helpers ---
+  isShowSalesTaxEnabled(): Observable<boolean> {
+    return this.showSalesTaxSubject.asObservable();
+  }
+
+  getShowSalesTaxEnabled(): boolean {
+    return this.showSalesTaxSubject.getValue();
+  }
+
+  setShowSalesTaxEnabled(enabled: boolean): void {
+    try {
+      localStorage.setItem(UserService.SHOW_SALES_TAX_KEY, String(enabled));
+    } catch (e) {
+      // ignore storage errors
+    }
+    this.showSalesTaxSubject.next(enabled);
   }
 }

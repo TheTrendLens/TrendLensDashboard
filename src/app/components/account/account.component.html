@@ -82,6 +82,36 @@
                     </p>
                   </dd>
                 </div>
+                <!-- Show Sales Tax in analytics toggle -->
+                <div class="sm:col-span-1">
+                  <dt class="text-sm font-medium text-gray-500">Show Sales Tax in Analytics</dt>
+                  <dd class="mt-1 text-sm text-gray-900">
+                    <div class="flex items-center space-x-2">
+                      <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input
+                          type="checkbox"
+                          id="showSalesTax"
+                          [(ngModel)]="showSalesTaxEnabled"
+                          (change)="onToggleShowSalesTax()"
+                          class="sr-only"
+                        />
+                        <label
+                          for="showSalesTax"
+                          class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
+                        >
+                          <span
+                            [ngClass]="{'translate-x-4': showSalesTaxEnabled, 'translate-x-0': !showSalesTaxEnabled}"
+                            class="block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out"
+                          ></span>
+                        </label>
+                      </div>
+                      <span class="text-sm font-medium text-gray-900">{{ showSalesTaxEnabled ? 'Shown' : 'Hidden' }}</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                      When enabled, dashboards and charts will include a separate Sales Tax value/series.
+                    </p>
+                  </dd>
+                </div>
                 <div *ngIf="experimentalFeatures" class="sm:col-span-1">
                   <dt class="text-sm font-medium text-gray-500">Theme</dt>
                   <dd class="mt-1 text-sm text-gray-900">
@@ -111,21 +141,34 @@
           <div class="mt-4 bg-white px-6 py-5 shadow sm:rounded-lg sm:px-8">
             <p class="text-sm text-gray-500 mb-4">
               Manage your subscription, update payment methods, or view your billing history.
+              You can upgrade to access premium features any time.
             </p>
-            <button
-              type="button"
-              (click)="goToStripeBillingPortal()"
-              [disabled]="isLoading"
-              class="inline-flex items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
-              <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <svg *ngIf="!isLoading" class="-ml-0.5 mr-1.5 h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M2.5 4A1.5 1.5 0 001 5.5V6h18v-.5A1.5 1.5 0 0017.5 4h-15zM19 8.5H1v6A1.5 1.5 0 002.5 16h15a1.5 1.5 0 001.5-1.5v-6zM3 10h.01v1H3v-1zm2 0h.01v1H5v-1zm2 0h.01v1H7v-1zm2 0h.01v1H9v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1z" clip-rule="evenodd" />
-              </svg>
-              {{ isLoading ? 'Loading...' : 'Manage Billing & Subscription' }}
-            </button>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                (click)="goToStripeBillingPortal()"
+                [disabled]="isLoading"
+                class="inline-flex items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
+                <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg *ngIf="!isLoading" class="-ml-0.5 mr-1.5 h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.5 4A1.5 1.5 0 001 5.5V6h18v-.5A1.5 1.5 0 0017.5 4h-15zM19 8.5H1v6A1.5 1.5 0 002.5 16h15a1.5 1.5 0 001.5-1.5v-6zM3 10h.01v1H3v-1zm2 0h.01v1H5v-1zm2 0h.01v1H7v-1zm2 0h.01v1H9v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1zm2 0h.01v1h-.01v-1z" clip-rule="evenodd" />
+                </svg>
+                {{ isLoading ? 'Loading...' : 'Manage Billing & Subscription' }}
+              </button>
+
+              <a
+                *ngIf="hasActiveSubscription === false"
+                routerLink="/signup/checkout"
+                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-600 ring-1 ring-inset ring-brand-300 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-brand-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M16 6V4a2 2 0 00-2-2H6a2 2 0 00-2 2v2H1v2h2l1 9a2 2 0 002 2h8a2 2 0 002-2l1-9h2V6h-3zM6 4h8v2H6V4z" />
+                </svg>
+                Upgrade to Pro
+              </a>
+            </div>
           </div>
         </div>
 

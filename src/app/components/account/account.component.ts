@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ChangePasswordComponent } from '../change-password/change-password.component';
 import { AuthService } from '../../services/auth.service';
 import { StripeService } from '../../services/stripe.service';
@@ -13,7 +14,7 @@ import { QuickBooksService } from '../../services/quickbooks.service';
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChangePasswordComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ChangePasswordComponent],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css'
 })
@@ -25,6 +26,12 @@ export class AccountComponent implements OnInit, OnDestroy {
   isDarkMode: boolean = false;
   experimentalFeatures: boolean = false;
   isExperimentalFeaturesUpdating: boolean = false;
+  // Sales tax display preference
+  showSalesTaxEnabled: boolean = false;
+
+  // Subscription status
+  hasActiveSubscription: boolean | null = null; // null = unknown/loading
+  isCheckingSubscription = false;
 
   // QuickBooks integration
   isQuickBooksConnected: boolean = false;
@@ -73,6 +80,9 @@ export class AccountComponent implements OnInit, OnDestroy {
           this.experimentalFeatures = user.experimental_features;
         }
       }
+
+      // Re-evaluate subscription status when user data changes
+      this.checkSubscriptionStatus();
     });
 
     // Initialize dark mode state
@@ -87,6 +97,12 @@ export class AccountComponent implements OnInit, OnDestroy {
       this.experimentalFeatures = enabled;
     });
 
+    // Initialize show sales tax preference
+    this.showSalesTaxEnabled = this.userService.getShowSalesTaxEnabled();
+    this.userService.isShowSalesTaxEnabled().subscribe(enabled => {
+      this.showSalesTaxEnabled = enabled;
+    });
+
     // Initial check of QuickBooks connection status will be done in ngOnInit
   }
 
@@ -96,6 +112,45 @@ export class AccountComponent implements OnInit, OnDestroy {
 
     // Start periodic refresh of token status
     // this.startTokenStatusRefresh();
+
+    // Determine subscription status initially
+    this.checkSubscriptionStatus();
+  }
+
+  onToggleShowSalesTax(): void {
+    this.userService.setShowSalesTaxEnabled(this.showSalesTaxEnabled);
+  }
+
+  /**
+   * Determines whether the current user already has an active subscription.
+   * Uses local user.active_package first, then falls back to Stripe status check.
+   */
+  private checkSubscriptionStatus(): void {
+    const currentUser = this.userService.getCurrentUser();
+    if (!currentUser) {
+      this.hasActiveSubscription = null;
+      return;
+    }
+
+    // If we already know from user object
+    if ((currentUser as any).active_package) {
+      this.hasActiveSubscription = true;
+      return;
+    }
+
+    // Otherwise query backend/Stripe
+    this.isCheckingSubscription = true;
+    this.stripeService.getSubscriptionStatus(currentUser.id).subscribe({
+      next: (subscription) => {
+        this.hasActiveSubscription = (subscription && (subscription as any).status === 'active');
+        this.isCheckingSubscription = false;
+      },
+      error: () => {
+        // On error, assume no active subscription to allow upgrade path
+        this.hasActiveSubscription = false;
+        this.isCheckingSubscription = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {

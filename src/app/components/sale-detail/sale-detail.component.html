@@ -4,7 +4,7 @@
 
 <div *ngIf="!isLoading && sale">
   <div class="space-x-4 border-b border-gray-100 mt-6 grid grid-cols-1">
-    <h2 class="text-xl text-brand-500 border-brand-400 font-semibold mb-4">{{ sale.buyer }}</h2>
+    <h2 class="text-xl text-brand-500 border-brand-400 font-semibold mb-4" [attr.title]="saleLabel">{{ saleLabel }}</h2>
     <h2 class="text-sm text-gray-500 font-semibold mb-4">{{ sale.date_sold | date }}</h2>
   </div>
 

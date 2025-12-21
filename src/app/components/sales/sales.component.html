@@ -10,7 +10,7 @@
       <input
         type="text"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
-        placeholder="Search by buyer name, brand, etc."
+        placeholder="Search by brand, description, etc."
         [(ngModel)]="searchQuery"
         (keyup.enter)="onSearch(searchQuery)">
     </div>
@@ -55,8 +55,8 @@
         <option value="date_asc">Date (Oldest First)</option>
         <option value="total_desc">Revenue (High to Low)</option>
         <option value="total_asc">Revenue (Low to High)</option>
-        <option value="buyer_asc">Buyer Name (A-Z)</option>
-        <option value="buyer_desc">Buyer Name (Z-A)</option>
+        <option value="buyer_asc">Alphabetical (A-Z)</option>
+        <option value="buyer_desc">Alphabetical (Z-A)</option>
       </select>
     </div>
 

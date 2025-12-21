@@ -7,4 +7,5 @@ export interface NewListingDto {
   quantity:     number;
   description:  string;
   source:       string;
+  season?:      string;
 }

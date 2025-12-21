@@ -1,0 +1,4 @@
+Sale Date,Sale Time,Customer Name,Item Title,Brand Name,Product Category,List Date,Item Size,Sale Amount,Listing Price,Platform Fee Amount,Payment Processing Fee,Total Revenue,Payment Method
+15/10/2024,14:30:00,john_doe,Vintage Nike Hoodie,Nike,Clothing,10/10/2024,Large,45.00,50.00,4.50,1.35,39.15,PayPal
+16/10/2024,09:15:00,jane_smith,Adidas Sneakers,Adidas,Shoes,12/10/2024,UK 8,80.00,85.00,8.00,2.40,69.60,Card
+17/10/2024,16:45:00,mike_jones,Zara Jacket,Zara,Outerwear,13/10/2024,Medium,35.00,40.00,3.50,1.05,30.45,PayPal

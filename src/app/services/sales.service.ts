@@ -108,13 +108,18 @@ export class SalesService {
     return this.http.post<Sale[]>(`${environment.backend.baseURL}/api/csv-import/sales`, sales);
   }
 
-  getSalesMetrics(timeframe?: string, graphed?: boolean, filterMissingCosts?: boolean): Observable<any> {
+  getSalesMetrics(
+    timeframe?: string,
+    graphed?: boolean,
+    filterMissingCosts?: boolean,
+    includeSalesTax?: boolean,
+  ): Observable<any> {
     let url = `${endpoint}/metrics`;
     if (timeframe) {
       url += `/${timeframe}`;
     }
 
-    let params = {};
+    let params: { [key: string]: string | boolean } = {};
     if (graphed !== undefined) {
       // @ts-ignore
       params['graphed'] = graphed;
@@ -122,6 +127,11 @@ export class SalesService {
     if (filterMissingCosts !== undefined) {
       // @ts-ignore
       params['filterMissingCosts'] = filterMissingCosts;
+    }
+
+    if (includeSalesTax !== undefined) {
+      // expose tax series/field when requested
+      params['includeSalesTax'] = includeSalesTax;
     }
 
     return this.http.get<any>(url, { params });

@@ -1,10 +1,10 @@
-import {Component, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
+import {Component, OnInit, QueryList, ViewChildren} from '@angular/core';
 import {take} from 'rxjs';
 import { UserService } from '../../services/user.service';
 import {NgClass, NgForOf, CurrencyPipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {BaseChartDirective} from 'ng2-charts';
-import {Chart, ChartData, ChartDataset, ChartOptions, registerables, TooltipItem} from 'chart.js';
+import {Chart, ChartData, ChartOptions, registerables, TooltipItem} from 'chart.js';
 import TrendlineLinearPlugin from 'chartjs-plugin-trendline';
 import 'chartjs-adapter-date-fns';
 import { CurrencyService } from '../../services/currency.service';
@@ -31,12 +31,15 @@ export class StatCardsComponent implements OnInit {
     costs: number;
     profit: number;
     numberOfSales: number;
+    salesTax?: number;
   } = {
     revenue: 0,
     costs: 0,
     profit: 0,
-    numberOfSales: 0
+    numberOfSales: 0,
   };
+
+  showSalesTaxEnabled = false;
 
   timeframeOptions = [
     { label: 'This Year', value: 'year' },
@@ -189,18 +192,25 @@ export class StatCardsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // React to user preference changes for showing sales tax
+    this.userService.isShowSalesTaxEnabled().subscribe((enabled) => {
+      this.showSalesTaxEnabled = enabled;
+      this.updateStats();
+    });
     this.updateStats();
   }
 
   public updateStats() {
     // Get metrics with filterMissingCosts=true to only include sales with complete cost data
-    this.userService.getMetrics(this.selectedTimeframe, false).pipe(take(1)).subscribe({
+    const includeTax = this.userService.getShowSalesTaxEnabled();
+    this.userService.getMetrics(this.selectedTimeframe, false, includeTax).pipe(take(1)).subscribe({
       next: (metrics) => {
         this.metrics = {
           revenue: metrics.revenue,
           costs: metrics.costs,
           profit: metrics.profit,
           numberOfSales: metrics.numberOfSales,
+          salesTax: metrics.salesTax ?? undefined,
         };
       },
       error: (error) => {
@@ -210,14 +220,16 @@ export class StatCardsComponent implements OnInit {
 
 
     // Get graphable metrics with filterMissingCosts=true to only include sales with complete cost data
-    this.userService.getGraphableMetrics(this.selectedTimeframe, false).pipe(take(1)).subscribe({
+    this.userService.getGraphableMetrics(this.selectedTimeframe, false, includeTax).pipe(take(1)).subscribe({
       next: (metrics) => {
         // Set labels based on date range
         this.chartData.labels = metrics.labels;
         this.barChartData.labels = metrics.labels;
 
         // Update chart datasets
-        this.chartData.datasets = metrics.series.filter((series) => series.label == 'Profit' || series.label == 'Costs').map((series) => ({
+        this.chartData.datasets = metrics.series
+          .filter((series) => ['Profit', 'Costs', 'Sales Tax'].includes(series.label))
+          .map((series) => ({
           label: series.label,
           data: series.data,
           borderColor: series.borderColor,

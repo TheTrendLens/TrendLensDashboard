@@ -3,13 +3,15 @@ import {SalesService} from '../../services/sales.service';
 import {ImportService} from '../../services/import.service';
 import {UserService} from '../../services/user.service';
 import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, TitleCasePipe} from '@angular/common';
-import {interval, Subscription} from 'rxjs';
+import {Subscription} from 'rxjs';
 import {NotificationService} from '../../services/notification.service';
 import {NewSaleDto} from '../../models/new-sale-dto';
 import {NewListingDto} from '../../models/new-listing-dto';
 import {NewProductDto} from '../../models/new-product-dto';
 import * as papaparse from 'papaparse';
 import {FormsModule} from "@angular/forms";
+import {ColumnMappingModalComponent, ColumnMapping} from '../column-mapping-modal/column-mapping-modal.component';
+import { createSaleLabel } from '../../utils/sale-label.util';
 
 @Component({
   selector: 'app-sales-upload',
@@ -21,7 +23,8 @@ import {FormsModule} from "@angular/forms";
     TitleCasePipe,
     FormsModule,
     DatePipe,
-    SlicePipe
+    SlicePipe,
+    ColumnMappingModalComponent
   ],
   styleUrl: './sales-upload.component.css'
 })
@@ -35,10 +38,23 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
 
   selectedFile: File | null = null;
   processedSales: any[] = [];
-  step: 'upload' | 'review' = 'upload';
+  step: 'upload' | 'mapping' | 'review' = 'upload';
   currentReviewIndex: number = 0;
   expandedDescriptions: { [key: string]: boolean } = {};
   isUploading: boolean = false;
+
+  // Column mapping properties
+  csvColumns: string[] = [];
+  columnMappings: ColumnMapping[] = [];
+  showMappingModal: boolean = false;
+  rawCsvData: any[] = [];
+
+  // Date format selection for parsing dates from CSV
+  dateFormat: 'DMY' | 'MDY' = 'DMY';
+
+  // Validation results for pre-flight check
+  validationErrors: { row?: number; field: string; message: string }[] = [];
+  validationWarnings: { row?: number; field: string; message: string }[] = [];
 
   constructor(private salesService: SalesService,
               private importService: ImportService,
@@ -59,6 +75,14 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     }
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
+    }
+  }
+
+  getSaleLabel(sale: any): string {
+    try {
+      return createSaleLabel(sale?.products, sale?.date_sold);
+    } catch {
+      return 'Sale';
     }
   }
 
@@ -97,12 +121,16 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        this.processedSales = this.transformDataToSales(results.data);
-        if (this.processedSales.length > 0) {
-          this.currentReviewIndex = 0;
-          this.step = 'review';
+        if (results.data && results.data.length > 0) {
+          // Extract column headers
+          this.csvColumns = Object.keys(results.data[0] as object);
+          this.rawCsvData = results.data;
+
+          // Show mapping modal
+          this.showMappingModal = true;
+          this.step = 'mapping';
         } else {
-          this.notificationService.error('No valid sales data found in the selected file.');
+          this.notificationService.error('No data found in the selected file.');
           this.resetUpload();
         }
       },
@@ -114,16 +142,51 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     });
   }
 
+  onMappingConfirmed(mappings: ColumnMapping[]): void {
+    this.columnMappings = mappings;
+    this.showMappingModal = false;
+
+    // Process CSV data with mappings
+    this.processedSales = this.transformDataToSalesWithMappings(this.rawCsvData, mappings);
+
+    // Build pre-flight validation report
+    this.runPreflightValidation();
+
+    if (this.processedSales.length > 0) {
+      this.currentReviewIndex = 0;
+      this.step = 'review';
+    } else {
+      this.notificationService.error('No valid sales data found after processing mappings.');
+      this.resetUpload();
+    }
+  }
+
+  onMappingCancelled(): void {
+    this.showMappingModal = false;
+    this.resetUpload();
+  }
+
   uploadProcessedSales(): void {
     if (this.processedSales.length === 0) {
       this.notificationService.error('No sales data to upload.');
       return;
     }
 
+    if (this.validationErrors.length > 0) {
+      this.notificationService.error('Please fix validation errors before uploading.');
+      return;
+    }
+
     this.isUploading = true;
     this.notificationService.info('Uploading sales data, please wait...');
 
-    this.salesService.uploadSales(this.processedSales).subscribe({
+    // Strip client-side review meta before upload
+    const payload = this.processedSales.map((s: any) => {
+      const { __groupingKey, __groupingMethod, __mergedCount, ...rest } = s;
+      return rest;
+    });
+
+    this.salesService.uploadSales(payload).subscribe({
       next: () => {
         this.notificationService.success('Sales data uploaded successfully!');
         this.loadImports();
@@ -164,6 +227,12 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     }
     this.expandedDescriptions = {};
     this.isUploading = false;
+
+    // Clear mapping-related properties
+    this.csvColumns = [];
+    this.columnMappings = [];
+    this.showMappingModal = false;
+    this.rawCsvData = [];
   }
 
   nextSale(): void {
@@ -186,18 +255,188 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     return parseFloat(parseFloat(cleanValue).toFixed(2)) || 0;
   }
 
-  transformDataToSales(data: any[]): any[] {
-    const salesMap = new Map<string, NewSaleDto>();
+  transformDataToSalesWithMappings(data: any[], mappings: ColumnMapping[]): any[] {
+    if (!data || data.length === 0 || !mappings || mappings.length === 0) {
+      return [];
+    }
+
+    // Create mapping lookup from CSV column to database field
+    const mappingLookup = new Map<string, string>();
+    mappings.forEach(mapping => {
+      mappingLookup.set(mapping.dbField, mapping.csvColumn);
+    });
+
+    // Helper function to get mapped value
+    const getMappedValue = (dbField: string, row: any): any => {
+      const csvColumn = mappingLookup.get(dbField);
+      return csvColumn ? row[csvColumn] : null;
+    };
+
+    // Extend NewSaleDto with client-side meta for review UI
+    type ReviewSale = NewSaleDto & {
+      __groupingKey?: string;
+      __groupingMethod?: 'external_id' | 'date_time_buyer' | 'unique';
+      __mergedCount?: number;
+    };
+
+    const salesMap = new Map<string, ReviewSale>();
+    let rowCounter = 0;
 
     try {
       data.forEach(row => {
+        rowCounter++;
+        // Get required sale fields using mappings
+        const dateSoldValue = getMappedValue('date_sold', row);
+        const timeSoldValue = getMappedValue('time_sold', row);
+        const buyerValue = getMappedValue('buyer', row);
+        const externalSalesIdRaw = getMappedValue('external_sales_id', row);
+        const externalSalesIdValue = typeof externalSalesIdRaw === 'string' ? externalSalesIdRaw.trim() : externalSalesIdRaw;
+
+        if (!dateSoldValue) {
+          console.warn('Skipping row due to missing required date_sold:', row);
+          return;
+        }
+
+        // Validate and parse date
+        let parsedDate: Date;
+        try {
+          parsedDate = this.parseDate(dateSoldValue);
+        } catch (error) {
+          console.warn('Skipping row due to invalid date format:', dateSoldValue);
+          return;
+        }
+
+        // Grouping strategy:
+        // 1) If Sales ID provided, use that to group multi-line orders
+        // 2) Else, fallback to (date + time + buyer) if both provided
+        // 3) Else, treat each row as unique
+        const hasExternalId = !!externalSalesIdValue;
+        const canMerge = !!timeSoldValue && !!buyerValue;
+        const saleId = hasExternalId
+          ? `ext:${externalSalesIdValue}`
+          : (canMerge ? `${dateSoldValue} | ${timeSoldValue} | ${buyerValue}` : `unique-${rowCounter}`);
+
+        if (!salesMap.has(saleId)) {
+          // Check for refunds
+          const refundedToBuyer = this.sanitizeFloatValue(getMappedValue('refunded_to_buyer', row) || '0');
+          const refundedToSeller = this.sanitizeFloatValue(getMappedValue('refunded_to_seller', row) || '0');
+
+          if (refundedToBuyer !== 0 || refundedToSeller !== 0) {
+            return;
+          }
+
+          // Get financial values with defaults
+          const platformFee = this.sanitizeFloatValue(getMappedValue('platform_fee', row) || '0');
+          const paymentFee = this.sanitizeFloatValue(getMappedValue('payment_fee', row) || '0');
+          const boostingFee = this.sanitizeFloatValue(getMappedValue('boosting_fee', row) || '0');
+          const total = this.sanitizeFloatValue(getMappedValue('total', row) || '0');
+          const salesTax = this.sanitizeFloatValue(getMappedValue('sales_tax', row) || '0');
+          const soldPrice = this.sanitizeFloatValue(getMappedValue('sold_price', row) || '0');
+          const sellerPostageCost = this.sanitizeFloatValue(getMappedValue('seller_postage_cost', row) || '0');
+
+          const sale: ReviewSale = {
+            date_sold: parsedDate,
+            time_sold: timeSoldValue || '00:00:00',
+            buyer: buyerValue || '',
+            external_sales_id: hasExternalId ? String(externalSalesIdValue) : null,
+            platform_fee: platformFee,
+            seller_postage_cost: sellerPostageCost,
+            total: total - salesTax,
+            payment_fee: paymentFee,
+            boosting_fee: boostingFee,
+            total_fee: paymentFee + platformFee + boostingFee,
+            payment_type: getMappedValue('payment_type', row) || 'Unknown',
+            sales_tax: salesTax,
+            refunded_to_buyer: refundedToBuyer,
+            refunded_to_seller: refundedToSeller,
+            sold_price: soldPrice,
+            offer: getMappedValue('offer', row) === 'true' || false,
+            products: [],
+            __groupingKey: hasExternalId ? String(externalSalesIdValue) : (canMerge ? `${this.formatDateForKey(parsedDate)}|${timeSoldValue}|${buyerValue}` : `row:${rowCounter}`),
+            __groupingMethod: hasExternalId ? 'external_id' : (canMerge ? 'date_time_buyer' : 'unique'),
+            __mergedCount: 0,
+          };
+          salesMap.set(saleId, sale);
+        }
+
+        const sale = salesMap.get(saleId);
+        if (!sale) return;
+
+        // Increment merged lines counter
+        sale.__mergedCount = (sale.__mergedCount ?? 0) + 1;
+
+        // Get listing fields using mappings
+        const description = getMappedValue('description', row);
+        const dateListedValue = getMappedValue('date_listed', row);
+
+        if (!description || !dateListedValue) {
+          console.warn('Skipping product due to missing required listing fields:', row);
+          return;
+        }
+
+        let parsedListingDate: Date;
+        try {
+          parsedListingDate = this.parseDate(dateListedValue);
+        } catch (error) {
+          console.warn('Skipping product due to invalid listing date format:', dateListedValue);
+          return;
+        }
+
+        const listedPrice = this.sanitizeFloatValue(getMappedValue('listed_price', row) || '0');
+        const category = getMappedValue('category', row) || 'Uncategorized';
+        const brand = getMappedValue('brand', row) || 'Other';
+        const itemCost = getMappedValue('item_cost', row) ? this.sanitizeFloatValue(getMappedValue('item_cost', row)) : null;
+
+        const listing: NewListingDto = {
+          brand: brand === 'N/A' ? 'Other' : brand,
+          category: category,
+          date_listed: parsedListingDate,
+          description: description,
+          item_cost: itemCost,
+          listed_price: listedPrice,
+          quantity: this.sanitizeFloatValue(getMappedValue('quantity', row) || '0'),
+          source: 'CSV Import',
+          season: getMappedValue('season', row) || undefined,
+        };
+
+        const size = getMappedValue('size', row) || 'One size';
+        const productItemCost = getMappedValue('product_item_cost', row) ? this.sanitizeFloatValue(getMappedValue('product_item_cost', row)) : null;
+
+        const product: NewProductDto = {
+          listing: listing,
+          item_cost: productItemCost,
+          size: size
+        };
+
+        sale.products.push(product);
+      });
+    } catch (error: any) {
+      console.error('Error transforming data to sales:', error);
+      this.notificationService.error('Error processing CSV data: ' + (error.message || 'Unknown error'));
+      return [];
+    }
+
+    return Array.from(salesMap.values());
+  }
+
+  transformDataToSales(data: any[]): any[] {
+    const salesMap = new Map<string, NewSaleDto>();
+    let rowCounter = 0;
+
+    try {
+      data.forEach(row => {
+        rowCounter++;
         // Validate date format
         const dateParts = row['Date of sale']?.split('/');
         if (!dateParts || dateParts.length !== 3 || parseInt(dateParts[0]) > 31 || parseInt(dateParts[1]) > 12) {
           this.notificationService.error('Dates must be in DD/MM/YYYY format');
           throw new Error('Invalid date format');
         }
-        const saleId = row['Date of sale'] + ' | ' + row['Time of sale'] + ' | ' + row['Buyer'];
+        const hasTime = !!row['Time of sale'];
+        const hasBuyer = !!row['Buyer'];
+        const saleId = (hasTime && hasBuyer)
+          ? (row['Date of sale'] + ' | ' + row['Time of sale'] + ' | ' + row['Buyer'])
+          : `unique-${rowCounter}`;
 
         if (!salesMap.has(saleId)) {
           const refundedToBuyer = this.sanitizeFloatValue(row['Refunded to buyer amount']);
@@ -220,7 +459,7 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
           const sale: NewSaleDto = {
             date_sold: this.parseDate(row['Date of sale']),
             time_sold: row['Time of sale'] || '00:00:00',
-            buyer: row['Buyer'],
+            buyer: row['Buyer'] || '',
             platform_fee: platformFee,
             seller_postage_cost: postageCost,
             total: parseFloat((total - usSalesTax).toFixed(2)) || 0.00,
@@ -270,15 +509,21 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
   }
 
   parseDate(dateStr: string): Date {
-    const parts = dateStr.split('/').map((num) => parseInt(num, 10));
+    const parts = dateStr.split(/[\/\-.]/).map((num) => parseInt(String(num).trim(), 10));
 
     if (parts.length !== 3 || parts.some(isNaN)) {
-      throw new Error('Date must be in DD/MM/YYYY format');
+      throw new Error('Date must be in a valid format');
     }
 
-    const [day, month, year] = parts;
+    let day: number, month: number, year: number;
+    if (this.dateFormat === 'DMY') {
+      [day, month, year] = parts;
+    } else {
+      // MDY
+      [month, day, year] = parts;
+    }
 
-    if (month > 12 || day > 31) {
+    if (month > 12 || day > 31 || day < 1 || month < 1) {
       throw new Error('Invalid date: Day must be 1-31 and month must be 1-12');
     }
 
@@ -290,6 +535,52 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
     }
 
     return date;
+  }
+
+  private formatDateForKey(d: Date): string {
+    // ISO date (YYYY-MM-DD)
+    return new Date(d).toISOString().split('T')[0];
+  }
+
+  private runPreflightValidation(): void {
+    this.validationErrors = [];
+    this.validationWarnings = [];
+
+    // Check totals and fees coherence and missing costs
+    this.processedSales.forEach((s: any, idx: number) => {
+      const i = idx + 1;
+      if (!s.date_sold) {
+        this.validationErrors.push({ row: i, field: 'date_sold', message: 'Missing sale date' });
+      }
+      if (typeof s.total === 'number' && typeof s.total_fee === 'number' && typeof s.sold_price === 'number') {
+        const calc = (s.payment_fee || 0) + (s.platform_fee || 0) + (s.boosting_fee || 0);
+        if (Math.abs(calc - s.total_fee) > 0.01) {
+          this.validationWarnings.push({ row: i, field: 'total_fee', message: 'Sum of fees does not equal total_fee' });
+        }
+      }
+      if ((s.refunded_to_buyer || 0) !== 0 || (s.refunded_to_seller || 0) !== 0) {
+        this.validationWarnings.push({ row: i, field: 'refunds', message: 'Refund detected; currently excluded' });
+      }
+      if (!s.products || s.products.length === 0) {
+        this.validationErrors.push({ row: i, field: 'products', message: 'No products attached' });
+      }
+    });
+  }
+
+  downloadValidationCsv(): void {
+    const headers = ['type', 'row', 'field', 'message'];
+    const rows: string[] = [];
+    const encode = (v: unknown) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    this.validationErrors.forEach(e => rows.push(['error', e.row ?? '', e.field, e.message].map(encode).join(',')));
+    this.validationWarnings.forEach(w => rows.push(['warning', w.row ?? '', w.field, w.message].map(encode).join(',')));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sales-upload-validation.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   deleteImport(id: string): void {

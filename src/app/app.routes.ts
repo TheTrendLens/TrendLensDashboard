@@ -12,11 +12,9 @@ import {SignupComponent} from './components/signup/signup.component';
 import {VerifyEmailComponent} from './components/verify-email/verify-email.component';
 import {SignupFlowComponent} from './components/signup-flow/signup-flow.component';
 import {map, of, switchMap} from 'rxjs';
-import {User as DbUser} from './models/user';
 import {CheckoutComponent} from './components/checkout/checkout.component';
 import {inject} from '@angular/core';
 import {StripeService} from './services/stripe.service';
-import {UserService} from './services/user.service';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
@@ -94,10 +92,12 @@ const createAuthRoute = (path: string, component: any, redirectLoggedIn = false)
     ...(redirectLoggedIn ? AUTH_GUARD_CONFIG.redirectLoggedIn : AUTH_GUARD_CONFIG.requireAuth)
 });
 
+// Authenticated routes that are part of the free/basic experience should NOT be gated by subscription anymore.
+// Premium features should add their own guards (e.g., FeatureAccessGuard) via additionalGuards.
 const createProtectedRoute = (path: string, component: any, additionalGuards: any[] = []) => ({
     path,
     component,
-    canActivate: [SubscriptionGuard, ...additionalGuards]
+    canActivate: [...additionalGuards]
 });
 
 const createCheckoutResolver = () => ({

@@ -88,6 +88,93 @@
   .animate-slide-in-right {
     animation: slide-in-right 0.3s ease-out;
   }
+
+  /* Custom scrollbar utility with light/dark support */
+  .tl-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(107,114,128,0.5) transparent; /* thumb track */
+  }
+  .dark .tl-scrollbar {
+    scrollbar-color: rgba(156,163,175,0.4) transparent;
+  }
+  .tl-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .tl-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .tl-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(107,114,128,0.35); /* gray-600 @ ~35% */
+    border-radius: 9999px;
+    border: 3px solid transparent; /* creates a pill thumb */
+    background-clip: content-box;
+  }
+  .tl-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75,85,99,0.5); /* gray-700 @ 50% */
+  }
+  .dark .tl-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156,163,175,0.35); /* gray-400 */
+  }
+  .dark .tl-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(209,213,219,0.5); /* gray-300 */
+  }
+
+  /* Chevron navbar used in Column Mapping modal header */
+  .tl-chevron-nav {
+    @apply flex w-full items-stretch gap-0 select-none;
+    overflow: visible;
+  }
+  .tl-chevron-item {
+    position: relative;
+    background: var(--bg, #1E5F7B);
+    color: #fff;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.875rem 1.25rem; /* py-3.5 px-5 for better density */
+    /* Items should fill the available width equally */
+    flex: 1 1 0;
+    border-radius: 8px 0 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: filter .15s ease, opacity .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 1px rgba(0,0,0,.06);
+    /* Overlap the previous chevron tip so it looks like one solid component */
+    --tip: 22px; /* width of the chevron tip (matches ::after width) */
+  }
+  .tl-chevron-item span { @apply skew-x-0; }
+  .tl-chevron-item:hover { filter: brightness(1.05); }
+  .tl-chevron-item:focus-visible { outline: 2px solid rgba(59,130,246,.6); outline-offset: 2px; }
+  .tl-chevron-item.active { filter: none; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+  .tl-chevron-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: calc(var(--tip) * -1);
+    width: var(--tip);
+    height: 100%;
+    background: var(--bg, #1E5F7B);
+    /** create the chevron tip */
+    -webkit-clip-path: polygon(0 0, 100% 50%, 0 100%);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    z-index: 2; /* ensure the tip sits above the next item */
+  }
+  /* Overlap successive items under the previous tip */
+  .tl-chevron-item + .tl-chevron-item {
+    margin-left: calc(var(--tip) * -1);
+  }
+
+  /* Manage stacking so left items appear above right items for a solid ribbon */
+  .tl-chevron-item { z-index: 1; }
+  .tl-chevron-item:nth-child(1) { z-index: 5; }
+  .tl-chevron-item:nth-child(2) { z-index: 4; }
+  .tl-chevron-item:nth-child(3) { z-index: 3; }
+
+  .tl-chevron-item.last { border-radius: 8px; }
+  .tl-chevron-item.last::after { display: none; }
 }
 
 /* Global styles for Angular Material snackbars */

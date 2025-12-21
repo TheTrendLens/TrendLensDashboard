@@ -18,6 +18,7 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {MatDialog} from '@angular/material/dialog';
 import {CurrencyService} from '../../services/currency.service';
+import { createSaleLabel } from '../../utils/sale-label.util';
 
 @Component({
   selector: 'app-sale-card',
@@ -72,6 +73,15 @@ export class SaleCardComponent implements AfterViewInit {
   onCardClick(): void {
     if (!this.isEditing && !this.isMassEditMode) {
       this.cardClick.emit(this.sale.id);
+    }
+  }
+
+  // Derived, concise label for this sale based on its products
+  get saleLabel(): string {
+    try {
+      return createSaleLabel(this.sale?.products, this.sale?.date_sold);
+    } catch {
+      return 'Sale';
     }
   }
 

@@ -5,13 +5,13 @@ import {take} from 'rxjs';
 import {CurrencyPipe, DatePipe, NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
-import {EditSaleDialogComponent} from '../edit-sale-dialog/edit-sale-dialog.component';
 import {Product} from '../../models/product';
 import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {CurrencyService} from '../../services/currency.service';
 import {AddProductDialogComponent} from '../add-product-dialog/add-product-dialog.component';
 import {FeatureFlagService} from '../../services/feature-flag.service';
+import { createSaleLabel } from '../../utils/sale-label.util';
 @Component({
   selector: 'app-sale-detail',
   standalone: true,
@@ -90,6 +90,15 @@ export class SaleDetailComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  // Derived sale label based on loaded products
+  get saleLabel(): string {
+    try {
+      return createSaleLabel(this.products, this.sale?.date_sold || undefined as unknown as Date);
+    } catch {
+      return 'Sale';
+    }
   }
 
   getValue(element: any, col: any): any {

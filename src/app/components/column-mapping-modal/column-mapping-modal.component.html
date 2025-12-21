@@ -1,0 +1,224 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-black/60 via-black/50 to-brand-900/40 backdrop-blur-sm">
+  <!-- Modal container uses flex layout; let the middle content scroll instead of the container -->
+  <div class="bg-white/95 dark:bg-gray-800/95 rounded-xl shadow-2xl ring-1 ring-gray-200 dark:ring-gray-700 max-w-6xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <!-- Accent bar -->
+    <div class="h-1 w-full bg-gradient-to-r from-brand-500 via-brand-400 to-brand-600"></div>
+    <!-- Sticky Header designed like the reference mock: title, subtitle, stepper -->
+    <div class="sticky top-0 z-10 bg-white/95 dark:bg-gray-800/95 border-b border-gray-200 dark:border-gray-700 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm">
+      <div class="px-6 pt-5">
+        <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">SNAP</h1>
+        <p class="mt-1 text-base text-gray-700 dark:text-gray-300">Let’s get your columns matched</p>
+      </div>
+      <!-- Chevron Navbar (styled to match the provided mock) -->
+      <div class="mt-4 px-6 pb-4 select-none">
+        <ol class="tl-chevron-nav" role="tablist" aria-label="Mapping Steps">
+          <!-- Sales -->
+          <li
+            class="tl-chevron-item"
+            [class.active]="activeCategory()==='sale'"
+            [style.--bg]="activeCategory()==='sale' ? '#28AAE1' : '#1E5F7B'"
+            role="tab"
+            [attr.aria-selected]="activeCategory()==='sale'"
+            tabindex="0"
+            (click)="setActiveCategory('sale')"
+          >
+            <span>Sales</span>
+          </li>
+          <!-- Listings -->
+          <li
+            class="tl-chevron-item"
+            [class.active]="activeCategory()==='listing'"
+            [style.--bg]="activeCategory()==='listing' ? '#247EAB' : '#1B4F68'"
+            role="tab"
+            [attr.aria-selected]="activeCategory()==='listing'"
+            tabindex="0"
+            (click)="setActiveCategory('listing')"
+          >
+            <span>Listings</span>
+          </li>
+          <!-- Products -->
+          <li
+            class="tl-chevron-item last"
+            [class.active]="activeCategory()==='product'"
+            [style.--bg]="activeCategory()==='product' ? '#2A8CAF' : '#173F52'"
+            role="tab"
+            [attr.aria-selected]="activeCategory()==='product'"
+            tabindex="0"
+            (click)="setActiveCategory('product')"
+          >
+            <span>Products</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Two-pane Main Content (scrollable area) -->
+    <div class="p-6 flex-1 min-h-0 overflow-y-auto tl-scrollbar">
+      <!-- Mapping Profiles Toolbar -->
+      <div class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="text-sm text-gray-700 dark:text-gray-300 font-medium">Mapping profiles</div>
+        <div class="flex items-center gap-2">
+          <select class="px-2 py-1 border rounded-md text-sm dark:bg-gray-900 dark:border-gray-700"
+                  (change)="loadProfileByName($any($event.target).value)">
+            <option value="" [selected]="!selectedProfileName()">Select a profile…</option>
+            @for (p of profiles(); track p.name) {
+              <option [value]="p.name" [selected]="selectedProfileName()===p.name">{{p.name}}</option>
+            }
+          </select>
+          <button type="button" (click)="saveCurrentAsProfile()"
+                  class="text-xs px-3 py-1 rounded-md bg-brand-600 text-white hover:bg-brand-700">Save current</button>
+          <button type="button" (click)="selectedProfileName() && deleteProfileByName(selectedProfileName())"
+                  class="text-xs px-3 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                  [disabled]="!selectedProfileName()">Delete</button>
+        </div>
+      </div>
+
+      <!-- Help / How it works -->
+      <div class="mb-4">
+        <div class="flex items-start gap-3 p-4 rounded-lg border border-brand-200/60 bg-brand-50/70 dark:bg-slate-800/70 dark:border-slate-700">
+<!--          <div class="shrink-0 mt-0.5 text-brand-700 dark:text-brand-300" aria-hidden="true">ℹ️</div>-->
+          <div class="flex-1">
+            <div class="flex items-center justify-between gap-3">
+              <p class="font-semibold text-sm text-gray-900 dark:text-gray-100">How column mapping and grouping works</p>
+              <button type="button"
+                      class="text-xs px-2 py-1 rounded-md border border-transparent text-brand-700 hover:text-brand-800 hover:border-brand-200 dark:text-brand-300 dark:hover:text-brand-200"
+                      (click)="toggleHelp()"
+                      [attr.aria-expanded]="showHelp()"
+                      aria-controls="mapping-help">
+                {{ showHelp() ? 'Hide details' : 'Show details' }}
+              </button>
+            </div>
+            @if (showHelp()) {
+              <div id="mapping-help" class="mt-2 text-sm text-gray-800 dark:text-gray-200 space-y-2">
+                <ul class="list-disc pl-5 space-y-1">
+                  <li>
+                    Group multi-line orders by mapping <span class="font-medium">Sales ID</span> (e.g. order number). Rows with the same Sales ID are combined into one sale.
+                  </li>
+                  <li>
+                    If you don’t have a Sales ID, you can still group rows by providing both <span class="font-medium">Time Sold</span> and <span class="font-medium">Buyer</span> — rows with the same Date + Time + Buyer will be grouped.
+                  </li>
+                  <li>
+                    If neither of the above is provided, each CSV row becomes its <span class="font-medium">own sale</span>.
+                  </li>
+                  <li>
+                    Required fields are shown first. Optional fields can be added with “Add optional columns” and will appear at the bottom.
+                  </li>
+                  <li>
+                    Auto‑match will prefill likely matches for you.
+                  </li>
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <!-- Row heading labels to mirror mock -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-3">
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">TRENDLENS</h3>
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 md:text-right">Uploaded</h3>
+      </div>
+
+      <!-- Mapping rows: each row has 2 selects in cards (Uploaded vs Trendlens) -->
+      <div class="space-y-4">
+        @for (field of getVisibleFieldsByCategory(activeCategory()); track field.value) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6"
+               (dragover)="onDragOver($event, field.value)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event, field.value)">
+            <!-- Trendlens (target field) card - now on the LEFT -->
+            <div class="rounded-xl border bg-white/90 dark:bg-gray-800/80 shadow-sm px-4 py-3"
+                 [class.border-red-300]="field.required && !isMapped(field.value)"
+                 [class.border-green-300]="isMapped(field.value)"
+                 [class.border-gray-200]="!isMapped(field.value)">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Trendlens Field</span>
+                  @if (field.required) { <span class="text-red-500 text-xs">*</span> }
+                </div>
+                <!-- Keep the 'Mapped' pill on the LEFT column -->
+                @if (isMapped(field.value)) {
+                  <span class="px-2 py-0.5 text-[10px] rounded-full bg-green-100 text-green-800">Mapped</span>
+                }
+              </div>
+              @if (field.required) {
+                <select disabled class="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700">
+                  <option selected>{{ field.label }}</option>
+                </select>
+              } @else {
+                <select
+                  class="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700"
+                  (change)="onOptionalFieldChanged(field.value, $any($event.target).value, field.category)">
+                  @for (opt of getOptionalChoicesByCategory(field.value, field.category); track opt.value) {
+                    <option [value]="opt.value" [selected]="opt.value === field.value">{{ opt.label }}</option>
+                  }
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Choose which optional field to map</p>
+              }
+              @if (!field.required && !isMapped(field.value)) {
+                <div class="mt-2 flex justify-end">
+                  <button (click)="hideOptionalField(field.value)" type="button" class="text-xs text-gray-500 hover:text-gray-700">Remove</button>
+                </div>
+              }
+            </div>
+
+            <!-- Uploaded (CSV) select card - now on the RIGHT -->
+            <div class="rounded-xl border border-brand-200/60 bg-white/90 dark:bg-gray-800/80 shadow-sm px-4 py-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">CSV Column</span>
+                <!-- Keep the 'Clear' button on the RIGHT column -->
+                @if (isMapped(field.value)) {
+                  <button (click)="clearMapping(field.value)" type="button" class="text-xs text-red-600 hover:text-red-800">Clear</button>
+                }
+              </div>
+              <select (change)="onColumnChanged(field.value, $any($event.target).value)"
+                      class="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-900 dark:border-gray-700">
+                <option value="" [selected]="!getMappedColumn(field.value)">Select CSV column…</option>
+                @for (column of filteredCsvColumns(); track column) {
+                  <option [value]="column" [selected]="getMappedColumn(field.value) === column">{{ column }}</option>
+                }
+              </select>
+              @if (getMappedColumn(field.value) && getSampleValue(getMappedColumn(field.value)!)) {
+                <div class="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  Sample: <span class="font-mono">{{ getSampleValue(getMappedColumn(field.value)!) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Add optional link -->
+      <div class="mt-6 flex items-center justify-center gap-2">
+        <button type="button" class="flex items-center gap-2 text-brand-600 hover:text-brand-700"
+                [disabled]="getHiddenOptionalFieldsByCategory(activeCategory()).length === 0"
+                (click)="addFirstHiddenOptional()">
+          <span class="text-xl leading-none">+</span>
+          <span class="font-medium">Add optional columns</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sticky Footer (sticks within the modal container) -->
+    <div class="sticky bottom-0 bg-white/95 dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm">
+      <!-- Progress bar + label like mock -->
+      <div class="flex-1 max-w-xl">
+        <div class="w-full bg-slate-800/20 rounded-full h-6 flex items-center">
+          <div class="h-6 rounded-full bg-brand-800" [style.width.%]="progressPercentage()"></div>
+        </div>
+        <div class="mt-1 text-center text-xs text-gray-700 dark:text-gray-300">
+          {{ mappedRequiredFieldsCount() }}/{{ totalRequiredFields() }} Required Matches
+        </div>
+      </div>
+      <div class="ml-6 flex gap-3">
+        <button (click)="onCancel()" type="button" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">
+          Cancel
+        </button>
+        <button (click)="onButtonClick()" [disabled]="!isCurrentTabValid()" type="button" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-400 text-white rounded-md">
+          {{ getButtonText() }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Field Selector Modal removed; inline selects are used -->

@@ -31,7 +31,7 @@ export class VerifyEmailComponent implements OnInit {
     if (user) {
       this.userEmail = user.email || '';
 
-      // If the user's email is already verified, create user in database and redirect to checkout
+      // If the user's email is already verified, create user in database and redirect to complete
       if (user.emailVerified) {
         if (user.email) {
           try {
@@ -46,7 +46,7 @@ export class VerifyEmailComponent implements OnInit {
             }
           }
         }
-        this.router.navigate(['/signup/checkout']);
+        this.router.navigate(['/signup/complete']);
       } else {
         // Start polling to check email verification status
         this.startVerificationCheck();
@@ -92,9 +92,9 @@ export class VerifyEmailComponent implements OnInit {
               // Call the createUserInDatabase method from AuthService
               await this.authService.createUserInDatabase(user.uid, user.email);
 
-              // Redirect to checkout after a short delay
+              // Redirect to signup complete after a short delay
               setTimeout(() => {
-                this.router.navigate(['/signup/checkout']);
+                this.router.navigate(['/signup/complete']);
               }, 1500);
             } catch (error: any) {
               this.errorMessage = 'Failed to create your account. Please try again.';
@@ -154,7 +154,7 @@ export class VerifyEmailComponent implements OnInit {
             }
           }
 
-          this.router.navigate(['/signup/checkout']);
+          this.router.navigate(['/signup/complete']);
         } else {
           this.errorMessage = 'Your email has not been verified yet. Please check your inbox and click the verification link.';
         }

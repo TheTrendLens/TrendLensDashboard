@@ -1,7 +1,8 @@
 <div #saleCard
      class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col w-full"
      [ngClass]="{ 'cursor-pointer': !isEditing && !isMassEditMode, 'cursor-default': isEditing || isMassEditMode }"
-     (click)="onCardClick()">
+     (click)="onCardClick()"
+     [attr.aria-label]="saleLabel">
 
   <div *ngIf="isEditing || isMassEditMode" class="absolute top-0 right-0 text-xs font-medium px-2.5 py-0.5 rounded"
        [ngClass]="isMassEditMode ? 'bg-blue-100 text-blue-800' : 'bg-brand-100 text-brand-800'">
@@ -9,9 +10,9 @@
   </div>
 
   <div class="p-3 flex-1 flex flex-col h-full">
-    <!-- Top Section: Name -->
+    <!-- Top Section: Identifier -->
     <div>
-      <h3 class="text-base font-semibold text-gray-900 truncate">{{ sale.buyer }}</h3>
+      <h3 class="text-base font-semibold text-gray-900 truncate" [attr.title]="saleLabel">{{ saleLabel }}</h3>
 
       <!-- Date and Items Count Row -->
       <div class="flex justify-between items-center mt-1 mb-2">

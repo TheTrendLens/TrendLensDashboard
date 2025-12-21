@@ -4,6 +4,7 @@ export interface NewSaleDto {
   date_sold: Date;
   time_sold: string;
   buyer: string;
+  external_sales_id?: string | null;
   platform_fee: number;
   seller_postage_cost: number;
   total: number;
@@ -11,6 +12,7 @@ export interface NewSaleDto {
   boosting_fee: number;
   total_fee: number;
   payment_type: string;
+  sales_tax?: number;
   refunded_to_buyer: number;
   refunded_to_seller: number;
   offer: boolean;
