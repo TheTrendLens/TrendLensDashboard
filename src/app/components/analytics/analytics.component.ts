@@ -11,6 +11,8 @@ import { BrandChartComponent } from './charts/brand-chart/brand-chart.component'
 import { CategoryChartComponent } from './charts/category-chart/category-chart.component';
 import { TourService } from '../../services/tour.service';
 import {FeatureAccessDirective} from '../../directives/feature-access.directive';
+import {FeatureAccessService} from '../../services/feature-access.service';
+import {UpgradeService} from '../../services/upgrade.service';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -108,7 +110,9 @@ export class AnalyticsComponent implements OnInit {
     private analyticsService: AnalyticsService,
     private listingService: ListingService,
     private currencyService: CurrencyService,
-    private tourService: TourService
+    private tourService: TourService,
+    private featureAccessService: FeatureAccessService,
+    private upgradeService: UpgradeService
   ) {
     // Set default date range to last 30 days
     this.startDate = new Date();
@@ -122,9 +126,20 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadAnalyticsData();
-    this.loadCategories();
-    this.loadBrands();
+    // Check access to analytics. If not allowed, open upgrade modal and do not load data.
+    this.featureAccessService.hasAccess('ANALYTICS_BASE').subscribe(hasAccess => {
+      if (hasAccess) {
+        this.loadAnalyticsData();
+        this.loadCategories();
+        this.loadBrands();
+      } else {
+        // Ensure we don't show stale data and stop loading spinners
+        this.isLoading = false;
+        this.analyticsData = null;
+        // Open the global upgrade dialog with source for tracking
+        this.upgradeService.open('analytics');
+      }
+    });
   }
 
   loadAnalyticsData(): void {

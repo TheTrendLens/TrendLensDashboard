@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import {environment} from '../../environments/environment';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {Subscription} from '../models/subscription';
+import { environment } from '../../environments/environment';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Subscription } from '../models/subscription';
 
 const endpoint = `${environment.backend.baseURL}/api/stripe`
 
@@ -16,8 +16,32 @@ export class StripeService {
     return this.http.get<Subscription>(`${endpoint}/get-stripe-subscription-status/${userId}`);
   }
 
-  createCustomerSession(userId: string): Observable<string> {
-    return this.http.get<string>(`${endpoint}/createCustomerSession`);
+  /**
+   * Initiates a Stripe checkout/billing session.
+   * Note: `userId` is currently unused by the backend endpoint but kept for compatibility.
+   * The optional `options.source` allows attributing where the upgrade was initiated.
+   */
+  createCustomerSession(
+    userId: string,
+    options?: { source?: string; context?: unknown }
+  ): Observable<string> {
+    const params: string[] = [];
+    if (options?.source) {
+      params.push(`source=${encodeURIComponent(options.source)}`);
+    }
+    // If we later want to pass a small context payload, keep it compact and URL-safe
+    if (options?.context) {
+      try {
+        const ctx = encodeURIComponent(btoa(JSON.stringify(options.context)));
+        params.push(`context=${ctx}`);
+      } catch {
+        // ignore context if it cannot be serialized
+      }
+    }
+    const url = params.length
+      ? `${endpoint}/createCustomerSession?${params.join('&')}`
+      : `${endpoint}/createCustomerSession`;
+    return this.http.get<string>(url);
   }
 
   /**

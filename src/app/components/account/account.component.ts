@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { ThemeService } from '../../services/theme.service';
 import { UserService } from '../../services/user.service';
 import { FeatureFlagService } from '../../services/feature-flag.service';
 import { QuickBooksService } from '../../services/quickbooks.service';
+import { UpgradeService } from '../../services/upgrade.service';
 
 @Component({
   selector: 'app-account',
@@ -44,6 +45,9 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   // Timer for refreshing QuickBooks token status
   private tokenStatusRefreshInterval: any;
+
+  // Services via inject() where appropriate
+  readonly upgradeService = inject(UpgradeService);
 
   constructor(
     private authService: AuthService,
@@ -115,6 +119,10 @@ export class AccountComponent implements OnInit, OnDestroy {
 
     // Determine subscription status initially
     this.checkSubscriptionStatus();
+  }
+
+  onOpenUpgrade(): void {
+    this.upgradeService.open('account');
   }
 
   onToggleShowSalesTax(): void {

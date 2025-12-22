@@ -7,11 +7,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { UserService } from '../../services/user.service';
 import { Subscription } from 'rxjs';
 import { FeatureAccessService } from '../../services/feature-access.service';
+import { UpgradeDialogComponent } from '../upgrade-dialog/upgrade-dialog.component';
 
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, UpgradeDialogComponent],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css'
 })

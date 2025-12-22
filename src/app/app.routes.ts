@@ -27,7 +27,7 @@ import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
 import {SubscriptionGuard} from './utils/subscription.guard';
 import {ListingsComponent} from './components/listings/listings.component';
-import {FeatureAccessGuard} from './utils/feature-access.guard';
+// import {FeatureAccessGuard} from './utils/feature-access.guard';
 import {SalesUploadComponent} from './components/sales-upload/sales-upload.component';
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
 const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
@@ -136,10 +136,8 @@ export const routes: Routes = [
             {path: 'listings', component: ListingsComponent, canActivate: [AdminGuard]},
             createProtectedRoute('sales', SalesComponent),
             createProtectedRoute('sales/:id', SaleDetailComponent),
-            {
-                ...createProtectedRoute('analytics', AnalyticsComponent, [FeatureAccessGuard]),
-                data: {requiredFeature: FEATURE_ROUTES.ANALYTICS}
-            },
+            // Allow all authenticated users to navigate to Analytics. The page itself will handle upgrade gating.
+            createProtectedRoute('analytics', AnalyticsComponent),
             createProtectedRoute('sales-upload', SalesUploadComponent),
             {path: 'account', component: AccountComponent},
             {path: 'admin', component: AdminComponent, canActivate: [AdminGuard]}
