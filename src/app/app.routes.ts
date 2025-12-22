@@ -13,6 +13,7 @@ import {VerifyEmailComponent} from './components/verify-email/verify-email.compo
 import {SignupFlowComponent} from './components/signup-flow/signup-flow.component';
 import {map, of, switchMap} from 'rxjs';
 import {CheckoutComponent} from './components/checkout/checkout.component';
+import { OnsiteCheckoutComponent } from './components/onsite-checkout/onsite-checkout.component';
 import {inject} from '@angular/core';
 import {StripeService} from './services/stripe.service';
 import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
@@ -138,6 +139,8 @@ export const routes: Routes = [
             createProtectedRoute('sales/:id', SaleDetailComponent),
             // Allow all authenticated users to navigate to Analytics. The page itself will handle upgrade gating.
             createProtectedRoute('analytics', AnalyticsComponent),
+            // New on-site checkout flow (keeps users on our site)
+            createProtectedRoute('checkout', OnsiteCheckoutComponent),
             createProtectedRoute('sales-upload', SalesUploadComponent),
             {path: 'account', component: AccountComponent},
             {path: 'admin', component: AdminComponent, canActivate: [AdminGuard]}
