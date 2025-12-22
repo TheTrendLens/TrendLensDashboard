@@ -96,19 +96,15 @@ export class UpgradeDialogComponent {
     }
     this.error.set(null);
     this.isLoading.set(true);
-    this.stripe.createCustomerSession(user.uid, { source: this.upgradeService.source() ?? undefined }).subscribe({
-      next: (url) => {
-        try {
-          // Redirect to Stripe Checkout/Portal URL
-          window.location.href = url as unknown as string;
-        } finally {
-          this.isLoading.set(false);
-        }
-      },
-      error: () => {
-        this.error.set('We could not start the checkout. Please try again.');
-        this.isLoading.set(false);
-      }
-    });
+    // Use Billing Portal session which returns a direct URL to redirect to
+    try {
+      this.stripe.redirectToBillingPortal(user.uid, {
+        returnUrl: `${window.location.origin}/account`,
+        source: this.upgradeService.source() ?? undefined
+      });
+    } catch {
+      this.error.set('We could not start the checkout. Please try again.');
+      this.isLoading.set(false);
+    }
   }
 }

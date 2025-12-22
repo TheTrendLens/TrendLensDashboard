@@ -47,11 +47,27 @@ export class StripeService {
   /**
    * Creates a Stripe billing portal session and redirects the user to it
    * @param userId The user ID
-   * @param returnUrl Optional URL to return to after the billing portal session
+   * @param options Optional options: returnUrl for after exiting portal, source/context for attribution
    */
-  redirectToBillingPortal(userId: string, returnUrl?: string): void {
-    // Show loading state in the component
-    const url = returnUrl ? `${endpoint}/createBillingPortalSession?returnUrl=${encodeURIComponent(returnUrl)}` : `${endpoint}/createBillingPortalSession`;
+  redirectToBillingPortal(
+    userId: string,
+    options?: { returnUrl?: string; source?: string; context?: unknown }
+  ): void {
+    const params: string[] = [];
+    if (options?.returnUrl) params.push(`returnUrl=${encodeURIComponent(options.returnUrl)}`);
+    if (options?.source) params.push(`source=${encodeURIComponent(options.source)}`);
+    if (options?.context) {
+      try {
+        const ctx = encodeURIComponent(btoa(JSON.stringify(options.context)));
+        params.push(`context=${ctx}`);
+      } catch {
+        // ignore context if it cannot be serialized
+      }
+    }
+
+    const url = params.length
+      ? `${endpoint}/createBillingPortalSession?${params.join('&')}`
+      : `${endpoint}/createBillingPortalSession`;
 
     this.http.get(url, { responseType: 'text' }).subscribe({
       next: (response) => {
