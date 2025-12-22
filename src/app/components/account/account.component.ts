@@ -215,7 +215,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     const returnUrl = window.location.origin + '/account';
 
     try {
-      this.stripeService.redirectToBillingPortal(user.uid, returnUrl);
+      // this.stripeService.redirectToBillingPortal(user.uid, returnUrl);
       // Note: isLoading will remain true until the page redirects
       // If there's an error, the catch block will set isLoading to false
     } catch (error) {
