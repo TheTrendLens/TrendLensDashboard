@@ -1,0 +1,15 @@
+/* Tailwind utility-driven; keep file for potential component-scoped tweaks */
+
+/* Panel enter/leave animations (basic) */
+.enter {
+  @apply opacity-0 scale-95;
+}
+.enter-active {
+  @apply transition ease-out duration-150 opacity-100 scale-100;
+}
+.leave {
+  @apply opacity-100 scale-100;
+}
+.leave-active {
+  @apply transition ease-in duration-100 opacity-0 scale-95;
+}
