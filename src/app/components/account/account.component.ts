@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { ChangePasswordComponent } from '../change-password/change-password.component';
 import { AuthService } from '../../services/auth.service';
 import { StripeService } from '../../services/stripe.service';
+import { BillingService, CheckoutPrice, CurrentSubscriptionResponse, ChangeSubscriptionResponse } from '../../services/billing.service';
+import { StripeJsService } from '../../services/stripe-js.service';
 import { CurrencyService } from '../../services/currency.service';
 import { ThemeService } from '../../services/theme.service';
 import { UserService } from '../../services/user.service';
@@ -33,6 +35,12 @@ export class AccountComponent implements OnInit, OnDestroy {
   // Subscription status
   hasActiveSubscription: boolean | null = null; // null = unknown/loading
   isCheckingSubscription = false;
+  // On-site subscription management state
+  manageLoading = false;
+  manageError: string | null = null;
+  currentSubscription: CurrentSubscriptionResponse['subscription'] | null = null;
+  priceMonthly: CheckoutPrice | null = null;
+  priceAnnual: CheckoutPrice | null = null;
 
   // QuickBooks integration
   isQuickBooksConnected: boolean = false;
@@ -48,6 +56,8 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   // Services via inject() where appropriate
   readonly upgradeService = inject(UpgradeService);
+  private readonly billing = inject(BillingService);
+  private readonly stripeJs = inject(StripeJsService);
 
   constructor(
     private authService: AuthService,
@@ -119,6 +129,7 @@ export class AccountComponent implements OnInit, OnDestroy {
 
     // Determine subscription status initially
     this.checkSubscriptionStatus();
+    this.loadSubscriptionManagementData();
   }
 
   onOpenUpgrade(): void {
@@ -159,6 +170,95 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.isCheckingSubscription = false;
       }
     });
+  }
+
+  private async loadSubscriptionManagementData() {
+    this.manageError = null;
+    try {
+      // Load current subscription summary
+      const subResp = await this.billing.getCurrentSubscription().toPromise();
+      this.currentSubscription = subResp?.subscription ?? null;
+
+      // Load available prices for plan switch labels
+      const products = await this.billing.getCheckoutProducts().toPromise();
+      this.priceMonthly = products.analytics.prices.monthly;
+      this.priceAnnual = products.analytics.prices.annual;
+    } catch (e) {
+      // Keep silent error; UI will hide management panel if data missing
+      console.error('Failed to load subscription management data', e);
+      this.manageError = 'Unable to load subscription details right now.';
+    }
+  }
+
+  get planInterval(): 'monthly' | 'annual' | null {
+    const interval = this.currentSubscription?.price?.interval;
+    if (interval === 'month') return 'monthly';
+    if (interval === 'year') return 'annual';
+    return null;
+  }
+
+  formatAmount(price: CheckoutPrice | null): string {
+    if (!price || price.unit_amount == null) return '';
+    const amount = price.unit_amount / 100;
+    const currency = (price.currency || 'gbp').toUpperCase();
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+    } catch {
+      return amount.toFixed(2) + ' ' + currency;
+    }
+  }
+
+  async onCancelAtPeriodEnd() {
+    this.manageLoading = true;
+    this.manageError = null;
+    try {
+      await this.billing.cancelSubscription().toPromise();
+      await this.loadSubscriptionManagementData();
+    } catch (e) {
+      console.error(e);
+      this.manageError = 'Could not cancel the subscription. Please try again.';
+    } finally {
+      this.manageLoading = false;
+    }
+  }
+
+  async onResume() {
+    this.manageLoading = true;
+    this.manageError = null;
+    try {
+      await this.billing.resumeSubscription().toPromise();
+      await this.loadSubscriptionManagementData();
+    } catch (e) {
+      console.error(e);
+      this.manageError = 'Could not resume the subscription. Please try again.';
+    } finally {
+      this.manageLoading = false;
+    }
+  }
+
+  async onChangePlan(target: 'monthly' | 'annual') {
+    if (!this.priceMonthly || !this.priceAnnual) return;
+    const priceId = target === 'monthly' ? this.priceMonthly.id : this.priceAnnual.id;
+    this.manageLoading = true;
+    this.manageError = null;
+    try {
+      const resp = await this.billing.changeSubscription({ priceId, proration_behavior: 'create_prorations', source: 'account_billing' }).toPromise() as ChangeSubscriptionResponse;
+      // If payment required, confirm any next actions
+      if (resp?.clientSecret) {
+        const stripe = await this.stripeJs.getStripe();
+        if (!stripe) throw new Error('Stripe failed to load');
+        const result = await stripe.confirmCardPayment(resp.clientSecret);
+        if (result.error) {
+          throw new Error(result.error.message || 'Payment confirmation failed');
+        }
+      }
+      await this.loadSubscriptionManagementData();
+    } catch (e) {
+      console.error(e);
+      this.manageError = 'Could not change plan. Please try again.';
+    } finally {
+      this.manageLoading = false;
+    }
   }
 
   ngOnDestroy(): void {

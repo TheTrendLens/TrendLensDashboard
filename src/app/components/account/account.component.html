@@ -7,6 +7,76 @@
   <main>
     <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="px-4 py-8 sm:px-0">
+        <!-- Subscription management panel -->
+        <div class="mb-8">
+          <h2 class="text-lg font-medium text-gray-900">Subscription</h2>
+          <div class="mt-4 bg-white px-6 py-5 shadow sm:rounded-lg sm:px-8">
+            <div *ngIf="manageError" class="mb-3 text-sm text-red-600">{{ manageError }}</div>
+
+            <div *ngIf="currentSubscription; else noSub">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm text-gray-500">Current plan</div>
+                  <div class="mt-1 text-base font-medium text-gray-900">
+                    Analytics – {{ planInterval === 'monthly' ? 'Monthly' : 'Annual' }}
+                    <span class="ml-2 text-sm text-gray-600" *ngIf="planInterval === 'monthly'">{{ formatAmount(priceMonthly) }} / mo</span>
+                    <span class="ml-2 text-sm text-gray-600" *ngIf="planInterval === 'annual'">{{ formatAmount(priceAnnual) }} / yr</span>
+                  </div>
+                  <div class="mt-1 text-sm text-gray-600">
+                    <span *ngIf="currentSubscription?.cancel_at_period_end; else renews">
+                      Cancels at end of period ({{ (currentSubscription?.current_period_end || 0) * 1000 | date:'mediumDate' }})
+                    </span>
+                    <ng-template #renews>
+                      Renews on {{ (currentSubscription?.current_period_end || 0) * 1000 | date:'mediumDate' }}
+                    </ng-template>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button"
+                          [disabled]="manageLoading || planInterval === 'monthly'"
+                          (click)="onChangePlan('monthly')"
+                          class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-200 disabled:opacity-60">
+                    Switch to Monthly
+                  </button>
+                  <button type="button"
+                          [disabled]="manageLoading || planInterval === 'annual'"
+                          (click)="onChangePlan('annual')"
+                          class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-200 disabled:opacity-60">
+                    Switch to Annual
+                  </button>
+                  <button type="button"
+                          *ngIf="!currentSubscription?.cancel_at_period_end; else resumeBtn"
+                          [disabled]="manageLoading"
+                          (click)="onCancelAtPeriodEnd()"
+                          class="inline-flex items-center rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60">
+                    Cancel at period end
+                  </button>
+                  <ng-template #resumeBtn>
+                    <button type="button"
+                            [disabled]="manageLoading"
+                            (click)="onResume()"
+                            class="inline-flex items-center rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-60">
+                      Resume
+                    </button>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+            <ng-template #noSub>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm text-gray-500">No active subscription</div>
+                  <div class="mt-1 text-sm text-gray-600">Upgrade to unlock Analytics features.</div>
+                </div>
+                <button type="button"
+                        (click)="onOpenUpgrade()"
+                        class="inline-flex items-center rounded-md bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-400">
+                  Upgrade
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
         <div class="mb-8">
           <h2 class="text-lg font-medium text-gray-900">Account Information</h2>
           <div class="mt-4 bg-white px-6 py-5 shadow sm:rounded-lg sm:px-8">
