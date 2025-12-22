@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BillingService, CreateSubscriptionResponse } from '../../services/billing.service';
+import { BillingService, CreateSubscriptionResponse, CheckoutPrice } from '../../services/billing.service';
 import { StripeJsService } from '../../services/stripe-js.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { input } from '@angular/core';
@@ -75,7 +75,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
   readonly error = signal<string | null>(null);
-  readonly products = signal<{ monthly: string; annual: string } | null>(null);
+  readonly products = signal<{ monthly: CheckoutPrice; annual: CheckoutPrice } | null>(null);
   readonly currency = signal<'gbp' | string>('gbp');
   readonly interval = signal<Interval>('monthly');
   readonly clientSecret = signal<string | null>(null);
@@ -88,8 +88,19 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   // Derived labels
   readonly priceIntervalLabel = computed(() => this.interval() === 'monthly' ? 'per month' : 'per year');
   readonly priceLabel = computed(() => {
-    // We do not have price amounts without retrieving from Stripe; keep simple label.
-    return this.interval() === 'monthly' ? 'Analytics – Monthly' : 'Analytics – Annual';
+    const prices = this.products();
+    if (!prices) return this.interval() === 'monthly' ? 'Analytics – Monthly' : 'Analytics – Annual';
+    const price = this.interval() === 'monthly' ? prices.monthly : prices.annual;
+    const amountMinor = price.unit_amount;
+    const currency = price.currency?.toUpperCase?.() || 'GBP';
+    if (amountMinor == null) return this.interval() === 'monthly' ? 'Analytics – Monthly' : 'Analytics – Annual';
+    const amount = amountMinor / 100;
+    try {
+      const fmt = new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 });
+      return `${fmt.format(amount)}`;
+    } catch {
+      return `${amount.toFixed(2)} ${currency}`;
+    }
   });
 
   constructor() {
@@ -108,9 +119,10 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       const config = await lastValueFrom(this.billing.getCheckoutProducts());
       const prices = config.analytics.prices;
       this.products.set({ monthly: prices.monthly, annual: prices.annual });
+      this.currency.set(config.analytics.currency as any);
 
       // Create a subscription immediately to get a clientSecret for Payment Element
-      const priceId = this.interval() === 'monthly' ? prices.monthly : prices.annual;
+      const priceId = (this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id);
       const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
       const resp = await lastValueFrom(
         this.billing.createSubscription({ priceId, source })
@@ -149,7 +161,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       this.error.set(null);
       const prices = this.products();
       if (!prices) return;
-      const priceId = this.interval() === 'monthly' ? prices.monthly : prices.annual;
+      const priceId = this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id;
       const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
       const resp = await lastValueFrom(
         this.billing.createSubscription({ priceId, source })

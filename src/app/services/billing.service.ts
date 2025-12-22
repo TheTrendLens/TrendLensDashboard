@@ -13,6 +13,13 @@ export type CreateSubscriptionResponse = {
   subscriptionId: string;
 };
 
+export type CheckoutPrice = {
+  id: string;
+  unit_amount: number | null; // minor units when not null
+  currency: string;
+  interval: 'day' | 'week' | 'month' | 'year';
+};
+
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly http = inject(HttpClient);
@@ -20,7 +27,12 @@ export class BillingService {
 
   getCheckoutProducts() {
     return this.http.get<{
-      analytics: { name: string; prices: { monthly: string; annual: string }; currency: string; intervalLabels: { monthly: string; annual: string } };
+      analytics: {
+        name: string;
+        prices: { monthly: CheckoutPrice; annual: CheckoutPrice };
+        currency: string;
+        intervalLabels: { monthly: string; annual: string };
+      };
       supports: { cards: boolean; wallets: string[] };
       live: boolean;
     }>(`${this.endpoint}/checkoutProducts`);
