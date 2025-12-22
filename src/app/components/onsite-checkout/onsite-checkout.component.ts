@@ -50,7 +50,7 @@ type Interval = 'monthly' | 'annual';
       <div class="mt-6 flex items-center gap-3">
         <button type="button"
                 (click)="onSubmit()"
-                [disabled]="isSubmitting() || !clientSecret()"
+                [disabled]="isSubmitting() || !elementsReady()"
                 class="inline-flex items-center rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-70">
           <svg *ngIf="isSubmitting()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -79,6 +79,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   readonly currency = signal<'gbp' | string>('gbp');
   readonly interval = signal<Interval>('monthly');
   readonly clientSecret = signal<string | null>(null);
+  readonly elementsReady = signal(false);
 
   // Stripe runtime
   private stripe: Stripe | null = null;
@@ -121,22 +122,19 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       this.products.set({ monthly: prices.monthly, annual: prices.annual });
       this.currency.set(config.analytics.currency as any);
 
-      // Create a subscription immediately to get a clientSecret for Payment Element
-      const priceId = (this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id);
-      const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
-      const resp = await lastValueFrom(
-        this.billing.createSubscription({ priceId, source })
-      ) as CreateSubscriptionResponse;
-
-      this.clientSecret.set(resp.clientSecret);
-
-      // Load Stripe and mount Payment Element
+      // Load Stripe and mount Payment Element in deferred mode (no intent yet)
       this.stripe = await this.stripeJs.getStripe();
       if (!this.stripe) throw new Error('Stripe failed to load');
-      this.elements = this.stripe.elements({ clientSecret: resp.clientSecret });
+      this.elements = this.stripe.elements({
+        mode: 'payment',
+        currency: (config.analytics.currency || 'gbp') as any,
+        // For subscriptions, amount is determined on server when creating the Subscription.
+        // We omit amount to allow wallets/card collection in deferred flow.
+      } as any);
       const paymentElement = this.elements.create('payment');
       await paymentElement.mount('#payment-element');
       this.mounted = true;
+      this.elementsReady.set(true);
     } catch (e: unknown) {
       this.error.set('We could not start the checkout. Please try again.');
       // log silently
@@ -151,38 +149,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   selectInterval(next: Interval) {
     if (this.interval() === next) return;
     this.interval.set(next);
-    // Recreate subscription for the newly selected price
-    this.recreateForSelectedPlan();
-  }
-
-  private async recreateForSelectedPlan() {
-    try {
-      this.isSubmitting.set(true);
-      this.error.set(null);
-      const prices = this.products();
-      if (!prices) return;
-      const priceId = this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id;
-      const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
-      const resp = await lastValueFrom(
-        this.billing.createSubscription({ priceId, source })
-      ) as CreateSubscriptionResponse;
-
-      this.clientSecret.set(resp.clientSecret);
-      // Remount elements with new client secret
-      await this.teardownElements();
-      if (!this.stripe) this.stripe = await this.stripeJs.getStripe();
-      if (!this.stripe) throw new Error('Stripe failed to load');
-      this.elements = this.stripe.elements({ clientSecret: resp.clientSecret });
-      const paymentElement = this.elements.create('payment');
-      await paymentElement.mount('#payment-element');
-      this.mounted = true;
-    } catch (e) {
-      this.error.set('Could not switch plan. Please try again.');
-      console.error(e);
-    } finally {
-      this.isSubmitting.set(false);
-      this.cdr.markForCheck();
-    }
+    // Deferred flow: do not create a subscription yet. We only create on submit.
   }
 
   async onSubmit() {
@@ -190,8 +157,21 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     this.isSubmitting.set(true);
     this.error.set(null);
     try {
-      const { error, paymentIntent } = await this.stripe.confirmPayment({
+      // Create the subscription only now (on submit), then confirm with returned clientSecret
+      const prices = this.products();
+      if (!prices) throw new Error('Prices not loaded');
+      const priceId = this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id;
+      const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
+
+      const resp = await lastValueFrom(
+        this.billing.createSubscription({ priceId, source })
+      ) as CreateSubscriptionResponse;
+
+      this.clientSecret.set(resp.clientSecret);
+
+      const { error } = await this.stripe.confirmPayment({
         elements: this.elements,
+        clientSecret: resp.clientSecret,
         redirect: 'if_required',
       });
 
@@ -200,7 +180,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
         return;
       }
 
-      // Success (succeeded or processing).
+      // Success (succeeded or processing)
       await this.router.navigate(['/account']);
     } catch (e) {
       this.error.set('Payment could not be completed. Please try again.');
