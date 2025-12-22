@@ -211,6 +211,9 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       // cause "card number is incomplete" errors. Instead, confirm the payment
       // using the existing Elements instance with the returned client secret.
 
+      if (!this.stripe) this.stripe = await this.stripeJs.getStripe();
+      if (!this.stripe) throw new Error('Stripe failed to load');
+
       const { error } = await this.stripe.confirmPayment({
         elements: this.elements,
         clientSecret: resp.clientSecret,
