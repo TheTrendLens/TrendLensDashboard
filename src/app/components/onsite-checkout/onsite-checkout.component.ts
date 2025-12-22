@@ -207,16 +207,9 @@ export class OnsiteCheckoutComponent implements OnDestroy {
 
       this.clientSecret.set(resp.clientSecret);
 
-      // Remount Elements with the clientSecret to align with Stripe's recommendation
-      this.elementsReady.set(false);
-      await this.teardownElements();
-      if (!this.stripe) this.stripe = await this.stripeJs.getStripe();
-      if (!this.stripe) throw new Error('Stripe failed to load');
-      this.elements = this.stripe.elements({ clientSecret: resp.clientSecret });
-      const paymentElement = this.elements.create('payment');
-      await paymentElement.mount('#payment-element');
-      this.mounted = true;
-      this.elementsReady.set(true);
+      // Do NOT remount Elements here. Remounting would reset the user's input and
+      // cause "card number is incomplete" errors. Instead, confirm the payment
+      // using the existing Elements instance with the returned client secret.
 
       const { error } = await this.stripe.confirmPayment({
         elements: this.elements,
