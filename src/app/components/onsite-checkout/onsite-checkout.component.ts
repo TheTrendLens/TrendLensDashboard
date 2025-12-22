@@ -186,6 +186,15 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     this.isSubmitting.set(true);
     this.error.set(null);
     try {
+      // Per Stripe docs for deferred Payment Element flows, submit must be called
+      // immediately when the customer presses pay, before any async work.
+      const submitResult = await this.elements.submit();
+      if ((submitResult as any)?.error) {
+        const msg = (submitResult as any).error?.message ?? 'Please check your details and try again.';
+        this.error.set(msg);
+        return;
+      }
+
       // Create the subscription only now (on submit)
       const prices = this.products();
       if (!prices) throw new Error('Prices not loaded');
