@@ -122,19 +122,15 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       this.products.set({ monthly: prices.monthly, annual: prices.annual });
       this.currency.set(config.analytics.currency as any);
 
-      // Load Stripe and mount Payment Element in deferred mode (no intent yet)
-      this.stripe = await this.stripeJs.getStripe();
-      if (!this.stripe) throw new Error('Stripe failed to load');
-      this.elements = this.stripe.elements({
-        mode: 'payment',
-        currency: (config.analytics.currency || 'gbp') as any,
-        // For subscriptions, amount is determined on server when creating the Subscription.
-        // We omit amount to allow wallets/card collection in deferred flow.
-      } as any);
-      const paymentElement = this.elements.create('payment');
-      await paymentElement.mount('#payment-element');
-      this.mounted = true;
-      this.elementsReady.set(true);
+      // Load Stripe and mount Payment Element in deferred mode, but provide amount + currency
+      // to satisfy Stripe Elements requirements when no clientSecret is supplied.
+      const chosen = this.interval() === 'monthly' ? prices.monthly : prices.annual;
+      const amountMinor = chosen.unit_amount;
+      const currency = (config.analytics.currency || chosen.currency || 'gbp') as string;
+      if (amountMinor == null || Number.isNaN(amountMinor)) {
+        throw new Error('Missing price amount for selected plan');
+      }
+      await this.mountPaymentElement(amountMinor, currency);
     } catch (e: unknown) {
       this.error.set('We could not start the checkout. Please try again.');
       // log silently
@@ -150,6 +146,39 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     if (this.interval() === next) return;
     this.interval.set(next);
     // Deferred flow: do not create a subscription yet. We only create on submit.
+    // But we should remount Elements with the new amount so wallets reflect the price.
+    this.remountForSelectedPlan();
+  }
+
+  private async remountForSelectedPlan() {
+    try {
+      const prices = this.products();
+      if (!prices) return;
+      const chosen = this.interval() === 'monthly' ? prices.monthly : prices.annual;
+      const amountMinor = chosen.unit_amount;
+      const currency = (this.currency() || chosen.currency || 'gbp') as string;
+      if (amountMinor == null || Number.isNaN(amountMinor)) return;
+      await this.mountPaymentElement(amountMinor, currency);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to remount payment element', e);
+    }
+  }
+
+  private async mountPaymentElement(amountMinor: number, currency: string) {
+    this.elementsReady.set(false);
+    await this.teardownElements();
+    this.stripe = await this.stripeJs.getStripe();
+    if (!this.stripe) throw new Error('Stripe failed to load');
+    this.elements = this.stripe.elements({
+      mode: 'payment',
+      amount: amountMinor,
+      currency: currency as any,
+    } as any);
+    const paymentElement = this.elements.create('payment');
+    await paymentElement.mount('#payment-element');
+    this.mounted = true;
+    this.elementsReady.set(true);
   }
 
   async onSubmit() {
