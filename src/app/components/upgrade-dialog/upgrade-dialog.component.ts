@@ -4,6 +4,7 @@ import { ModalShellComponent } from '../common/modal-shell/modal-shell.component
 import { StripeService } from '../../services/stripe.service';
 import { AuthService } from '../../services/auth.service';
 import { UpgradeService } from '../../services/upgrade.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-upgrade-dialog',
@@ -79,6 +80,7 @@ export class UpgradeDialogComponent {
   private readonly stripe = inject(StripeService);
   private readonly auth = inject(AuthService);
   readonly upgradeService = inject(UpgradeService);
+  private readonly router = inject(Router);
 
   readonly isOpen = this.upgradeService.isOpen;
   readonly isLoading = signal(false);
@@ -96,15 +98,18 @@ export class UpgradeDialogComponent {
     }
     this.error.set(null);
     this.isLoading.set(true);
-    // Use Billing Portal session which returns a direct URL to redirect to
-    try {
-      this.stripe.redirectToBillingPortal(user.uid, {
-        returnUrl: `${window.location.origin}/account`,
-        source: this.upgradeService.source() ?? undefined
-      });
-    } catch {
-      this.error.set('We could not start the checkout. Please try again.');
-      this.isLoading.set(false);
-    }
+    // Navigate to on-site checkout instead of redirecting to Stripe portal
+    const source = this.upgradeService.source() ?? 'analytics';
+    this.router
+      .navigate(['/checkout'], {
+        queryParams: { interval: 'monthly', source },
+      })
+      .then(() => {
+        this.upgradeService.close();
+      })
+      .catch(() => {
+        this.error.set('We could not start the checkout. Please try again.');
+      })
+      .finally(() => this.isLoading.set(false));
   }
 }
