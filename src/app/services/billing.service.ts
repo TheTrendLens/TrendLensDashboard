@@ -48,6 +48,27 @@ export type ChangeSubscriptionResponse = {
   clientSecret?: string | null;
 };
 
+export type PreviewSubscriptionRequest = {
+  priceId: string;
+  proration_behavior?: 'create_prorations' | 'none';
+};
+
+export type PreviewSubscriptionResponse = {
+  currency: string;
+  subtotal: number | null;
+  tax: number | null;
+  total: number | null;
+  amount_due: number | null;
+  has_proration: boolean;
+  lines: Array<{
+    id: string;
+    amount: number;
+    currency: string | null;
+    description: string | null;
+    proration: boolean;
+  }>;
+};
+
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly http = inject(HttpClient);
@@ -84,5 +105,9 @@ export class BillingService {
 
   resumeSubscription() {
     return this.http.post<{ id: string; status: string; cancel_at_period_end: boolean; current_period_end: number | null }>(`${this.endpoint}/subscriptions/resume`, {});
+  }
+
+  previewSubscriptionChange(body: PreviewSubscriptionRequest) {
+    return this.http.post<PreviewSubscriptionResponse>(`${this.endpoint}/subscriptions/preview`, body);
   }
 }

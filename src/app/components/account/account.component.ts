@@ -13,6 +13,7 @@ import { UserService } from '../../services/user.service';
 import { FeatureFlagService } from '../../services/feature-flag.service';
 import { QuickBooksService } from '../../services/quickbooks.service';
 import { UpgradeService } from '../../services/upgrade.service';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-account',
@@ -38,6 +39,10 @@ export class AccountComponent implements OnInit, OnDestroy {
   // On-site subscription management state
   manageLoading = false;
   manageError: string | null = null;
+  manageSuccess: string | null = null;
+  isCancelling = false;
+  isResuming = false;
+  isChangingPlan: 'monthly' | 'annual' | null = null;
   currentSubscription: CurrentSubscriptionResponse['subscription'] | null = null;
   priceMonthly: CheckoutPrice | null = null;
   priceAnnual: CheckoutPrice | null = null;
@@ -174,13 +179,14 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   private async loadSubscriptionManagementData() {
     this.manageError = null;
+    this.manageSuccess = null;
     try {
       // Load current subscription summary
-      const subResp = await this.billing.getCurrentSubscription().toPromise();
+      const subResp = await lastValueFrom(this.billing.getCurrentSubscription());
       this.currentSubscription = subResp?.subscription ?? null;
 
       // Load available prices for plan switch labels
-      const products = await this.billing.getCheckoutProducts().toPromise();
+      const products = await lastValueFrom(this.billing.getCheckoutProducts());
       this.priceMonthly = products.analytics.prices.monthly;
       this.priceAnnual = products.analytics.prices.annual;
     } catch (e) {
@@ -210,29 +216,39 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   async onCancelAtPeriodEnd() {
     this.manageLoading = true;
+    this.isCancelling = true;
     this.manageError = null;
+    this.manageSuccess = null;
     try {
-      await this.billing.cancelSubscription().toPromise();
+      await lastValueFrom(this.billing.cancelSubscription());
       await this.loadSubscriptionManagementData();
+      this.manageSuccess = 'Subscription will cancel at the end of the current period.';
     } catch (e) {
       console.error(e);
       this.manageError = 'Could not cancel the subscription. Please try again.';
     } finally {
       this.manageLoading = false;
+      this.isCancelling = false;
+      setTimeout(() => (this.manageSuccess = null), 4000);
     }
   }
 
   async onResume() {
     this.manageLoading = true;
+    this.isResuming = true;
     this.manageError = null;
+    this.manageSuccess = null;
     try {
-      await this.billing.resumeSubscription().toPromise();
+      await lastValueFrom(this.billing.resumeSubscription());
       await this.loadSubscriptionManagementData();
+      this.manageSuccess = 'Subscription has been set to renew at the end of the period.';
     } catch (e) {
       console.error(e);
       this.manageError = 'Could not resume the subscription. Please try again.';
     } finally {
       this.manageLoading = false;
+      this.isResuming = false;
+      setTimeout(() => (this.manageSuccess = null), 4000);
     }
   }
 
@@ -240,9 +256,13 @@ export class AccountComponent implements OnInit, OnDestroy {
     if (!this.priceMonthly || !this.priceAnnual) return;
     const priceId = target === 'monthly' ? this.priceMonthly.id : this.priceAnnual.id;
     this.manageLoading = true;
+    this.isChangingPlan = target;
     this.manageError = null;
+    this.manageSuccess = null;
     try {
-      const resp = await this.billing.changeSubscription({ priceId, proration_behavior: 'create_prorations', source: 'account_billing' }).toPromise() as ChangeSubscriptionResponse;
+      const resp = await lastValueFrom(
+        this.billing.changeSubscription({ priceId, proration_behavior: 'create_prorations', source: 'account_billing' })
+      ) as ChangeSubscriptionResponse;
       // If payment required, confirm any next actions
       if (resp?.clientSecret) {
         const stripe = await this.stripeJs.getStripe();
@@ -253,11 +273,14 @@ export class AccountComponent implements OnInit, OnDestroy {
         }
       }
       await this.loadSubscriptionManagementData();
+      this.manageSuccess = `Plan changed to ${target === 'monthly' ? 'Monthly' : 'Annual'}.`;
     } catch (e) {
       console.error(e);
       this.manageError = 'Could not change plan. Please try again.';
     } finally {
       this.manageLoading = false;
+      this.isChangingPlan = null;
+      setTimeout(() => (this.manageSuccess = null), 4000);
     }
   }
 
