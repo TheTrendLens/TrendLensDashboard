@@ -182,11 +182,11 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   }
 
   async onSubmit() {
-    if (!this.stripe || !this.elements) return;
+    if (!this.elements) return;
     this.isSubmitting.set(true);
     this.error.set(null);
     try {
-      // Create the subscription only now (on submit), then confirm with returned clientSecret
+      // Create the subscription only now (on submit)
       const prices = this.products();
       if (!prices) throw new Error('Prices not loaded');
       const priceId = this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id;
@@ -197,6 +197,17 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       ) as CreateSubscriptionResponse;
 
       this.clientSecret.set(resp.clientSecret);
+
+      // Remount Elements with the clientSecret to align with Stripe's recommendation
+      this.elementsReady.set(false);
+      await this.teardownElements();
+      if (!this.stripe) this.stripe = await this.stripeJs.getStripe();
+      if (!this.stripe) throw new Error('Stripe failed to load');
+      this.elements = this.stripe.elements({ clientSecret: resp.clientSecret });
+      const paymentElement = this.elements.create('payment');
+      await paymentElement.mount('#payment-element');
+      this.mounted = true;
+      this.elementsReady.set(true);
 
       const { error } = await this.stripe.confirmPayment({
         elements: this.elements,
@@ -209,7 +220,12 @@ export class OnsiteCheckoutComponent implements OnDestroy {
         return;
       }
 
-      // Success (succeeded or processing)
+      // Success (succeeded or processing). Poll until subscription becomes active/trialing.
+      const ok = await this.pollForActivation(45_000, 2_000);
+      if (!ok) {
+        // If still not active, guide the user but allow navigation
+        this.error.set('Payment is processing. Your subscription will activate shortly.');
+      }
       await this.router.navigate(['/account']);
     } catch (e) {
       this.error.set('Payment could not be completed. Please try again.');
@@ -237,5 +253,22 @@ export class OnsiteCheckoutComponent implements OnDestroy {
 
   async ngOnDestroy() {
     await this.teardownElements();
+  }
+
+  private async pollForActivation(timeoutMs: number, intervalMs: number): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try {
+        const resp = await lastValueFrom(this.billing.getCurrentSubscription());
+        const sub = resp?.subscription ?? null;
+        if (sub && (sub.status === 'active' || sub.status === 'trialing')) {
+          return true;
+        }
+      } catch {
+        // ignore and retry
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return false;
   }
 }

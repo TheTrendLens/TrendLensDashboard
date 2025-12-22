@@ -13,6 +13,7 @@ import { TourService } from '../../services/tour.service';
 import {FeatureAccessDirective} from '../../directives/feature-access.directive';
 import {FeatureAccessService} from '../../services/feature-access.service';
 import {UpgradeService} from '../../services/upgrade.service';
+import { BillingService } from '../../services/billing.service';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -112,7 +113,8 @@ export class AnalyticsComponent implements OnInit {
     private currencyService: CurrencyService,
     private tourService: TourService,
     private featureAccessService: FeatureAccessService,
-    private upgradeService: UpgradeService
+    private upgradeService: UpgradeService,
+    private billingService: BillingService
   ) {
     // Set default date range to last 30 days
     this.startDate = new Date();
@@ -126,17 +128,26 @@ export class AnalyticsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Check access to analytics. If not allowed, open upgrade modal and do not load data.
-    this.featureAccessService.hasAccess('ANALYTICS_BASE').subscribe(hasAccess => {
-      if (hasAccess) {
-        this.loadAnalyticsData();
-        this.loadCategories();
-        this.loadBrands();
-      } else {
-        // Ensure we don't show stale data and stop loading spinners
+    // Gate analytics by actual subscription status rather than feature flag
+    // If user does not have an active/trialing subscription, open upgrade modal and skip loading data
+    this.billingService.getCurrentSubscription().subscribe({
+      next: (resp) => {
+        const sub = resp?.subscription ?? null;
+        const isValid = !!sub && (sub.status === 'active' || sub.status === 'trialing');
+        if (isValid) {
+          this.loadAnalyticsData();
+          this.loadCategories();
+          this.loadBrands();
+        } else {
+          this.isLoading = false;
+          this.analyticsData = null;
+          this.upgradeService.open('analytics');
+        }
+      },
+      error: () => {
+        // On error, fail-safe to showing the upgrade modal so users can upgrade
         this.isLoading = false;
         this.analyticsData = null;
-        // Open the global upgrade dialog with source for tracking
         this.upgradeService.open('analytics');
       }
     });
