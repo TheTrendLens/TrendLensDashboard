@@ -217,6 +217,11 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       const { error } = await this.stripe.confirmPayment({
         elements: this.elements,
         clientSecret: resp.clientSecret,
+        confirmParams: {
+          // Required by Stripe when automatic payment methods may require a redirect (e.g., 3DS)
+          // Navigate users back to the account page after any required authentication.
+          return_url: `${window.location.origin}/account?source=stripe`,
+        },
         redirect: 'if_required',
       });
 
