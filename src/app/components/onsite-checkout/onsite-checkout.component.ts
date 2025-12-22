@@ -174,6 +174,9 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       mode: 'payment',
       amount: amountMinor,
       currency: currency as any,
+      // Align deferred Elements config with server-created PaymentIntent for subscriptions
+      // to avoid: "setup_future_usage (off_session) does not match expected (null)"
+      setupFutureUsage: 'off_session',
     } as any);
     const paymentElement = this.elements.create('payment');
     await paymentElement.mount('#payment-element');
