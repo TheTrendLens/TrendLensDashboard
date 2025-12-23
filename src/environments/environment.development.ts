@@ -3,6 +3,8 @@ export const environment = {
   backend: {
     baseURL: "http://localhost:3000"
   },
+  // Feature flags
+  addonsEnabled: false,
   firebaseConfig: {
     apiKey: "AIzaSyAe4OWrwydmxI6pYtI0FpJv_ZXxtXUZ1-4",
     authDomain: "trendlens-dev.firebaseapp.com",

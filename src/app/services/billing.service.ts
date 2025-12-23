@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 
 type CreateSubscriptionRequest = {
   priceId: string;
+  addonPriceIds?: string[];
   source?: string;
   context?: unknown;
 };
@@ -26,6 +27,8 @@ export type CurrentSubscriptionResponse = {
     status: string;
     cancel_at_period_end: boolean;
     current_period_end: number | null; // epoch seconds
+    product_name?: string | null;
+    addon_names?: string[];
     price: null | {
       id: string;
       currency: string | null;
@@ -96,6 +99,12 @@ export class BillingService {
         currency: string;
         intervalLabels: { monthly: string; annual: string };
       };
+      addons?: {
+        advancedAnalytics?: {
+          name: string;
+          prices: { monthly: CheckoutPrice; annual: CheckoutPrice };
+        };
+      };
       supports: { cards: boolean; wallets: string[] };
       live: boolean;
     }>(`${this.endpoint}/checkoutProducts`);
@@ -127,5 +136,27 @@ export class BillingService {
 
   getUpcomingInvoice() {
     return this.http.get<UpcomingInvoiceResponse>(`${this.endpoint}/subscriptions/upcoming`);
+  }
+
+  // Addon management
+  addAddon(addonPriceId: string, proration: 'create_prorations' | 'none' = 'create_prorations') {
+    return this.http.post<{ subscriptionId: string; status: string; clientSecret?: string | null }>(
+      `${this.endpoint}/subscriptions/addons/add`,
+      { addonPriceId, proration_behavior: proration }
+    );
+  }
+
+  removeAddon(addonPriceId: string, proration: 'create_prorations' | 'none' = 'create_prorations') {
+    return this.http.post<{ subscriptionId: string; status: string; clientSecret?: string | null }>(
+      `${this.endpoint}/subscriptions/addons/remove`,
+      { addonPriceId, proration_behavior: proration }
+    );
+  }
+
+  previewAddon(addonPriceId: string, action: 'add' | 'remove') {
+    return this.http.post<PreviewSubscriptionResponse>(
+      `${this.endpoint}/subscriptions/addons/preview`,
+      { addonPriceId, action }
+    );
   }
 }

@@ -14,6 +14,7 @@ import { FeatureFlagService } from '../../services/feature-flag.service';
 import { QuickBooksService } from '../../services/quickbooks.service';
 import { UpgradeService } from '../../services/upgrade.service';
 import { lastValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-account',
@@ -46,6 +47,9 @@ export class AccountComponent implements OnInit, OnDestroy {
   currentSubscription: CurrentSubscriptionResponse['subscription'] | null = null;
   priceMonthly: CheckoutPrice | null = null;
   priceAnnual: CheckoutPrice | null = null;
+  // Addon pricing
+  addonMonthly: CheckoutPrice | null = null;
+  addonAnnual: CheckoutPrice | null = null;
   // Upcoming invoice summary
   upcoming: UpcomingInvoiceResponse | null = null;
 
@@ -65,6 +69,9 @@ export class AccountComponent implements OnInit, OnDestroy {
   readonly upgradeService = inject(UpgradeService);
   private readonly billing = inject(BillingService);
   private readonly stripeJs = inject(StripeJsService);
+
+  // Feature flags
+  readonly addonsEnabled = environment.addonsEnabled;
 
   constructor(
     private authService: AuthService,
@@ -149,7 +156,7 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   /**
    * Determines whether the current user already has an active subscription.
-   * Uses local user.active_package first, then falls back to Stripe status check.
+   * Uses Stripe-backed billing endpoint; considers trialing as active for gating.
    */
   private checkSubscriptionStatus(): void {
     const currentUser = this.userService.getCurrentUser();
@@ -158,24 +165,20 @@ export class AccountComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // If we already know from user object
-    if ((currentUser as any).active_package) {
-      this.hasActiveSubscription = true;
-      return;
-    }
-
-    // Otherwise query backend/Stripe
+    // Query backend/Stripe (source of truth)
     this.isCheckingSubscription = true;
-    this.stripeService.getSubscriptionStatus(currentUser.id).subscribe({
-      next: (subscription) => {
-        this.hasActiveSubscription = (subscription && (subscription as any).status === 'active');
+    this.billing.getCurrentSubscription().subscribe({
+      next: (resp) => {
+        const sub = resp?.subscription ?? null;
+        const status = sub?.status ?? null;
+        this.hasActiveSubscription = !!sub && (status === 'active' || status === 'trialing');
         this.isCheckingSubscription = false;
       },
       error: () => {
         // On error, assume no active subscription to allow upgrade path
         this.hasActiveSubscription = false;
         this.isCheckingSubscription = false;
-      }
+      },
     });
   }
 
@@ -191,6 +194,19 @@ export class AccountComponent implements OnInit, OnDestroy {
       const products = await lastValueFrom(this.billing.getCheckoutProducts());
       this.priceMonthly = products.analytics.prices.monthly;
       this.priceAnnual = products.analytics.prices.annual;
+      if (this.addonsEnabled) {
+        const addon = products.addons?.advancedAnalytics?.prices;
+        if (addon) {
+          this.addonMonthly = addon.monthly;
+          this.addonAnnual = addon.annual;
+        } else {
+          this.addonMonthly = null;
+          this.addonAnnual = null;
+        }
+      } else {
+        this.addonMonthly = null;
+        this.addonAnnual = null;
+      }
 
       // Load upcoming invoice to determine next renewal date/amount
       try {
@@ -203,6 +219,77 @@ export class AccountComponent implements OnInit, OnDestroy {
       // Keep silent error; UI will hide management panel if data missing
       console.error('Failed to load subscription management data', e);
       this.manageError = 'Unable to load subscription details right now.';
+    }
+  }
+
+  get hasAdvancedAnalyticsAddon(): boolean {
+    const names = (this.currentSubscription as any)?.addon_names as string[] | undefined;
+    return Array.isArray(names) ? names.includes('Advanced Analytics') : false;
+  }
+
+  async onAddAdvancedAnalytics() {
+    if (!this.addonsEnabled) return;
+    try {
+      this.manageError = null;
+      this.manageLoading = true;
+      // choose addon price by current interval
+      const interval = this.planInterval;
+      const priceId = interval === 'annual' ? this.addonAnnual?.id : this.addonMonthly?.id;
+      if (!priceId) throw new Error('Addon price not available');
+
+      const resp = await lastValueFrom(this.billing.addAddon(priceId));
+
+      // If payment is required, confirm invoice payment
+      const clientSecret = resp.clientSecret ?? null;
+      if (clientSecret) {
+        const stripe = await this.stripeJs.getStripe();
+        if (!stripe) throw new Error('Stripe failed to load');
+        const result = await (stripe as any).confirmInvoicePayment(clientSecret, {
+          return_url: `${window.location.origin}/account?source=stripe`,
+        });
+        if ((result as any)?.error) {
+          throw new Error((result as any).error.message || 'Payment authorization failed');
+        }
+      }
+
+      await this.loadSubscriptionManagementData();
+      this.manageSuccess = 'Advanced Analytics has been added to your subscription.';
+    } catch (e: any) {
+      this.manageError = e?.message || 'Unable to add Advanced Analytics right now.';
+    } finally {
+      this.manageLoading = false;
+    }
+  }
+
+  async onRemoveAdvancedAnalytics() {
+    if (!this.addonsEnabled) return;
+    try {
+      this.manageError = null;
+      this.manageLoading = true;
+      // choose addon price by current interval (removal matches by price id in subscription)
+      const interval = this.planInterval;
+      const priceId = interval === 'annual' ? this.addonAnnual?.id : this.addonMonthly?.id;
+      if (!priceId) throw new Error('Addon price not available');
+
+      const resp = await lastValueFrom(this.billing.removeAddon(priceId));
+      const clientSecret = resp.clientSecret ?? null;
+      if (clientSecret) {
+        const stripe = await this.stripeJs.getStripe();
+        if (!stripe) throw new Error('Stripe failed to load');
+        const result = await (stripe as any).confirmInvoicePayment(clientSecret, {
+          return_url: `${window.location.origin}/account?source=stripe`,
+        });
+        if ((result as any)?.error) {
+          throw new Error((result as any).error.message || 'Payment authorization failed');
+        }
+      }
+
+      await this.loadSubscriptionManagementData();
+      this.manageSuccess = 'Advanced Analytics has been removed from your subscription.';
+    } catch (e: any) {
+      this.manageError = e?.message || 'Unable to remove Advanced Analytics right now.';
+    } finally {
+      this.manageLoading = false;
     }
   }
 
@@ -375,7 +462,12 @@ export class AccountComponent implements OnInit, OnDestroy {
     const returnUrl = window.location.origin + '/account';
 
     try {
-      // this.stripeService.redirectToBillingPortal(user.uid, returnUrl);
+      // Re-enable redirect to Stripe Billing Portal
+      this.stripeService.redirectToBillingPortal(user.uid, {
+        returnUrl,
+        source: 'account_billing',
+        context: { from: 'account_page' },
+      });
       // Note: isLoading will remain true until the page redirects
       // If there's an error, the catch block will set isLoading to false
     } catch (error) {

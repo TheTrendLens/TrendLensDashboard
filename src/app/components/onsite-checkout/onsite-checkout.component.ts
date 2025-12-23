@@ -7,6 +7,7 @@ import { input } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { Stripe, StripeElements } from '@stripe/stripe-js';
 import { lastValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 type Interval = 'monthly' | 'annual';
 
@@ -33,6 +34,14 @@ type Interval = 'monthly' | 'annual';
                       [class]="interval() === 'annual' ? 'px-3 py-1.5 text-sm bg-brand-600 text-white' : 'px-3 py-1.5 text-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300'">
                 Annual
               </button>
+            </div>
+            <div *ngIf="addonAvailable()" class="mt-3 flex items-center gap-2">
+              <input id="adv-addon" type="checkbox" [checked]="includeAddon()" (change)="toggleAddon($event)"
+                     class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-600" />
+              <label for="adv-addon" class="text-sm text-gray-700 dark:text-gray-300">
+                Add Advanced Analytics
+                <span class="ml-1 text-gray-500">(+{{ addonPriceDeltaLabel() }})</span>
+              </label>
             </div>
           </div>
           <div class="text-right">
@@ -76,8 +85,10 @@ export class OnsiteCheckoutComponent implements OnDestroy {
   readonly isSubmitting = signal(false);
   readonly error = signal<string | null>(null);
   readonly products = signal<{ monthly: CheckoutPrice; annual: CheckoutPrice } | null>(null);
+  readonly addonProducts = signal<{ monthly: CheckoutPrice; annual: CheckoutPrice } | null>(null);
   readonly currency = signal<'gbp' | string>('gbp');
   readonly interval = signal<Interval>('monthly');
+  readonly includeAddon = signal<boolean>(false);
   readonly clientSecret = signal<string | null>(null);
   readonly elementsReady = signal(false);
 
@@ -92,7 +103,9 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     const prices = this.products();
     if (!prices) return this.interval() === 'monthly' ? 'Analytics – Monthly' : 'Analytics – Annual';
     const price = this.interval() === 'monthly' ? prices.monthly : prices.annual;
-    const amountMinor = price.unit_amount;
+    const addon = this.addonProducts();
+    const addonAmount = this.includeAddon() && addon ? (this.interval() === 'monthly' ? addon.monthly.unit_amount : addon.annual.unit_amount) : 0;
+    const amountMinor = (price.unit_amount ?? 0) + (addonAmount ?? 0);
     const currency = price.currency?.toUpperCase?.() || 'GBP';
     if (amountMinor == null) return this.interval() === 'monthly' ? 'Analytics – Monthly' : 'Analytics – Annual';
     const amount = amountMinor / 100;
@@ -102,6 +115,16 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     } catch {
       return `${amount.toFixed(2)} ${currency}`;
     }
+  });
+
+  readonly addonAvailable = computed(() => environment.addonsEnabled && !!this.addonProducts());
+  readonly addonPriceDeltaLabel = computed(() => {
+    const addon = this.addonProducts();
+    if (!addon) return '';
+    const p = this.interval() === 'monthly' ? addon.monthly : addon.annual;
+    const amt = (p.unit_amount ?? 0) / 100;
+    const ccy = (p.currency || 'gbp').toUpperCase();
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: ccy }).format(amt); } catch { return `${amt.toFixed(2)} ${ccy}`; }
   });
 
   constructor() {
@@ -117,15 +140,40 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     this.isLoading.set(true);
     this.error.set(null);
     try {
+      // Guard: if user already has an active/trialing subscription, do not allow creating another
+      try {
+        const subResp = await lastValueFrom(this.billing.getCurrentSubscription());
+        const sub = subResp?.subscription ?? null;
+        const status = (sub as any)?.status as string | undefined;
+        if (sub && (status === 'active' || status === 'trialing')) {
+          // Redirect to account page; append a hint param that can be used for showing a message
+          await this.router.navigate(['/account'], { queryParams: { m: 'already_subscribed' } });
+          return;
+        }
+      } catch {
+        // If the check fails, continue — we’ll rely on server-side guard as well
+      }
+
       const config = await lastValueFrom(this.billing.getCheckoutProducts());
       const prices = config.analytics.prices;
       this.products.set({ monthly: prices.monthly, annual: prices.annual });
       this.currency.set(config.analytics.currency as any);
+      if (environment.addonsEnabled) {
+        const addon = config.addons?.advancedAnalytics?.prices;
+        if (addon) {
+          this.addonProducts.set({ monthly: addon.monthly, annual: addon.annual });
+        }
+      } else {
+        this.addonProducts.set(null);
+        this.includeAddon.set(false);
+      }
 
       // Load Stripe and mount Payment Element in deferred mode, but provide amount + currency
       // to satisfy Stripe Elements requirements when no clientSecret is supplied.
       const chosen = this.interval() === 'monthly' ? prices.monthly : prices.annual;
-      const amountMinor = chosen.unit_amount;
+      const addonSel = environment.addonsEnabled ? this.addonProducts() : null;
+      const addonAmt = environment.addonsEnabled && this.includeAddon() && addonSel ? (this.interval() === 'monthly' ? addonSel.monthly.unit_amount : addonSel.annual.unit_amount) : 0;
+      const amountMinor = (chosen.unit_amount ?? 0) + (addonAmt ?? 0);
       const currency = (config.analytics.currency || chosen.currency || 'gbp') as string;
       if (amountMinor == null || Number.isNaN(amountMinor)) {
         throw new Error('Missing price amount for selected plan');
@@ -155,7 +203,9 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       const prices = this.products();
       if (!prices) return;
       const chosen = this.interval() === 'monthly' ? prices.monthly : prices.annual;
-      const amountMinor = chosen.unit_amount;
+      const addon = environment.addonsEnabled ? this.addonProducts() : null;
+      const addonAmt = environment.addonsEnabled && this.includeAddon() && addon ? (this.interval() === 'monthly' ? addon.monthly.unit_amount : addon.annual.unit_amount) : 0;
+      const amountMinor = (chosen.unit_amount ?? 0) + (addonAmt ?? 0);
       const currency = (this.currency() || chosen.currency || 'gbp') as string;
       if (amountMinor == null || Number.isNaN(amountMinor)) return;
       await this.mountPaymentElement(amountMinor, currency);
@@ -163,6 +213,14 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       // eslint-disable-next-line no-console
       console.error('Failed to remount payment element', e);
     }
+  }
+
+  toggleAddon(ev: Event) {
+    if (!environment.addonsEnabled) return;
+    const checked = (ev.target as HTMLInputElement)?.checked ?? false;
+    this.includeAddon.set(checked);
+    // Update Elements amount to reflect addon selection
+    this.remountForSelectedPlan();
   }
 
   private async mountPaymentElement(amountMinor: number, currency: string) {
@@ -189,6 +247,19 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     this.isSubmitting.set(true);
     this.error.set(null);
     try {
+      // Double-check before submission to avoid race conditions
+      try {
+        const subResp = await lastValueFrom(this.billing.getCurrentSubscription());
+        const sub = subResp?.subscription ?? null;
+        const status = (sub as any)?.status as string | undefined;
+        if (sub && (status === 'active' || status === 'trialing')) {
+          await this.router.navigate(['/account'], { queryParams: { m: 'already_subscribed' } });
+          return;
+        }
+      } catch {
+        // Ignore and continue — backend will enforce as well
+      }
+
       // Per Stripe docs for deferred Payment Element flows, submit must be called
       // immediately when the customer presses pay, before any async work.
       const submitResult = await this.elements.submit();
@@ -203,9 +274,11 @@ export class OnsiteCheckoutComponent implements OnDestroy {
       if (!prices) throw new Error('Prices not loaded');
       const priceId = this.interval() === 'monthly' ? prices.monthly.id : prices.annual.id;
       const source = this.route.snapshot.queryParamMap.get('source') ?? undefined;
+      const addon = environment.addonsEnabled ? this.addonProducts() : null;
+      const addonId = environment.addonsEnabled && this.includeAddon() && addon ? (this.interval() === 'monthly' ? addon.monthly.id : addon.annual.id) : null;
 
       const resp = await lastValueFrom(
-        this.billing.createSubscription({ priceId, source })
+        this.billing.createSubscription({ priceId, addonPriceIds: environment.addonsEnabled && addonId ? [addonId] : undefined, source })
       ) as CreateSubscriptionResponse;
 
       this.clientSecret.set(resp.clientSecret);

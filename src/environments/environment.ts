@@ -7,6 +7,8 @@ export const environment = {
   backend: {
     baseURL: "https://api.thetrendlens.co.uk"
   },
+  // Feature flags
+  addonsEnabled: false,
   firebaseConfig: {
     apiKey: "AIzaSyCKU_ApBLpjipMqNPfokCDy0guCHs0cgfI",
     authDomain: "trendlens-production.firebaseapp.com",
