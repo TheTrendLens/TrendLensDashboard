@@ -27,10 +27,16 @@
                   </div>
                   <div class="mt-1 text-sm text-gray-600">
                     <span *ngIf="currentSubscription?.cancel_at_period_end; else renews">
-                      Cancels at end of period ({{ (currentSubscription?.current_period_end || 0) * 1000 | date:'mediumDate' }})
+                      Cancels at end of period
+                      <span *ngIf="nextRenewalEpoch as nre">({{ (nre || 0) * 1000 | date:'mediumDate' }})</span>
                     </span>
                     <ng-template #renews>
-                      Renews on {{ (currentSubscription?.current_period_end || 0) * 1000 | date:'mediumDate' }}
+                      <span>
+                        Renews on
+                        <span *ngIf="nextRenewalEpoch as nre">{{ (nre || 0) * 1000 | date:'mediumDate' }}</span>
+                        <span *ngIf="!nextRenewalEpoch">—</span>
+                        <span *ngIf="nextAmountDueLabel" class="ml-2 text-gray-500">· {{ nextAmountDueLabel }}</span>
+                      </span>
                     </ng-template>
                   </div>
                 </div>

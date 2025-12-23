@@ -69,6 +69,20 @@ export type PreviewSubscriptionResponse = {
   }>;
 };
 
+export type UpcomingInvoiceResponse =
+  | {
+      hasUpcoming: true;
+      subscriptionId: string;
+      period_start: number | null;
+      period_end: number | null;
+      amount_due: number;
+      subtotal: number;
+      total: number;
+      currency: string;
+      next_payment_attempt: number | null;
+    }
+  | { hasUpcoming: false; reason: string };
+
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly http = inject(HttpClient);
@@ -109,5 +123,9 @@ export class BillingService {
 
   previewSubscriptionChange(body: PreviewSubscriptionRequest) {
     return this.http.post<PreviewSubscriptionResponse>(`${this.endpoint}/subscriptions/preview`, body);
+  }
+
+  getUpcomingInvoice() {
+    return this.http.get<UpcomingInvoiceResponse>(`${this.endpoint}/subscriptions/upcoming`);
   }
 }

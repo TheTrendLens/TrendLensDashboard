@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ChangePasswordComponent } from '../change-password/change-password.component';
 import { AuthService } from '../../services/auth.service';
 import { StripeService } from '../../services/stripe.service';
-import { BillingService, CheckoutPrice, CurrentSubscriptionResponse, ChangeSubscriptionResponse } from '../../services/billing.service';
+import { BillingService, CheckoutPrice, CurrentSubscriptionResponse, ChangeSubscriptionResponse, UpcomingInvoiceResponse } from '../../services/billing.service';
 import { StripeJsService } from '../../services/stripe-js.service';
 import { CurrencyService } from '../../services/currency.service';
 import { ThemeService } from '../../services/theme.service';
@@ -46,6 +46,8 @@ export class AccountComponent implements OnInit, OnDestroy {
   currentSubscription: CurrentSubscriptionResponse['subscription'] | null = null;
   priceMonthly: CheckoutPrice | null = null;
   priceAnnual: CheckoutPrice | null = null;
+  // Upcoming invoice summary
+  upcoming: UpcomingInvoiceResponse | null = null;
 
   // QuickBooks integration
   isQuickBooksConnected: boolean = false;
@@ -189,6 +191,14 @@ export class AccountComponent implements OnInit, OnDestroy {
       const products = await lastValueFrom(this.billing.getCheckoutProducts());
       this.priceMonthly = products.analytics.prices.monthly;
       this.priceAnnual = products.analytics.prices.annual;
+
+      // Load upcoming invoice to determine next renewal date/amount
+      try {
+        this.upcoming = await lastValueFrom(this.billing.getUpcomingInvoice());
+      } catch (e) {
+        // Non-fatal; keep upcoming as null
+        this.upcoming = null;
+      }
     } catch (e) {
       // Keep silent error; UI will hide management panel if data missing
       console.error('Failed to load subscription management data', e);
@@ -200,6 +210,33 @@ export class AccountComponent implements OnInit, OnDestroy {
     const interval = this.currentSubscription?.price?.interval;
     if (interval === 'month') return 'monthly';
     if (interval === 'year') return 'annual';
+    return null;
+  }
+
+  get nextRenewalEpoch(): number | null {
+    const periodEnd = this.currentSubscription?.current_period_end ?? null;
+    if (periodEnd) return periodEnd;
+    const up = this.upcoming;
+    if (up && (up as any).hasUpcoming === true) {
+      const u = up as Extract<UpcomingInvoiceResponse, { hasUpcoming: true }>;
+      return u.period_end ?? null;
+    }
+    return null;
+  }
+
+  get nextAmountDueLabel(): string | null {
+    const up = this.upcoming;
+    if (up && (up as any).hasUpcoming === true) {
+      const u = up as Extract<UpcomingInvoiceResponse, { hasUpcoming: true }>;
+      const total = u.total;
+      const currency = (u.currency || 'gbp').toUpperCase();
+      const amount = (total ?? 0) / 100;
+      try {
+        return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+      } catch {
+        return amount.toFixed(2) + ' ' + currency;
+      }
+    }
     return null;
   }
 

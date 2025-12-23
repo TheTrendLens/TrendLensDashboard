@@ -171,7 +171,7 @@ export class OnsiteCheckoutComponent implements OnDestroy {
     this.stripe = await this.stripeJs.getStripe();
     if (!this.stripe) throw new Error('Stripe failed to load');
     this.elements = this.stripe.elements({
-      mode: 'payment',
+      mode: 'subscription',
       amount: amountMinor,
       currency: currency as any,
       // Align deferred Elements config with server-created PaymentIntent for subscriptions
