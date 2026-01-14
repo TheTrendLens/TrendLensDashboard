@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { AdminService, UserAdminInfo, PaginatedUserAdminInfo } from '../../services/admin.service';
+import { AdminService, UserAdminInfo, PaginatedUserAdminInfo, QueuedJob } from '../../services/admin.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DatePipe, NgIf } from '@angular/common';
+import { MatTabsModule } from '@angular/material/tabs';
+import { DatePipe, NgIf, NgForOf, JsonPipe } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -18,8 +19,11 @@ import { NotificationService } from '../../services/notification.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTabsModule,
     DatePipe,
     NgIf,
+    NgForOf,
+    JsonPipe,
     MatDialogModule,
     MatTooltipModule,
     MatPaginatorModule
@@ -29,6 +33,9 @@ import { NotificationService } from '../../services/notification.service';
 })
 export class AdminComponent implements OnInit {
   users: UserAdminInfo[] = [];
+  jobs: QueuedJob[] = [];
+  healthStatus: any = null;
+
   displayedColumns: string[] = [
     'email',
     'lastLogin',
@@ -40,7 +47,19 @@ export class AdminComponent implements OnInit {
     'sent_report',
     'actions'
   ];
+
+  jobDisplayedColumns: string[] = [
+    'id',
+    'queue',
+    'name',
+    'status',
+    'timestamp',
+    'progress',
+    'actions'
+  ];
+
   loading = true;
+  jobsLoading = false;
 
   // Pagination
   totalUsers = 0;
@@ -56,6 +75,8 @@ export class AdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadJobs();
+    this.loadHealth();
   }
 
   loadUsers(page: number = 1, limit: number = this.pageSize): void {
@@ -74,6 +95,60 @@ export class AdminComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  loadJobs(): void {
+    this.jobsLoading = true;
+    this.adminService.getQueuedJobs().subscribe({
+      next: (jobs) => {
+        this.jobs = jobs;
+        this.jobsLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading jobs:', error);
+        this.notificationService.error('Error loading queued jobs.');
+        this.jobsLoading = false;
+      }
+    });
+  }
+
+  loadHealth(): void {
+    this.adminService.getHealth().subscribe({
+      next: (status) => {
+        this.healthStatus = status;
+      },
+      error: (error) => {
+        console.error('Error loading health status:', error);
+      }
+    });
+  }
+
+  retryJob(job: QueuedJob): void {
+    this.adminService.retryJob(job.queue, job.id).subscribe({
+      next: (response) => {
+        this.notificationService.success(response.message);
+        this.loadJobs();
+      },
+      error: (error) => {
+        console.error('Error retrying job:', error);
+        this.notificationService.error('Failed to retry job.');
+      }
+    });
+  }
+
+  removeJob(job: QueuedJob): void {
+    if (confirm(`Are you sure you want to remove job ${job.id} from ${job.queue}?`)) {
+      this.adminService.removeJob(job.queue, job.id).subscribe({
+        next: (response) => {
+          this.notificationService.success(response.message);
+          this.loadJobs();
+        },
+        error: (error) => {
+          console.error('Error removing job:', error);
+          this.notificationService.error('Failed to remove job.');
+        }
+      });
+    }
   }
 
   handlePageEvent(event: PageEvent): void {

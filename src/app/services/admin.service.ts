@@ -22,6 +22,20 @@ export interface PaginatedUserAdminInfo {
   limit: number;
 }
 
+export interface QueuedJob {
+  id: string;
+  name: string;
+  data: any;
+  status: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' | 'stalled';
+  timestamp: number;
+  processedOn?: number;
+  finishedOn?: number;
+  failedReason?: string;
+  stacktrace?: string[];
+  progress: number;
+  queue: string;
+}
+
 const endpoint = `${environment.backend.baseURL}/api/admin`;
 
 @Injectable({
@@ -30,6 +44,34 @@ const endpoint = `${environment.backend.baseURL}/api/admin`;
 export class AdminService {
 
   constructor(private http: HttpClient) { }
+
+  /**
+   * Get application health status
+   */
+  getHealth(): Observable<any> {
+    return this.http.get(`${environment.backend.baseURL}/health`);
+  }
+
+  /**
+   * Get all queued jobs from all queues
+   */
+  getQueuedJobs(): Observable<QueuedJob[]> {
+    return this.http.get<QueuedJob[]>(`${endpoint}/jobs`);
+  }
+
+  /**
+   * Retry a failed/stalled job
+   */
+  retryJob(queueName: string, jobId: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${endpoint}/jobs/${queueName}/${jobId}/retry`, {});
+  }
+
+  /**
+   * Remove a job from the queue
+   */
+  removeJob(queueName: string, jobId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${endpoint}/jobs/${queueName}/${jobId}`);
+  }
 
   /**
    * Get all users with admin information with pagination
