@@ -1,5 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {NgForOf} from "@angular/common";
+import {Component, Input, OnInit, ViewChild, signal, inject, ChangeDetectionStrategy, input} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatPaginator} from '@angular/material/paginator';
 import {Sale} from '../../models/sale';
@@ -17,60 +16,56 @@ import {SalesService} from '../../services/sales.service';
 @Component({
   selector: 'app-action-required-tables',
   imports: [
-    NgForOf,
     ReactiveFormsModule,
     FormsModule,
     SaleCardComponent
   ],
   templateUrl: './action-required-tables.component.html',
-  styleUrl: './action-required-tables.component.css'
+  styleUrl: './action-required-tables.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionRequiredTablesComponent implements OnInit {
+  public userService = inject(UserService);
+  public salesService = inject(SalesService);
+  public dialog = inject(MatDialog);
+  private router = inject(Router);
+  private productService = inject(ProductService);
+
   console = console;
   Math = Math; // Make Math available to the template
 
-  public salesData: Sale[] = [];
-  saleItemCounts: { [saleId: string]: number } = {};
+  salesData = signal<Sale[]>([]);
+  saleItemCounts = signal<{ [saleId: string]: number }>({});
 
-  salesIsLoading: boolean = false;
-  isMassEditMode: boolean = false;
-  salesTotalRows = 1000;
-  salesPageSize = 32; // Set to 32 as per requirements
-  salesCurrentPage = 1;
-  totalPages: number = 0;
+  salesIsLoading = signal<boolean>(false);
+  isMassEditMode = signal<boolean>(false);
+  salesTotalRows = signal<number>(1000);
+  salesPageSize = signal<number>(32); // Set to 32 as per requirements
+  salesCurrentPage = signal<number>(1);
+  totalPages = signal<number>(0);
   @ViewChild(MatPaginator) salesPaginator!: MatPaginator;
 
-  @Input('metricsComponent') metricsComponent: StatCardsComponent | undefined
-
-  constructor(
-    public userService: UserService,
-    public salesService: SalesService,
-    public dialog: MatDialog,
-    private router: Router,
-    private productService: ProductService
-  ) {
-
-  }
+  metricsComponent = input<StatCardsComponent | undefined>(undefined, { alias: 'metricsComponent' });
 
   ngOnInit(): void {
     this.loadData();
   }
 
   calculateTotalPages(): void {
-    this.totalPages = Math.ceil(this.salesTotalRows / this.salesPageSize);
+    this.totalPages.set(Math.ceil(this.salesTotalRows() / this.salesPageSize()));
   }
 
   // Navigation methods for pagination arrows
   goToPreviousPage(): void {
-    if (this.salesCurrentPage > 1) { // Changed from 0 to 1 for 1-based pagination
-      this.salesCurrentPage--;
+    if (this.salesCurrentPage() > 1) { // Changed from 0 to 1 for 1-based pagination
+      this.salesCurrentPage.update(p => p - 1);
       this.loadData();
     }
   }
 
   goToNextPage(): void {
-    if (this.salesCurrentPage < this.totalPages) { // Removed -1 for 1-based pagination
-      this.salesCurrentPage++;
+    if (this.salesCurrentPage() < this.totalPages()) { // Removed -1 for 1-based pagination
+      this.salesCurrentPage.update(p => p + 1);
       this.loadData();
     }
   }
@@ -80,49 +75,51 @@ export class ActionRequiredTablesComponent implements OnInit {
   }
 
   loadData() {
-    this.salesIsLoading = true;
+    this.salesIsLoading.set(true);
 
-    this.salesService.getSales(this.salesPageSize, this.salesCurrentPage, '', 'all', 'date_desc', 0, true).pipe(take(1)).subscribe({
+    this.salesService.getSales(this.salesPageSize(), this.salesCurrentPage(), '', 'all', 'date_desc', 0, true).pipe(take(1)).subscribe({
       next: (paginatedSales) => {
-        this.salesData = paginatedSales.items;
-        this.salesTotalRows = paginatedSales.meta.totalItems;
+        this.salesData.set(paginatedSales.items);
+        this.salesTotalRows.set(paginatedSales.meta.totalItems);
         this.calculateTotalPages();
 
         if (this.salesPaginator) {
-          this.salesPaginator.pageIndex = this.salesCurrentPage - 1; // Convert from 1-based to 0-based for paginator
+          this.salesPaginator.pageIndex = this.salesCurrentPage() - 1; // Convert from 1-based to 0-based for paginator
         }
         this.loadSaleItemCounts();
-        this.salesIsLoading = false;
+        this.salesIsLoading.set(false);
       },
       error: (error) => {
         console.error(error);
-        this.salesIsLoading = false;
+        this.salesIsLoading.set(false);
       }
     })
   }
 
   loadSaleItemCounts(): void {
     // First, use any products already loaded with the sales
-    this.salesData.forEach(sale => {
+    const currentCounts = {...this.saleItemCounts()};
+    this.salesData().forEach(sale => {
       if (sale.products && Array.isArray(sale.products)) {
         // Products are already loaded, use them directly
-        this.saleItemCounts[sale.id] = sale.products.length;
+        currentCounts[sale.id] = sale.products.length;
       } else {
         // Products not loaded, set initial count to 0
-        this.saleItemCounts[sale.id] = 0;
+        currentCounts[sale.id] = 0;
 
         // Fetch products for this sale
         this.productService.getProductsBySale(sale.id).subscribe({
           next: (products: Product[]) => {
-            this.saleItemCounts[sale.id] = products.length;
+            this.saleItemCounts.update(counts => ({...counts, [sale.id]: products.length}));
           },
           error: (error) => {
             console.error(`Error fetching products for sale ${sale.id}:`, error);
-            this.saleItemCounts[sale.id] = 0;
+            this.saleItemCounts.update(counts => ({...counts, [sale.id]: 0}));
           }
         });
       }
     });
+    this.saleItemCounts.set(currentCounts);
   }
 
   getValue(element: any, col: any): any {
@@ -167,43 +164,46 @@ export class ActionRequiredTablesComponent implements OnInit {
       data: sale
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(() => {
       this.loadData();
 
-      if (this.metricsComponent) {
-        this.metricsComponent.updateStats();
+      const metrics = this.metricsComponent();
+      if (metrics) {
+        metrics.updateStats();
       }
     })
   }
 
   onSaleUpdated(sale: Sale): void {
     // Update the stat-cards component when a sale is updated
-    if (this.metricsComponent) {
-      this.metricsComponent.updateStats();
+    const metrics = this.metricsComponent();
+    if (metrics) {
+      metrics.updateStats();
     }
   }
 
   onProductUpdated(product: Product): void {
     // Update the stat-cards component when a product is updated
-    if (this.metricsComponent) {
-      this.metricsComponent.updateStats();
+    const metrics = this.metricsComponent();
+    if (metrics) {
+      metrics.updateStats();
     }
   }
 
   toggleMassEditMode(): void {
-    if (this.isMassEditMode) {
+    if (this.isMassEditMode()) {
       // Exiting mass edit mode - save all changes
       this.saveMassEditChanges();
     } else {
       // Entering mass edit mode
-      this.isMassEditMode = true;
+      this.isMassEditMode.set(true);
     }
   }
 
   private saveMassEditChanges(): void {
     // In mass edit mode, all changes are saved automatically by individual sale cards
     // We just need to exit mass edit mode
-    this.isMassEditMode = false;
+    this.isMassEditMode.set(false);
 
     // Refresh the data to ensure we have the latest state
     this.loadData();

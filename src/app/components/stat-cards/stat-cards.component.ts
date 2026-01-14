@@ -1,7 +1,7 @@
-import {Component, OnInit, QueryList, ViewChildren} from '@angular/core';
+import {Component, OnInit, QueryList, ViewChildren, signal, inject, ChangeDetectionStrategy} from '@angular/core';
 import {take} from 'rxjs';
 import { UserService } from '../../services/user.service';
-import {NgClass, NgForOf, CurrencyPipe, NgIf} from '@angular/common';
+import {CurrencyPipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {BaseChartDirective} from 'ng2-charts';
 import {Chart, ChartData, ChartOptions, registerables, TooltipItem} from 'chart.js';
@@ -15,52 +15,55 @@ Chart.register(TrendlineLinearPlugin);
 @Component({
   selector: 'app-stat-cards',
   imports: [
-    NgForOf,
-    NgIf,
     FormsModule,
-    NgClass,
     BaseChartDirective,
     CurrencyPipe
   ],
   templateUrl: './stat-cards.component.html',
-  styleUrl: './stat-cards.component.css'
+  styleUrl: './stat-cards.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatCardsComponent implements OnInit {
+  private userService = inject(UserService);
+  private currencyService = inject(CurrencyService);
 
-  metrics: {
+  metrics = signal<{
     revenue: number;
     costs: number;
     profit: number;
     numberOfSales: number;
+    roi: number;
+    averageProfit: number;
     salesTax?: number;
-  } = {
+  }>({
     revenue: 0,
     costs: 0,
     profit: 0,
     numberOfSales: 0,
-  };
+    roi: 0,
+    averageProfit: 0,
+  });
 
-  showSalesTaxEnabled = false;
+  showSalesTaxEnabled = signal<boolean>(false);
 
   timeframeOptions = [
     { label: 'This Year', value: 'year' },
     { label: 'This Month', value: 'month' },
-    // { label: 'Last 30 Days', value: '30days' },
     { label: 'Last Year', value: 'lastyear' },
     { label: 'Last Month', value: 'lastmonth' },
   ];
 
   @ViewChildren(BaseChartDirective) charts!: QueryList<BaseChartDirective>;
 
-  public chartData: ChartData = {
+  public chartData = signal<ChartData>({
     labels: [],
     datasets: []
-  };
+  });
 
-  public barChartData: ChartData = {
+  public barChartData = signal<ChartData>({
     labels: [],
     datasets: []
-  };
+  });
 
   public chartOptions: ChartOptions = {
     elements: {
@@ -78,7 +81,7 @@ export class StatCardsComponent implements OnInit {
         stacked: true,
         beginAtZero: true,
         ticks: {
-          callback: (value: any, index: any, ticks: any) => {
+          callback: (value: any) => {
             return this.currencyService.getCurrencySymbol() + value.toFixed(2);
           }
         }
@@ -141,10 +144,11 @@ export class StatCardsComponent implements OnInit {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any, index: any, ticks: any) {
+          callback: function(value: any) {
             if (Math.floor(value) === value) {
               return value;
             }
+            return '';
           }
         }
       },
@@ -183,19 +187,12 @@ export class StatCardsComponent implements OnInit {
     }
   }
 
-  selectedTimeframe = this.timeframeOptions[0].value;
-
-  constructor(
-    private userService: UserService,
-    private currencyService: CurrencyService
-  ) {
-
-  }
+  selectedTimeframe = signal<string>(this.timeframeOptions[0].value);
 
   ngOnInit(): void {
     // React to user preference changes for showing sales tax
     this.userService.isShowSalesTaxEnabled().subscribe((enabled) => {
-      this.showSalesTaxEnabled = enabled;
+      this.showSalesTaxEnabled.set(enabled);
       this.updateStats();
     });
     this.updateStats();
@@ -204,15 +201,17 @@ export class StatCardsComponent implements OnInit {
   public updateStats() {
     // Get metrics with filterMissingCosts=true to only include sales with complete cost data
     const includeTax = this.userService.getShowSalesTaxEnabled();
-    this.userService.getMetrics(this.selectedTimeframe, false, includeTax).pipe(take(1)).subscribe({
+    this.userService.getMetrics(this.selectedTimeframe(), false, includeTax).pipe(take(1)).subscribe({
       next: (metrics) => {
-        this.metrics = {
+        this.metrics.set({
           revenue: metrics.revenue,
           costs: metrics.costs,
           profit: metrics.profit,
           numberOfSales: metrics.numberOfSales,
+          roi: metrics.roi,
+          averageProfit: metrics.averageProfit,
           salesTax: metrics.salesTax ?? undefined,
-        };
+        });
       },
       error: (error) => {
         console.error(error);
@@ -221,47 +220,54 @@ export class StatCardsComponent implements OnInit {
 
 
     // Get graphable metrics with filterMissingCosts=true to only include sales with complete cost data
-    this.userService.getGraphableMetrics(this.selectedTimeframe, false, includeTax).pipe(take(1)).subscribe({
+    this.userService.getGraphableMetrics(this.selectedTimeframe(), false, includeTax).pipe(take(1)).subscribe({
       next: (metrics) => {
         // Set labels based on date range
-        this.chartData.labels = metrics.labels;
-        this.barChartData.labels = metrics.labels;
+        const labels = metrics.labels;
 
         // Update chart datasets
-        this.chartData.datasets = metrics.series
-          .filter((series) => ['Profit', 'Costs', 'Sales Tax'].includes(series.label))
-          .map((series) => ({
-          label: series.label,
-          data: series.data,
-          borderColor: series.borderColor,
-          backgroundColor: series.borderColor.replace('1)', '0.2)'),
-          pointStyle: false,
-          borderWidth: 2,
-          stack: '0',
-          fill: {
-            target: series.label === 'Costs' ? 'origin' : '-1',
-            color: series.borderColor
-          }
-        }));
+        const newChartData: ChartData = {
+          labels: labels,
+          datasets: metrics.series
+            .filter((series: any) => ['Profit', 'Costs', 'Sales Tax'].includes(series.label))
+            .map((series: any) => ({
+              label: series.label,
+              data: series.data,
+              borderColor: series.borderColor,
+              backgroundColor: series.borderColor.replace('1)', '0.2)'),
+              pointStyle: false,
+              borderWidth: 2,
+              stack: '0',
+              fill: {
+                target: series.label === 'Costs' ? 'origin' : '-1',
+                color: series.borderColor
+              }
+            }))
+        };
+        this.chartData.set(newChartData);
 
-        this.barChartData.datasets = metrics.series.filter((series) => series.label == 'Number of Sales').map((series) => ({
-          label: series.label,
-          data: series.data,
-          borderColor: series.borderColor,
-          backgroundColor: series.borderColor.replace('1)', '0.2)'),
-          pointStyle: false,
-          borderWidth: 2,
-          trendlineLinear: {
-            colorMin: "rgba(255,105,180, .8)",
-            lineStyle: "dotted",
-            width: 2
-          }
-        }));
+        const newBarChartData: ChartData = {
+          labels: labels,
+          datasets: metrics.series.filter((series: any) => series.label == 'Number of Sales').map((series: any) => ({
+            label: series.label,
+            data: series.data,
+            borderColor: series.borderColor,
+            backgroundColor: series.borderColor.replace('1)', '0.2)'),
+            pointStyle: false,
+            borderWidth: 2,
+            trendlineLinear: {
+              colorMin: "rgba(255,105,180, .8)",
+              lineStyle: "dotted",
+              width: 2
+            }
+          }))
+        };
+        this.barChartData.set(newBarChartData);
 
         // Determine the format based on the selected timeframe
         let xAxisFormat: 'day' | 'month';
 
-        if (this.selectedTimeframe === 'month' || this.selectedTimeframe === 'lastmonth') {
+        if (this.selectedTimeframe() === 'month' || this.selectedTimeframe() === 'lastmonth') {
           xAxisFormat = 'day';
         } else {
           // For 'year', 'lastyear', or any other timeframe
@@ -287,53 +293,8 @@ export class StatCardsComponent implements OnInit {
   }
 
   selectTimeframe(timeframe: string): void {
-    this.selectedTimeframe = timeframe;
+    this.selectedTimeframe.set(timeframe);
     this.updateStats();
-  }
-
-  /**
-   * Check if all dates in the labels array are within the same month
-   */
-  private areDatesInSameMonth(labels: string[]): boolean {
-    if (labels.length <= 1) return true;
-
-    try {
-      // Try to parse the first date to determine format
-      const firstDate = new Date(labels[0]);
-      const firstMonth = firstDate.getMonth();
-      const firstYear = firstDate.getFullYear();
-
-      // Check if all dates are in the same month and year
-      return labels.every(label => {
-        const date = new Date(label);
-        return date.getMonth() === firstMonth && date.getFullYear() === firstYear;
-      });
-    } catch (e) {
-      console.error('Error parsing dates:', e);
-      return false;
-    }
-  }
-
-  /**
-   * Check if all dates in the labels array are within the same year
-   */
-  private areDatesInSameYear(labels: string[]): boolean {
-    if (labels.length <= 1) return true;
-
-    try {
-      // Try to parse the first date to determine format
-      const firstDate = new Date(labels[0]);
-      const firstYear = firstDate.getFullYear();
-
-      // Check if all dates are in the same year
-      return labels.every(label => {
-        const date = new Date(label);
-        return date.getFullYear() === firstYear;
-      });
-    } catch (e) {
-      console.error('Error parsing dates:', e);
-      return false;
-    }
   }
 
   /**
@@ -370,32 +331,33 @@ export class StatCardsComponent implements OnInit {
 
     // Set min and max dates based on the selected timeframe
     if (format === 'month') {
-      if (this.selectedTimeframe === 'year') {
+      if (this.selectedTimeframe() === 'year') {
         // This year: Jan 1 to current month (not beyond current month)
         min = new Date(now.getFullYear(), 0, 1);
         max = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
-      } else if (this.selectedTimeframe === 'lastyear') {
+      } else if (this.selectedTimeframe() === 'lastyear') {
         // Last year: Jan 1 to Dec 1 of last year (not Dec 31st to avoid duplicate)
         min = new Date(now.getFullYear() - 1, 0, 1);
         max = new Date(now.getFullYear() - 1, 11, 1); // December 1st of last year
       }
     } else if (format === 'day') {
-      if (this.selectedTimeframe === 'month') {
+      if (this.selectedTimeframe() === 'month') {
         // This month: 1st to current day (not beyond current day)
         min = new Date(now.getFullYear(), now.getMonth(), 1);
         max = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Current day
-      } else if (this.selectedTimeframe === 'lastmonth') {
+      } else if (this.selectedTimeframe() === 'lastmonth') {
         // Last month: 1st to last day of previous month
         min = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         max = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
       }
     }
 
+    const currentChartData = this.chartData();
     // If we have chart data but no min/max set yet, use the data range
-    if ((!min || !max) && this.chartData.labels && this.chartData.labels.length > 0) {
+    if ((!min || !max) && currentChartData.labels && currentChartData.labels.length > 0) {
       // Get the first and last dates from the labels
-      const firstLabel = this.chartData.labels[0];
-      const lastLabel = this.chartData.labels[this.chartData.labels.length - 1];
+      const firstLabel = currentChartData.labels[0];
+      const lastLabel = currentChartData.labels[currentChartData.labels.length - 1];
 
       // Only set if we don't already have values
       if (!min && firstLabel) {
@@ -413,11 +375,12 @@ export class StatCardsComponent implements OnInit {
       }
     }
 
+    const currentBarChartData = this.barChartData();
     // If we still don't have min/max and have bar chart data, use that range
-    if ((!min || !max) && this.barChartData.labels && this.barChartData.labels.length > 0) {
+    if ((!min || !max) && currentBarChartData.labels && currentBarChartData.labels.length > 0) {
       // Get the first and last dates from the bar chart labels
-      const firstLabel = this.barChartData.labels[0];
-      const lastLabel = this.barChartData.labels[this.barChartData.labels.length - 1];
+      const firstLabel = currentBarChartData.labels[0];
+      const lastLabel = currentBarChartData.labels[currentBarChartData.labels.length - 1];
 
       // Only set if we don't already have values
       if (!min && firstLabel) {

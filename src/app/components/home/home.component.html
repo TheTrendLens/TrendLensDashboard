@@ -1,2 +1,11 @@
 <app-stat-cards #metrics></app-stat-cards>
-<app-action-required-tables [metricsComponent]="metrics"></app-action-required-tables>
+<app-quick-actions></app-quick-actions>
+<app-inventory-summary></app-inventory-summary>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="xl:col-span-2">
+    <app-recent-sales></app-recent-sales>
+  </div>
+  <div class="xl:col-span-1">
+    <app-action-required-tables [metricsComponent]="metrics"></app-action-required-tables>
+  </div>
+</div>

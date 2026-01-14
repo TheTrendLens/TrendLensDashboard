@@ -1,22 +1,23 @@
 <div>
   <!-- Tab System -->
   <div class="flex space-x-4 border-b border-gray-200">
-    <button
-      *ngFor="let option of timeframeOptions"
-      (click)="selectTimeframe(option.value)"
-      [ngClass]="{
-        'border-brand-400 text-brand-500': selectedTimeframe === option.value,
-        'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': selectedTimeframe !== option.value
-      }"
-      class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none"
-    >
-      {{ option.label }}
-    </button>
+    @for (option of timeframeOptions; track option.value) {
+      <button
+        (click)="selectTimeframe(option.value)"
+        [class.border-brand-400]="selectedTimeframe() === option.value"
+        [class.text-brand-500]="selectedTimeframe() === option.value"
+        [class.border-transparent]="selectedTimeframe() !== option.value"
+        [class.text-gray-500]="selectedTimeframe() !== option.value"
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none hover:text-gray-700 hover:border-gray-300"
+      >
+        {{ option.label }}
+      </button>
+    }
   </div>
 </div>
 
 <div>
-  <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+  <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
       <dt>
         <div class="absolute rounded-md bg-brand-400 p-3">
@@ -27,7 +28,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Sales</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{metrics.numberOfSales}}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{metrics().numberOfSales}}</p>
       </dd>
     </div>
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
@@ -40,7 +41,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Profit</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics().profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
       </dd>
     </div>
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
@@ -53,7 +54,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Revenue</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics().revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
       </dd>
     </div>
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
@@ -66,23 +67,52 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Costs</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.costs | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics().costs | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
       </dd>
     </div>
-    <!-- Sales Tax (conditional) -->
-    <div *ngIf="showSalesTaxEnabled && metrics.salesTax !== undefined" class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
+    <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
       <dt>
         <div class="absolute rounded-md bg-brand-400 p-3">
           <svg class="size-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
           </svg>
         </div>
-        <p class="ml-16 truncate text-sm font-medium text-gray-500">Sales Tax</p>
+        <p class="ml-16 truncate text-sm font-medium text-gray-500">ROI</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.salesTax | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics().roi.toFixed(1) }}%</p>
       </dd>
     </div>
+    <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
+      <dt>
+        <div class="absolute rounded-md bg-brand-400 p-3">
+          <svg class="size-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </div>
+        <p class="ml-16 truncate text-sm font-medium text-gray-500">Avg. Profit / Sale</p>
+      </dt>
+      <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics().averageProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      </dd>
+    </div>
+    <!-- Sales Tax (conditional) -->
+    @if (showSalesTaxEnabled() && metrics().salesTax !== undefined) {
+      <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
+        <dt>
+          <div class="absolute rounded-md bg-brand-400 p-3">
+            <svg class="size-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+            </svg>
+          </div>
+          <p class="ml-16 truncate text-sm font-medium text-gray-500">Sales Tax</p>
+        </dt>
+        <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+          <p class="text-2xl font-semibold text-gray-900">{{ metrics().salesTax | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        </dd>
+      </div>
+    }
   </dl>
 </div>
 <div>
@@ -91,7 +121,7 @@
       <h2 class="text-xl font-semibold mb-4">Profit Cost Graph</h2>
       <div class="h-96">
         <canvas baseChart #chart
-                [data]="chartData"
+                [data]="chartData()"
                 [options]="chartOptions"
                 type="line">
         </canvas>
@@ -101,7 +131,7 @@
       <h2 class="text-xl font-semibold mb-4">Number of Sales</h2>
       <div class="h-96">
         <canvas baseChart #barChart
-                [data]="barChartData"
+                [data]="barChartData()"
                 [options]="barChartOptions"
                 type="bar">
         </canvas>

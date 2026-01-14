@@ -106,7 +106,8 @@
     *ngFor="let listing of listingsData"
     [listing]="listing"
     [canEdit]="true"
-    (cardClick)="navigateToListing($event)">
+    (cardClick)="navigateToListing($event)"
+    (listingDeleted)="loadData()">
   </app-listing-card>
 </div>
 

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import {DatePipe, NgIf, CurrencyPipe, NgForOf, NgClass} from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import {DatePipe, CommonModule, CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { AnalyticsService, AnalyticsData, ComparisonData, AnalyticsFilter } from '../../services/analytics.service';
@@ -23,26 +23,32 @@ Chart.register(...registerables);
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
   imports: [
+    CommonModule,
     FormsModule,
     MatInputModule,
     DatePipe,
-    NgIf,
     CurrencyPipe,
-    NgForOf,
-    NgClass,
     SalesOverTimeChartComponent,
     BrandChartComponent,
     CategoryChartComponent,
     FeatureAccessDirective
   ],
-  standalone: true
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AnalyticsComponent implements OnInit {
+  private analyticsService = inject(AnalyticsService);
+  private listingService = inject(ListingService);
+  private currencyService = inject(CurrencyService);
+  private tourService = inject(TourService);
+  private featureAccessService = inject(FeatureAccessService);
+  private upgradeService = inject(UpgradeService);
+  private billingService = inject(BillingService);
+
   // Make Math available in the template
   Math = Math;
 
   // Date filters
-  startDate: Date = new Date();
+  startDate: Date = new Date(new Date().setDate(new Date().getDate() - 120));
   endDate: Date = new Date();
   isLoading: boolean = false;
   analyticsData: AnalyticsData | null = null;
@@ -106,21 +112,6 @@ export class AnalyticsComponent implements OnInit {
   selectedPreset: string = '';
 
   // Charts are now handled by individual components
-
-  constructor(
-    private analyticsService: AnalyticsService,
-    private listingService: ListingService,
-    private currencyService: CurrencyService,
-    private tourService: TourService,
-    private featureAccessService: FeatureAccessService,
-    private upgradeService: UpgradeService,
-    private billingService: BillingService
-  ) {
-    // Set default date range to last 30 days
-    this.startDate = new Date();
-    this.startDate.setDate(this.startDate.getDate() - 120);
-    this.endDate = new Date();
-  }
 
   // Method to manually start the tour
   startTour(): void {
@@ -903,6 +894,16 @@ export class AnalyticsComponent implements OnInit {
       this.analyticsData.pricePoints.forEach(item => {
         const avgTurnover = item.averageTurnover !== undefined ? item.averageTurnover.toFixed(1) : 'N/A';
         csvContent += `${item.priceRange},${item.count},${item.revenue},${item.profit || 0},${avgTurnover}\n`;
+      });
+    }
+    // For top products data
+    else if (fileName === 'top-products' && this.analyticsData.topProducts) {
+      // Add header row
+      csvContent += 'Item,Category,Brand,Revenue,COGS,Profit,Date Sold\n';
+
+      // Add data rows
+      this.analyticsData.topProducts.forEach(item => {
+        csvContent += `${item.description.replace(/,/g, ' ')},${item.category},${item.brand},${item.revenue},${item.item_cost},${item.profit},${item.date_sold}\n`;
       });
     }
 

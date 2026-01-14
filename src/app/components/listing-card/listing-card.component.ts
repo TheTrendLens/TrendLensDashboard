@@ -1,17 +1,18 @@
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
+  input,
+  output,
   ElementRef,
   ViewChild,
-  AfterViewInit
+  AfterViewInit,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import {NgForOf, NgIf, DatePipe, NgClass, CurrencyPipe} from '@angular/common';
+import {CommonModule, DatePipe, CurrencyPipe} from '@angular/common';
 import { Listing } from '../../models/listing';
-import { MatIcon } from '@angular/material/icon';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {ActivatedRoute} from '@angular/router';
 import {ListingService} from '../../services/listing.service';
 import {MatDialog} from '@angular/material/dialog';
 import {CurrencyService} from '../../services/currency.service';
@@ -20,39 +21,38 @@ import {CurrencyService} from '../../services/currency.service';
   selector: 'app-listing-card',
   templateUrl: './listing-card.component.html',
   styleUrls: ['./listing-card.component.css'],
-  standalone: true,
-  imports: [NgIf, DatePipe, ReactiveFormsModule, FormsModule, NgClass, CurrencyPipe]
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, FormsModule, CurrencyPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListingCardComponent implements AfterViewInit {
-  @Input() listing!: Listing;
-  @Input() canEdit: boolean = false;
-  @Output() cardClick = new EventEmitter<string>();
-  editingItemCost = false;
-  originalItemCost: number | null = null;
+  private listingService = inject(ListingService);
+  public dialog = inject(MatDialog);
+  private currencyService = inject(CurrencyService);
+
+  listing = input.required<Listing>();
+  canEdit = input<boolean>(false);
+  cardClick = output<string>();
+  listingDeleted = output<string>();
+
+  editingItemCost = signal<boolean>(false);
+  originalItemCost = signal<number | null>(null);
 
   Math = Math; // Make Math available to the template
 
   @ViewChild('itemCostInput') itemCostInput: ElementRef | undefined;
-
-  constructor(
-    private route: ActivatedRoute,
-    private listingService: ListingService,
-    public dialog: MatDialog,
-    private currencyService: CurrencyService
-  ) {}
 
   ngAfterViewInit(): void {
     // Initialization after view is loaded
   }
 
   // Check if any edits are in progress
-  get isEditing(): boolean {
-    return this.editingItemCost;
-  }
+  isEditing = computed(() => {
+    return this.editingItemCost();
+  });
 
   onCardClick(): void {
-    if (!this.isEditing) {
-      this.cardClick.emit(this.listing.id);
+    if (!this.isEditing()) {
+      this.cardClick.emit(this.listing().id);
     }
   }
 
@@ -72,9 +72,10 @@ export class ListingCardComponent implements AfterViewInit {
       event.stopPropagation();
     }
 
-    if (!this.listing) return;
-    this.editingItemCost = true;
-    this.originalItemCost = this.listing.item_cost;
+    const l = this.listing();
+    if (!l) return;
+    this.editingItemCost.set(true);
+    this.originalItemCost.set(l.item_cost);
 
     setTimeout(() => {
       if (this.itemCostInput) {
@@ -89,13 +90,15 @@ export class ListingCardComponent implements AfterViewInit {
       event.stopPropagation();
     }
 
-    if (!this.listing) return;
+    const l = this.listing();
+    if (!l) return;
 
-    this.listingService.update(this.listing).subscribe({
+    this.listingService.update(l).subscribe({
       next: (updatedListing) => {
-        this.listing = updatedListing;
-        this.editingItemCost = false;
-        this.originalItemCost = null;
+        // Since input is signal, we can't easily modify it locally.
+        // Usually the parent will refresh.
+        this.editingItemCost.set(false);
+        this.originalItemCost.set(null);
       },
       error: (error) => {
         console.error('Error updating item cost:', error);
@@ -109,9 +112,27 @@ export class ListingCardComponent implements AfterViewInit {
       event.stopPropagation();
     }
 
-    if (!this.listing || this.originalItemCost === null) return;
-    this.listing.item_cost = this.originalItemCost;
-    this.editingItemCost = false;
-    this.originalItemCost = null;
+    const l = this.listing();
+    const original = this.originalItemCost();
+    if (!l || original === null) return;
+    l.item_cost = original;
+    this.editingItemCost.set(false);
+    this.originalItemCost.set(null);
+  }
+
+  deleteListing(event: Event): void {
+    event.stopPropagation();
+    const l = this.listing();
+    if (confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      this.listingService.delete(l.id).subscribe({
+        next: () => {
+          this.listingDeleted.emit(l.id);
+        },
+        error: (error) => {
+          console.error('Error deleting listing:', error);
+          alert('Error deleting listing. It might be linked to existing sales.');
+        }
+      });
+    }
   }
 }

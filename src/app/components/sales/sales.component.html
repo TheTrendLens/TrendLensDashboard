@@ -1,29 +1,28 @@
 <!-- Search, Filter, and Sort Controls -->
-<div class="mb-6 bg-white rounded-lg shadow p-4">
-  <!-- Header with Search and Create Button -->
-  <div class="flex justify-between items-center mb-4">
-    <!-- Search Bar -->
-    <div class="relative flex-grow mr-4">
-      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex-1 max-w-lg relative">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <mat-icon class="text-gray-400">search</mat-icon>
       </div>
       <input
         type="text"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
         placeholder="Search by brand, description, etc."
-        [(ngModel)]="searchQuery"
-        (keyup.enter)="onSearch(searchQuery)">
+        [ngModel]="searchQuery()"
+        (keyup.enter)="onSearch($any($event.target).value)">
     </div>
 
     <!-- Create Sale Button -->
     <div class="flex space-x-2">
-      <button
-        *ngIf="experimentalFeaturesEnabled"
-        (click)="createSale()"
-        class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
-        <mat-icon class="mr-1">add</mat-icon>
-        Create Sale
-      </button>
+      @if (experimentalFeaturesEnabled()) {
+        <button
+          (click)="createSale()"
+          class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
+          <mat-icon class="mr-1">add</mat-icon>
+          Create Sale
+        </button>
+      }
     </div>
   </div>
 
@@ -33,8 +32,8 @@
       <label class="block mb-2 text-sm font-medium text-gray-900">Date Range</label>
       <mat-form-field appearance="fill" class="w-full tailwind-datepicker">
         <mat-date-range-input [rangePicker]="picker">
-          <input matStartDate placeholder="Start date" [(ngModel)]="startDate" (dateChange)="applyFilters()">
-          <input matEndDate placeholder="End date" [(ngModel)]="endDate" (dateChange)="applyFilters()">
+          <input matStartDate placeholder="Start date" [ngModel]="startDate()" (dateChange)="startDate.set($event); applyFilters()">
+          <input matEndDate placeholder="End date" [ngModel]="endDate()" (dateChange)="endDate.set($event); applyFilters()">
         </mat-date-range-input>
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-date-range-picker #picker></mat-date-range-picker>
@@ -49,8 +48,8 @@
       <select
         id="sortBy"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="sortBy"
-        (change)="applyFilters()">
+        [ngModel]="sortBy()"
+        (change)="sortBy.set($any($event.target).value); applyFilters()">
         <option value="date_desc">Date (Newest First)</option>
         <option value="date_asc">Date (Oldest First)</option>
         <option value="total_desc">Revenue (High to Low)</option>
@@ -66,8 +65,8 @@
       <select
         id="itemsFilter"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="itemsFilter"
-        (change)="applyFilters()">
+        [ngModel]="itemsFilter()"
+        (change)="itemsFilter.set($any($event.target).value); applyFilters()">
         <option value="all">All</option>
         <option value="single">Single Item</option>
         <option value="multiple">Multiple Items</option>
@@ -82,8 +81,8 @@
           id="missingCosts"
           type="checkbox"
           class="w-4 h-4 text-brand-600 bg-gray-100 border-gray-300 rounded focus:ring-brand-500"
-          [(ngModel)]="missingCosts"
-          (change)="applyFilters()">
+          [ngModel]="missingCosts()"
+          (change)="missingCosts.set($any($event.target).checked); applyFilters()">
         <label for="missingCosts" class="ml-2 text-sm font-medium text-gray-900">Show sales with missing costs</label>
       </div>
     </div>
@@ -91,94 +90,103 @@
 </div>
 
 <!-- Pagination Info -->
-<div *ngIf="salesData.length > 0" class="flex justify-between items-center mb-6">
-  <div class="text-sm text-gray-700">
-    Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> to
-    <span class="font-medium">{{ Math.min(currentPage * pageSize, totalRows) }}</span> of
-    <span class="font-medium">{{ totalRows }}</span> sales
+@if (salesData().length > 0) {
+  <div class="flex justify-between items-center mb-6 px-6">
+    <div class="text-sm text-gray-700">
+      Showing <span class="font-medium">{{ (currentPage() - 1) * pageSize() + 1 }}</span> to
+      <span class="font-medium">{{ Math.min(currentPage() * pageSize(), totalRows()) }}</span> of
+      <span class="font-medium">{{ totalRows() }}</span> sales
+    </div>
+    <div class="text-sm text-gray-700">
+      Page <span class="font-medium">{{ currentPage() }}</span> of <span class="font-medium">{{ totalPages() }}</span>
+    </div>
   </div>
-  <div class="text-sm text-gray-700">
-    Page <span class="font-medium">{{ currentPage }}</span> of <span class="font-medium">{{ totalPages }}</span>
-  </div>
-</div>
+}
 
 <!-- Card Grid with Restructured Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 3xl:grid-cols-6 gap-4 w-full">
+<div class="px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 3xl:grid-cols-6 gap-4 w-full">
   <!-- Sale Card Component -->
-  <app-sale-card
-    *ngFor="let sale of salesData"
-    [sale]="sale"
-    [itemCount]="saleItemCounts[sale.id]"
-    (cardClick)="navigateToBundle($event)">
-  </app-sale-card>
+  @for (sale of salesData(); track sale.id) {
+    <app-sale-card
+      [sale]="sale"
+      [itemCount]="saleItemCounts()[sale.id]"
+      [canEdit]="true"
+      (cardClick)="navigateToBundle($event)"
+      (saleDeleted)="loadData()">
+    </app-sale-card>
+  }
 </div>
 
 <!-- No Data Display -->
-<div *ngIf="!isLoading && salesData.length === 0" class="flex flex-col items-center justify-center py-12 px-4 w-full">
-  <mat-icon class="text-gray-400 text-6xl mb-4">search_off</mat-icon>
-  <h3 class="text-xl font-medium text-gray-900 mb-2">No sales found</h3>
-  <p class="text-gray-600 text-center max-w-md mb-4">
-    We couldn't find any sales matching your search criteria. Try adjusting your filters or search terms.
-  </p>
-  <button
-    (click)="searchQuery = ''; dateFilter = 'all'; sortBy = 'date_desc'; itemsFilter = 'all'; missingCosts = false; startDate = undefined; endDate = undefined; applyFilters()"
-    class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition">
-    Reset Filters
-  </button>
-</div>
+@if (!isLoading() && salesData().length === 0) {
+  <div class="flex flex-col items-center justify-center py-12 px-4 w-full">
+    <mat-icon class="text-gray-400 text-6xl mb-4">search_off</mat-icon>
+    <h3 class="text-xl font-medium text-gray-900 mb-2">No sales found</h3>
+    <p class="text-gray-600 text-center max-w-md mb-4">
+      We couldn't find any sales matching your search criteria. Try adjusting your filters or search terms.
+    </p>
+    <button
+      (click)="searchQuery.set(''); dateFilter.set('all'); sortBy.set('date_desc'); itemsFilter.set('all'); missingCosts.set(false); startDate.set(undefined); endDate.set(undefined); applyFilters()"
+      class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition">
+      Reset Filters
+    </button>
+  </div>
+}
 
 <!-- Enhanced Pagination Controls -->
-<div *ngIf="salesData.length > 0" class="flex justify-center mb-6 space-x-2 items-center">
-  <!-- First Page Button -->
-  <button
-    mat-icon-button
-    [disabled]="currentPage === 1"
-    (click)="goToFirstPage()"
-    class="flex items-center justify-center"
-    aria-label="First page">
-    <mat-icon class="flex items-center justify-center">first_page</mat-icon>
-  </button>
+@if (salesData().length > 0) {
+  <div class="flex justify-center mb-6 space-x-2 items-center">
+    <!-- First Page Button -->
+    <button
+      mat-icon-button
+      [disabled]="currentPage() === 1"
+      (click)="goToFirstPage()"
+      class="flex items-center justify-center"
+      aria-label="First page">
+      <mat-icon class="flex items-center justify-center">first_page</mat-icon>
+    </button>
 
-  <!-- Previous Page Button -->
-  <button
-    mat-icon-button
-    [disabled]="currentPage === 1"
-    (click)="goToPreviousPage()"
-    class="flex items-center justify-center"
-    aria-label="Previous page">
-    <mat-icon class="flex items-center justify-center">arrow_back</mat-icon>
-  </button>
+    <!-- Previous Page Button -->
+    <button
+      mat-icon-button
+      [disabled]="currentPage() === 1"
+      (click)="goToPreviousPage()"
+      class="flex items-center justify-center"
+      aria-label="Previous page">
+      <mat-icon class="flex items-center justify-center">chevron_left</mat-icon>
+    </button>
 
-  <!-- Page Number Input -->
-  <div class="flex items-center mx-2">
-    <input
-      type="number"
-      [min]="1"
-      [max]="totalPages"
-      [(ngModel)]="currentPage"
-      (change)="goToPage(currentPage)"
-      class="w-12 h-8 text-center border border-gray-300 rounded-md"
-      aria-label="Page number">
-    <span class="mx-2 text-gray-600">of {{ totalPages }}</span>
+    <!-- Page Number Input -->
+    <div class="flex items-center mx-2">
+      <input
+        type="number"
+        [min]="1"
+        [max]="totalPages()"
+        [ngModel]="currentPage()"
+        (change)="goToPage($any($event.target).value)"
+        class="w-12 h-8 text-center border border-gray-300 rounded-md"
+        aria-label="Page number">
+      <span class="mx-2 text-gray-600">of {{ totalPages() }}</span>
+    </div>
+
+    <!-- Next Page Button -->
+    <button
+      mat-icon-button
+      [disabled]="currentPage() >= totalPages()"
+      (click)="goToNextPage()"
+      class="flex items-center justify-center"
+      aria-label="Next page">
+      <mat-icon class="flex items-center justify-center">chevron_right</mat-icon>
+    </button>
+
+    <!-- Last Page Button -->
+    <button
+      mat-icon-button
+      [disabled]="currentPage() >= totalPages()"
+      (click)="goToLastPage()"
+      class="flex items-center justify-center"
+      aria-label="Last page">
+      <mat-icon class="flex items-center justify-center">last_page</mat-icon>
+    </button>
   </div>
-
-  <!-- Next Page Button -->
-  <button
-    mat-icon-button
-    [disabled]="currentPage >= totalPages"
-    (click)="goToNextPage()"
-    class="flex items-center justify-center"
-    aria-label="Next page">
-    <mat-icon class="flex items-center justify-center">arrow_forward</mat-icon>
-  </button>
-
-  <!-- Last Page Button -->
-  <button
-    mat-icon-button
-    [disabled]="currentPage >= totalPages"
-    (click)="goToLastPage()"
-    class="flex items-center justify-center"
-    aria-label="Last page">
-    <mat-icon class="flex items-center justify-center">last_page</mat-icon>
-  </button>
-</div>
+}

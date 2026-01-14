@@ -1,8 +1,8 @@
-import {Component, HostListener, OnInit} from '@angular/core';
+import {Component, inject, OnInit, signal, ChangeDetectionStrategy} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
 import {MatTableModule} from '@angular/material/table';
-import {NgForOf, NgIf} from '@angular/common';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginatorModule} from '@angular/material/paginator';
@@ -19,40 +19,44 @@ import {TourService} from '../../services/tour.service';
 
 @Component({
   selector: 'app-listings',
-  imports: [MatTableModule, NgForOf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, ListingCardComponent, NgIf],
+  imports: [MatTableModule, CommonModule, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, ListingCardComponent],
   templateUrl: './listings.component.html',
-  styleUrl: './listings.component.css'
+  styleUrl: './listings.component.css',
+  host: {
+    '(window:resize)': 'onResize()'
+  },
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ListingsComponent implements OnInit {
-  public listingsData: Listing[] = [];
-  searchQuery: string = '';
-  totalPages: number = 0;
+  public userService = inject(UserService);
+  public listingService = inject(ListingService);
+  public dialog = inject(MatDialog);
+  private router = inject(Router);
+  private featureFlagService = inject(FeatureFlagService);
+  private tourService = inject(TourService);
+
+  listingsData = signal<Listing[]>([]);
+  searchQuery = signal<string>('');
+  totalPages = signal<number>(0);
 
   // Properties for filtering and sorting
-  dateFilter: string = 'all';
-  sortBy: string = 'date_desc';
-  categoryFilter: string = 'all';
-  categories: string[] = [];
+  dateFilter = signal<string>('all');
+  sortBy = signal<string>('date_desc');
+  categoryFilter = signal<string>('all');
+  categories = signal<string[]>([]);
   Math = Math; // Make Math available to the template
 
-  isLoading: boolean = false;
-  totalRows = 0;
-  pageSize = 32;
-  currentPage = 1;// Default value
-  experimentalFeaturesEnabled: boolean = false;
+  isLoading = signal<boolean>(false);
+  totalRows = signal<number>(0);
+  pageSize = signal<number>(32);
+  currentPage = signal<number>(1);
+  experimentalFeaturesEnabled = signal<boolean>(false);
 
-  constructor(
-    public userService: UserService,
-    public listingService: ListingService,
-    public dialog: MatDialog,
-    private router: Router,
-    private featureFlagService: FeatureFlagService,
-    private tourService: TourService
-  ) {
+  constructor() {
     // Initialize experimental features state
-    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.experimentalFeaturesEnabled.set(this.featureFlagService.getExperimentalFeaturesEnabled());
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
-      this.experimentalFeaturesEnabled = enabled;
+      this.experimentalFeaturesEnabled.set(enabled);
     });
   }
 
@@ -68,15 +72,15 @@ export class ListingsComponent implements OnInit {
 
   // Add these navigation methods
   goToPreviousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
       this.loadData();
     }
   }
 
   goToNextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
       this.loadData();
     }
   }
@@ -87,26 +91,26 @@ export class ListingsComponent implements OnInit {
   }
 
   loadData() {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     // Pass filters to the service
     this.listingService.getListings(
-      this.pageSize,
-      this.currentPage,
-      this.searchQuery,
-      this.dateFilter,
-      this.sortBy
+      this.pageSize(),
+      this.currentPage(),
+      this.searchQuery(),
+      this.dateFilter(),
+      this.sortBy()
     ).pipe(take(1)).subscribe({
       next: (paginatedListings) => {
-        this.listingsData = paginatedListings.items;
-        this.totalRows = paginatedListings.meta.totalItems;
-        this.totalPages = paginatedListings.meta.totalPages;
+        this.listingsData.set(paginatedListings.items);
+        this.totalRows.set(paginatedListings.meta.totalItems);
+        this.totalPages.set(paginatedListings.meta.totalPages);
 
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (error) => {
         console.error(error);
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
@@ -114,7 +118,7 @@ export class ListingsComponent implements OnInit {
   loadCategories() {
     this.listingService.getCategories().subscribe({
       next: (categories) => {
-        this.categories = categories;
+        this.categories.set(categories);
       },
       error: (error) => {
         console.error('Error loading categories:', error);
@@ -126,23 +130,21 @@ export class ListingsComponent implements OnInit {
    * Apply all filters and reload data
    */
   applyFilters() {
-    this.currentPage = 1; // Reset to first page when filters change
+    this.currentPage.set(1); // Reset to first page when filters change
     this.loadData();
   }
 
   onSearch(query: string) {
-    this.searchQuery = query;
-    this.currentPage = 1; // Reset to first page when search changes
+    this.searchQuery.set(query);
+    this.currentPage.set(1); // Reset to first page when search changes
     this.loadData(); // This will update totalRows from the pagination response
   }
 
   /**
    * Listen for window resize events to update display
    */
-  @HostListener('window:resize')
   onResize() {
-    // Force change detection to update the display
-    this.listingsData = [...this.listingsData];
+    // Measurement logic if needed
   }
 
   /**
@@ -223,5 +225,24 @@ export class ListingsComponent implements OnInit {
         console.error('Error fetching listing details:', error);
       }
     });
+  }
+
+  /**
+   * Deletes a listing after confirmation
+   */
+  deleteListing(listingId: string): void {
+    if (confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      this.isLoading.set(true);
+      this.listingService.delete(listingId).subscribe({
+        next: () => {
+          this.loadData();
+        },
+        error: (error) => {
+          console.error('Error deleting listing:', error);
+          this.isLoading.set(false);
+          alert('Error deleting listing. It might be linked to existing sales.');
+        }
+      });
+    }
   }
 }

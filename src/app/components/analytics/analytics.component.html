@@ -250,42 +250,58 @@
 <!-- Analytics Content -->
 <div *ngIf="!isLoading && analyticsData && analyticsData.summary.totalSales > 0">
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-6">
     <!-- Total Sales Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Total Sales</h3>
+      <h3 class="text-xs font-medium text-gray-500">Total Sales</h3>
       <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalSales }}</p>
     </div>
 
     <!-- Total Revenue Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Total Revenue</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <h3 class="text-xs font-medium text-gray-500">Total Revenue</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
     </div>
 
-    <!-- Total Fees Card -->
+    <!-- Total Costs Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Total Costs</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalFees | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <h3 class="text-xs font-medium text-gray-500">Total Costs</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalCosts | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+      <p class="text-[10px] text-gray-400 mt-1">Fees + Shipping + COGS</p>
     </div>
 
     <!-- Total Profit Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Total Profit</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <h3 class="text-xs font-medium text-gray-500">Total Profit</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+    </div>
+
+    <!-- ROI Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-xs font-medium text-gray-500">ROI</h3>
+      <p class="text-2xl font-bold" [ngClass]="analyticsData.summary.roi >= 0 ? 'text-green-600' : 'text-red-600'">
+        {{ analyticsData.summary.roi.toFixed(1) }}%
+      </p>
+      <p class="text-[10px] text-gray-400 mt-1">Return on Investment</p>
+    </div>
+
+    <!-- Average Profit Card -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-xs font-medium text-gray-500">Avg. Profit / Item</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
     </div>
 
     <!-- Average Sale Price Card -->
     <div class="bg-white rounded-lg shadow p-4">
-      <h3 class="text-sm font-medium text-gray-500">Average Sale Price</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <h3 class="text-xs font-medium text-gray-500">Avg. Sale Price</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
     </div>
 
     <!-- Average Inventory Turnover Card -->
     <div class="bg-white rounded-lg shadow p-4" *ngIf="analyticsData.summary.averageInventoryTurnover !== undefined">
-      <h3 class="text-sm font-medium text-gray-500">Avg. Days to Sell</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageInventoryTurnover.toFixed(1) }} days</p>
-      <p class="text-xs text-gray-500 mt-1">Average time from listing to sale</p>
+      <h3 class="text-xs font-medium text-gray-500">Avg. Days to Sell</h3>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageInventoryTurnover.toFixed(1) }}</p>
+      <p class="text-[10px] text-gray-400 mt-1">Listing to Sale</p>
     </div>
   </div>
 
@@ -615,6 +631,49 @@
       These forecasts and recommendations are based on your historical sales data and should be used as guidance only.
       Always consider market conditions and your business knowledge when making decisions.
     </p>
+  </div>
+
+  <!-- Top Products by Profit Section -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6" *ngIf="analyticsData?.topProducts && analyticsData?.topProducts?.length! > 0">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Top Products by Profit</h3>
+      <div class="flex space-x-2">
+        <button
+          (click)="exportDataAsCSV('top-products')"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export as CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category / Brand</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COGS</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Sold</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let product of analyticsData?.topProducts">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">{{ product.description }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.category }} / {{ product.brand }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.item_cost | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">{{ product.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.date_sold | date:'shortDate' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Profit Margin by Category Section -->

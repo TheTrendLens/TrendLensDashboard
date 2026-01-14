@@ -3,15 +3,16 @@
     <h2 class="text-xl text-brand-500 border-brand-400 font-semibold">Action Required</h2>
     <button
       (click)="toggleMassEditMode()"
-      [class]="isMassEditMode ?
-        'bg-green-600 hover:bg-green-700 text-white' :
-        'bg-brand-600 hover:bg-brand-700 text-white'"
-      class="px-4 py-2 rounded-md font-medium transition-colors duration-200">
-      {{ isMassEditMode ? 'Save All' : 'Edit All' }}
+      [class.bg-green-600]="isMassEditMode()"
+      [class.hover:bg-green-700]="isMassEditMode()"
+      [class.bg-brand-600]="!isMassEditMode()"
+      [class.hover:bg-brand-700]="!isMassEditMode()"
+      class="px-4 py-2 rounded-md font-medium transition-colors duration-200 text-white">
+      {{ isMassEditMode() ? 'Save All' : 'Edit All' }}
     </button>
   </div>
   <h2 class="text-sm text-gray-500 font-semibold mb-4">
-    @if (isMassEditMode) {
+    @if (isMassEditMode()) {
       <span class="text-brand-600 font-semibold">Mass Edit Mode:</span> Edit all item costs directly. Click "Save All" when finished.
     } @else {
       Please make sure all sales have a <b>Postage Cost</b>, and an <b>Item Cost</b> for each product. (Refresh once you've finished to load more sales)
@@ -22,14 +23,15 @@
 <!-- Card Grid - Limited to 5 cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full" style="max-width: 100%;">
   <!-- Sale Card Component -->
-  <app-sale-card
-    *ngFor="let sale of salesData"
-    [sale]="sale"
-    [itemCount]="saleItemCounts[sale.id]"
-    [canEdit]="true"
-    [isMassEditMode]="isMassEditMode"
-    (cardClick)="navigateToSale($event)"
-    (saleUpdated)="onSaleUpdated($event)"
-    (productUpdated)="onProductUpdated($event)">
-  </app-sale-card>
+  @for (sale of salesData(); track sale.id) {
+    <app-sale-card
+      [sale]="sale"
+      [itemCount]="saleItemCounts()[sale.id]"
+      [canEdit]="true"
+      [isMassEditMode]="isMassEditMode()"
+      (cardClick)="navigateToSale($event)"
+      (saleUpdated)="onSaleUpdated($event)"
+      (productUpdated)="onProductUpdated($event)">
+    </app-sale-card>
+  }
 </div>

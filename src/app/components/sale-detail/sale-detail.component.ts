@@ -1,8 +1,8 @@
-import {Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren, signal, computed, inject, ChangeDetectionStrategy} from '@angular/core';
+import {ActivatedRoute, Router, RouterModule} from '@angular/router';
 import {Sale} from '../../models/sale';
 import {take} from 'rxjs';
-import {CurrencyPipe, DatePipe, NgForOf, NgIf} from '@angular/common';
+import {CommonModule, CurrencyPipe, DatePipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
 import {Product} from '../../models/product';
@@ -10,48 +10,58 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {CurrencyService} from '../../services/currency.service';
 import {AddProductDialogComponent} from '../add-product-dialog/add-product-dialog.component';
+import {CreateSaleFlowDialogComponent} from '../create-sale-flow-dialog/create-sale-flow-dialog.component';
 import {FeatureFlagService} from '../../services/feature-flag.service';
 import { createSaleLabel } from '../../utils/sale-label.util';
+import {MatIcon} from '@angular/material/icon';
+import {MatButton, MatIconButton} from '@angular/material/button';
+
 @Component({
   selector: 'app-sale-detail',
-  standalone: true,
   imports: [
-    NgForOf,
-    NgIf,
+    CommonModule,
     FormsModule,
     DatePipe,
-    CurrencyPipe
+    CurrencyPipe,
+    MatIcon,
+    MatButton,
+    MatIconButton,
+    RouterModule
   ],
   templateUrl: './sale-detail.component.html',
-  styleUrls: ['./sale-detail.component.css']
+  styleUrls: ['./sale-detail.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaleDetailComponent implements OnInit {
-  sale: Sale | null = null;
-  products: Product[] = [];
-  isLoading = true;
-  editingPostage = false;
-  originalPostageCost: number | null = null;
-  editingItemCost: { [key: string]: boolean } = {};
-  originalItemCosts: { [key: string]: number } = {};
-  experimentalFeaturesEnabled: boolean = false;
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private salesService = inject(SalesService);
+  private productService = inject(ProductService);
+  public dialog = inject(MatDialog);
+  private currencyService = inject(CurrencyService);
+  private featureFlagService = inject(FeatureFlagService);
+
+  sale = signal<Sale | null>(null);
+  products = signal<Product[]>([]);
+  isLoading = signal<boolean>(true);
+  error = signal<string | null>(null);
+
+  editingPostage = signal<boolean>(false);
+  originalPostageCost = signal<number | null>(null);
+  editingItemCost = signal<{ [key: string]: boolean }>({});
+  originalItemCosts = signal<{ [key: string]: number }>({});
+  experimentalFeaturesEnabled = signal<boolean>(false);
 
   @ViewChild('postageCostInput') postageCostInput: ElementRef | undefined;
   @ViewChildren('itemCostInput') itemCostInputs: QueryList<ElementRef> | undefined;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private salesService: SalesService,
-    private productService: ProductService,
-    public dialog: MatDialog,
-    private currencyService: CurrencyService,
-    private featureFlagService: FeatureFlagService,
-  ) {
+  constructor() {
     // Initialize experimental features state
-    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.experimentalFeaturesEnabled.set(this.featureFlagService.getExperimentalFeaturesEnabled());
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
-      this.experimentalFeaturesEnabled = enabled;
-    });}
+      this.experimentalFeaturesEnabled.set(enabled);
+    });
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -63,17 +73,17 @@ export class SaleDetailComponent implements OnInit {
   }
 
   loadBundleData(saleId: string): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     // Load sales details
     this.salesService.findOne(saleId).pipe(take(1)).subscribe({
       next: (sale) => {
-        this.sale = sale;
+        this.sale.set(sale);
         this.loadProductsData(saleId);
       },
       error: (error) => {
         console.error('Error loading sale:', error);
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
@@ -82,24 +92,24 @@ export class SaleDetailComponent implements OnInit {
     // Load products for this sale
     this.productService.getProductsBySale(saleId).pipe(take(1)).subscribe({
       next: (products) => {
-        this.products = products;
-        this.isLoading = false;
+        this.products.set(products);
+        this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Error loading products:', error);
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
 
   // Derived sale label based on loaded products
-  get saleLabel(): string {
+  saleLabel = computed(() => {
     try {
-      return createSaleLabel(this.products, this.sale?.date_sold || undefined as unknown as Date);
+      return createSaleLabel(this.products(), this.sale()?.date_sold || undefined as unknown as Date);
     } catch {
       return 'Sale';
     }
-  }
+  });
 
   getValue(element: any, col: any): any {
     if (col.type === 'number') {
@@ -112,26 +122,29 @@ export class SaleDetailComponent implements OnInit {
       return col.nestedKey ? element[col.key]?.[col.nestedKey] : element[col.key];
     }
   }
-  get totalItemCosts(): number {
-    return this.products.reduce((sum, sale) => {
-      const itemCost = sale.item_cost;
+
+  totalItemCosts = computed(() => {
+    return this.products().reduce((sum, p) => {
+      const itemCost = p.item_cost;
       if (itemCost === null) return sum;
       return sum + (typeof itemCost === 'string' ? parseFloat(itemCost) : itemCost);
     }, 0);
-  }
+  });
 
-  get totalProfit(): number {
-    if (this.sale)
-      return this.sale?.total - (this.sale.platform_fee || 0) - (this.sale.payment_fee || 0) - (this.sale.seller_postage_cost || 0) - this.totalItemCosts;
-
+  totalProfit = computed(() => {
+    const s = this.sale();
+    if (s) {
+      return s.total - (s.platform_fee || 0) - (s.payment_fee || 0) - (s.seller_postage_cost || 0) - this.totalItemCosts();
+    }
     return 0.00;
-  }
+  });
 
   // Postage cost editing methods
   startEditingPostage(): void {
-    if (!this.sale) return;
-    this.editingPostage = true;
-    this.originalPostageCost = this.sale.seller_postage_cost;
+    const s = this.sale();
+    if (!s) return;
+    this.editingPostage.set(true);
+    this.originalPostageCost.set(s.seller_postage_cost);
 
     setTimeout(() => {
       if (this.postageCostInput) {
@@ -139,16 +152,16 @@ export class SaleDetailComponent implements OnInit {
         this.postageCostInput.nativeElement.select();
       }
     });
-
   }
 
   savePostage(): void {
-    if (!this.sale) return;
-    this.salesService.update(this.sale).subscribe({
+    const s = this.sale();
+    if (!s) return;
+    this.salesService.update(s).subscribe({
       next: (updatedSale) => {
-        this.sale = updatedSale;
-        this.editingPostage = false;
-        this.originalPostageCost = null;
+        this.sale.set(updatedSale);
+        this.editingPostage.set(false);
+        this.originalPostageCost.set(null);
       },
       error: (error) => {
         console.error('Error updating postage cost:', error);
@@ -158,19 +171,21 @@ export class SaleDetailComponent implements OnInit {
   }
 
   cancelEditingPostage(): void {
-    if (!this.sale || this.originalPostageCost === null) return;
-    this.sale.seller_postage_cost = this.originalPostageCost;
-    this.editingPostage = false;
-    this.originalPostageCost = null;
+    const s = this.sale();
+    const original = this.originalPostageCost();
+    if (!s || original === null) return;
+    this.sale.update(val => val ? {...val, seller_postage_cost: original} : null);
+    this.editingPostage.set(false);
+    this.originalPostageCost.set(null);
   }
 
   // Item cost editing methods
   startEditingItemCost(productId: string): void {
-    const product = this.products.find(p => p.id === productId);
+    const product = this.products().find(p => p.id === productId);
     if (!product) return;
 
-    this.editingItemCost[productId] = true;
-    this.originalItemCosts[productId] = product.item_cost;
+    this.editingItemCost.update(map => ({...map, [productId]: true}));
+    this.originalItemCosts.update(map => ({...map, [productId]: product.item_cost}));
 
     setTimeout(() => {
       if (this.itemCostInputs) {
@@ -189,14 +204,17 @@ export class SaleDetailComponent implements OnInit {
 
     this.productService.update(product).subscribe({
       next: (updatedProduct) => {
-        // Find and update the product in the local array
-        const index = this.products.findIndex(p => p.id === updatedProduct.id);
-        if (index !== -1) {
-          this.products[index] = updatedProduct;
-        }
-
-        this.editingItemCost[product.id] = false;
-        delete this.originalItemCosts[product.id];
+        this.products.update(list => list.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        this.editingItemCost.update(map => {
+          const newMap = {...map};
+          delete newMap[product.id];
+          return newMap;
+        });
+        this.originalItemCosts.update(map => {
+          const newMap = {...map};
+          delete newMap[product.id];
+          return newMap;
+        });
       },
       error: (error) => {
         console.error('Error updating item cost:', error);
@@ -206,12 +224,20 @@ export class SaleDetailComponent implements OnInit {
   }
 
   cancelEditingItemCost(productId: string): void {
-    const product = this.products.find(p => p.id === productId);
-    if (!product || !(productId in this.originalItemCosts)) return;
+    const originalMap = this.originalItemCosts();
+    if (!(productId in originalMap)) return;
 
-    product.item_cost = this.originalItemCosts[productId];
-    this.editingItemCost[productId] = false;
-    delete this.originalItemCosts[productId];
+    this.products.update(list => list.map(p => p.id === productId ? {...p, item_cost: originalMap[productId]} : p));
+    this.editingItemCost.update(map => {
+      const newMap = {...map};
+      delete newMap[productId];
+      return newMap;
+    });
+    this.originalItemCosts.update(map => {
+      const newMap = {...map};
+      delete newMap[productId];
+      return newMap;
+    });
   }
 
   /**
@@ -228,27 +254,27 @@ export class SaleDetailComponent implements OnInit {
    * Opens a dialog to add a new product to the sale
    */
   addProduct(): void {
-    if (!this.sale) return;
+    const s = this.sale();
+    if (!s) return;
 
     const dialogRef = this.dialog.open(AddProductDialogComponent, {
       width: '600px',
-      data: { saleId: this.sale.id }
+      data: { saleId: s.id }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         // Create the product
-        // @ts-ignore
         this.productService.create({
             sale: result.saleId,
             listing: result.listingId,
             size: result.size,
             item_cost: result.itemCost
-          }
+          } as Product
         ).subscribe({
           next: (newProduct) => {
             // Add the new product to the local array
-            this.products.push(newProduct);
+            this.products.update(list => [...list, newProduct]);
           },
           error: (error) => {
             console.error('Error creating product:', error);
@@ -266,7 +292,7 @@ export class SaleDetailComponent implements OnInit {
       this.productService.delete(productId).subscribe({
         next: () => {
           // Remove the product from the local array
-          this.products = this.products.filter(p => p.id !== productId);
+          this.products.update(list => list.filter(p => p.id !== productId));
         },
         error: (error) => {
           console.error('Error deleting product:', error);
@@ -279,10 +305,11 @@ export class SaleDetailComponent implements OnInit {
    * Deletes the entire sale and navigates back to the sales list
    */
   deleteSale(): void {
-    if (!this.sale) return;
+    const s = this.sale();
+    if (!s) return;
 
     if (confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
-      this.salesService.delete(this.sale.id).subscribe({
+      this.salesService.delete(s.id).subscribe({
         next: () => {
           // Navigate back to the sales list
           this.router.navigate(['/sales']);

@@ -3,13 +3,17 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  Input,
-  Output,
+  input,
+  output,
   QueryList,
   ViewChild,
-  ViewChildren
+  ViewChildren,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
-import {CurrencyPipe, DatePipe, NgClass, NgForOf, NgIf} from '@angular/common';
+import {CurrencyPipe, DatePipe, CommonModule} from '@angular/common';
 import {Sale} from '../../models/sale';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Product} from '../../models/product';
@@ -24,66 +28,63 @@ import { createSaleLabel } from '../../utils/sale-label.util';
   selector: 'app-sale-card',
   templateUrl: './sale-card.component.html',
   styleUrls: ['./sale-card.component.css'],
-  standalone: true,
-  imports: [NgForOf, NgIf, DatePipe, ReactiveFormsModule, FormsModule, NgClass, CurrencyPipe]
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, FormsModule, CurrencyPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaleCardComponent implements AfterViewInit {
-  @Input() sale!: Sale;
-  @Input() itemCount: number | undefined;
-  @Input() canEdit: boolean = false;
-  @Input() isMassEditMode: boolean = false;
-  @Output() cardClick = new EventEmitter<string>();
-  @Output() saleUpdated = new EventEmitter<Sale>();
-  @Output() productUpdated = new EventEmitter<Product>();
-  editingPostage = false;
-  originalPostageCost: number | null = null;
-  editingItemCost: { [key: string]: boolean } = {};
-  originalItemCosts: { [key: string]: number } = {};
+  private route = inject(ActivatedRoute);
+  private salesService = inject(SalesService);
+  private productService = inject(ProductService);
+  public dialog = inject(MatDialog);
+  private currencyService = inject(CurrencyService);
 
-  Math = Math; // Make Math available to the template
+  sale = input.required<Sale>();
+  itemCount = input<number | undefined>();
+  canEdit = input<boolean>(false);
+  isMassEditMode = input<boolean>(false);
 
-  // Product display limits
-  private productRowHeight = 30; // Default value
+  cardClick = output<string>();
+  saleUpdated = output<Sale>();
+  saleDeleted = output<string>();
+  productUpdated = output<Product>();
+
+  editingPostage = signal<boolean>(false);
+  originalPostageCost = signal<number | null>(null);
+  editingItemCost = signal<{ [key: string]: boolean }>({});
+  originalItemCosts = signal<{ [key: string]: number }>({});
+
+  Math = Math;
+
+  private productRowHeight = 30;
 
   @ViewChild('productRow') productRowElement: ElementRef | undefined;
   @ViewChild('postageCostInput') postageCostInput: ElementRef | undefined;
   @ViewChildren('itemCostInput') itemCostInputs: QueryList<ElementRef> | undefined;
 
-
-  constructor(
-    private route: ActivatedRoute,
-    private salesService: SalesService,
-    private productService: ProductService,
-    public dialog: MatDialog,
-    private currencyService: CurrencyService
-  ) {}
-
   ngAfterViewInit(): void {
-    // Once the view is initialized, measure the actual height of a product row
     if (this.productRowElement && this.productRowElement.nativeElement) {
       this.productRowHeight = this.productRowElement.nativeElement.clientHeight;
     }
   }
 
-  // Check if any edits are in progress
-  get isEditing(): boolean {
-    return Object.values(this.editingItemCost).some(value => value) || this.editingPostage;
-  }
+  isEditing = computed(() => {
+    return Object.values(this.editingItemCost()).some(value => value) || this.editingPostage();
+  });
 
   onCardClick(): void {
-    if (!this.isEditing && !this.isMassEditMode) {
-      this.cardClick.emit(this.sale.id);
+    if (!this.isEditing() && !this.isMassEditMode()) {
+      this.cardClick.emit(this.sale().id);
     }
   }
 
-  // Derived, concise label for this sale based on its products
-  get saleLabel(): string {
+  saleLabel = computed(() => {
     try {
-      return createSaleLabel(this.sale?.products, this.sale?.date_sold);
+      const s = this.sale();
+      return createSaleLabel(s?.products, s?.date_sold);
     } catch {
       return 'Sale';
     }
-  }
+  });
 
   calculateCosts(sale: Sale) {
     return sale.products?.reduce((sum, product) => {
@@ -93,10 +94,6 @@ export class SaleCardComponent implements AfterViewInit {
     }, +sale.total_fee + +sale.seller_postage_cost) || 0;
   }
 
-  /**
-   * Gets the current currency code from the CurrencyService
-   * This is used by the CurrencyPipe in the template
-   */
   getCurrencyCode(): string {
     const currencySymbol = this.currencyService.getCurrencySymbol();
     const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
@@ -115,85 +112,58 @@ export class SaleCardComponent implements AfterViewInit {
     }
   }
 
-  /**
-   * Get a limited number of products based on card height
-   * @param products The full list of products
-   * @param cardElement The DOM element of the card
-   * @returns A limited list of products
-   */
   getLimitedProducts(products: any[], cardElement?: HTMLElement): any[] {
-    // Default to a reasonable limit for SSR or if element isn't provided
     if (typeof window === 'undefined' || !cardElement) {
       return products.slice(0, 2);
     }
-
-    // Get the card height
     const cardHeight = cardElement.clientHeight;
-
-    // Calculate available space for products
-    const reservedSpace = 150; // Space for header and footer
+    const reservedSpace = 150;
     const availableHeight = cardHeight - reservedSpace;
-
-    // Calculate how many products can fit using the measured row height
     const visibleProducts = Math.max(1, Math.floor(availableHeight / this.productRowHeight));
-
     return products.slice(0, visibleProducts);
   }
 
-  /**
-   * Check if there are more products than the limit
-   * @param products The full list of products
-   * @param cardElement The DOM element of the card
-   * @returns True if there are more products than the limit
-   */
   hasMoreProducts(products: any[], cardElement?: HTMLElement): boolean {
     if (typeof window === 'undefined' || !cardElement) {
       return products.length > 2;
     }
-
     const cardHeight = cardElement.clientHeight;
     const productRowHeight = 50;
     const reservedSpace = 150;
     const availableHeight = cardHeight - reservedSpace;
     const visibleProducts = Math.max(1, Math.floor(availableHeight / productRowHeight));
-
     return products.length > visibleProducts;
   }
 
-  // Postage cost editing methods
   startEditingPostage(event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
-
-    if (!this.sale) return;
-    this.editingPostage = true;
-    this.originalPostageCost = this.sale.seller_postage_cost;
-
+    const s = this.sale();
+    if (!s) return;
+    this.editingPostage.set(true);
+    this.originalPostageCost.set(s.seller_postage_cost);
     setTimeout(() => {
       if (this.postageCostInput) {
         this.postageCostInput.nativeElement.focus();
         this.postageCostInput.nativeElement.select();
       }
     });
-
   }
 
   savePostage(event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
-
-    if (!this.sale) return;
-    this.salesService.update(this.sale).subscribe({
+    const s = this.sale();
+    if (!s) return;
+    this.salesService.update(s).subscribe({
       next: (updatedSale) => {
-        let products = this.sale.products;
-        this.sale = updatedSale;
-        this.sale.products = products;
-        this.editingPostage = false;
-        this.originalPostageCost = null;
-        // Emit the updated sale
-        this.saleUpdated.emit(this.sale);
+        // Since input is signal, we can't easily modify it locally if it's meant to be immutable from parent.
+        // But usually the parent will refresh.
+        this.editingPostage.set(false);
+        this.originalPostageCost.set(null);
+        this.saleUpdated.emit(updatedSale);
       },
       error: (error) => {
         console.error('Error updating postage cost:', error);
@@ -206,32 +176,27 @@ export class SaleCardComponent implements AfterViewInit {
     if (event) {
       event.stopPropagation();
     }
-
-    if (!this.sale || this.originalPostageCost === null) return;
-    this.sale.seller_postage_cost = this.originalPostageCost;
-    this.editingPostage = false;
-    this.originalPostageCost = null;
+    const s = this.sale();
+    const original = this.originalPostageCost();
+    if (!s || original === null) return;
+    s.seller_postage_cost = original;
+    this.editingPostage.set(false);
+    this.originalPostageCost.set(null);
   }
 
-  // Item cost editing methods
   startEditingItemCost(productId: string, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
-
-    const product = this.sale.products.find(p => p.id === productId);
+    const product = this.sale().products.find(p => p.id === productId);
     if (!product) return;
-
-    this.editingItemCost[productId] = true;
-    this.originalItemCosts[productId] = product.item_cost;
-
+    this.editingItemCost.update(map => ({...map, [productId]: true}));
+    this.originalItemCosts.update(map => ({...map, [productId]: product.item_cost}));
     setTimeout(() => {
       if (this.itemCostInputs) {
-        // Find the input element with the matching product ID data attribute
         const inputElement = this.itemCostInputs.find(el =>
           el.nativeElement.getAttribute('data-product-id') === productId
         );
-
         if (inputElement) {
           inputElement.nativeElement.focus();
           inputElement.nativeElement.select();
@@ -244,21 +209,19 @@ export class SaleCardComponent implements AfterViewInit {
     if (event) {
       event.stopPropagation();
     }
-
     if (!product) return;
-
     this.productService.update(product).subscribe({
       next: (updatedProduct) => {
-        // Find and update the product in the local array
-        const index = this.sale.products.findIndex(p => p.id === updatedProduct.id);
-        if (index !== -1) {
-          this.sale.products[index] = updatedProduct;
-        }
-
-        this.editingItemCost[product.id] = false;
-        delete this.originalItemCosts[product.id];
-
-        // Emit the updated product
+        this.editingItemCost.update(map => {
+          const newMap = {...map};
+          delete newMap[product.id];
+          return newMap;
+        });
+        this.originalItemCosts.update(map => {
+          const newMap = {...map};
+          delete newMap[product.id];
+          return newMap;
+        });
         this.productUpdated.emit(updatedProduct);
       },
       error: (error) => {
@@ -272,12 +235,35 @@ export class SaleCardComponent implements AfterViewInit {
     if (event) {
       event.stopPropagation();
     }
+    const product = this.sale().products.find(p => p.id === productId);
+    const originalMap = this.originalItemCosts();
+    if (!product || !(productId in originalMap)) return;
+    product.item_cost = originalMap[productId];
+    this.editingItemCost.update(map => {
+      const newMap = {...map};
+      delete newMap[productId];
+      return newMap;
+    });
+    this.originalItemCosts.update(map => {
+      const newMap = {...map};
+      delete newMap[productId];
+      return newMap;
+    });
+  }
 
-    const product = this.sale.products.find(p => p.id === productId);
-    if (!product || !(productId in this.originalItemCosts)) return;
-
-    product.item_cost = this.originalItemCosts[productId];
-    this.editingItemCost[productId] = false;
-    delete this.originalItemCosts[productId];
+  deleteSale(event: Event): void {
+    event.stopPropagation();
+    const s = this.sale();
+    if (confirm('Are you sure you want to delete this sale? This will also return items to stock.')) {
+      this.salesService.delete(s.id).subscribe({
+        next: () => {
+          this.saleDeleted.emit(s.id);
+        },
+        error: (error) => {
+          console.error('Error deleting sale:', error);
+          alert('Error deleting sale.');
+        }
+      });
+    }
   }
 }

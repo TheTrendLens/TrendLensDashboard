@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -9,7 +9,12 @@ export interface AnalyticsSummary {
   totalSales: number;
   totalRevenue: number;
   totalFees: number;
+  totalShipping: number;
+  totalCOGS: number;
+  totalCosts: number;
   totalProfit: number;
+  roi: number;
+  averageProfit: number;
   averageSalePrice: number;
   averageInventoryTurnover?: number; // Average days from listing to sale
 }
@@ -67,6 +72,17 @@ export interface AnalyticsFilter {
   limit?: number;
 }
 
+export interface TopProductData {
+  id: string;
+  description: string;
+  brand: string;
+  category: string;
+  revenue: number;
+  profit: number;
+  item_cost: number;
+  date_sold: string;
+}
+
 export interface AnalyticsData {
   summary: AnalyticsSummary;
   timeSeries: TimeSeriesData[];
@@ -74,6 +90,7 @@ export interface AnalyticsData {
   brands: BrandData[];
   salesVelocity?: SalesVelocityData[];
   pricePoints?: PricePointData[];
+  topProducts?: TopProductData[];
 }
 
 export interface ComparisonData {
@@ -91,7 +108,7 @@ export interface ComparisonData {
   providedIn: 'root'
 })
 export class AnalyticsService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
 
   /**
    * Get analytics data filtered by various parameters

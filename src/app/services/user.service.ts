@@ -130,6 +130,8 @@ export class UserService {
     costs: number;
     profit: number;
     numberOfSales: number;
+    roi: number;
+    averageProfit: number;
     salesTax?: number;
   }> {
     const params = new URLSearchParams();
@@ -143,6 +145,8 @@ export class UserService {
       costs: number;
       profit: number;
       numberOfSales: number;
+      roi: number;
+      averageProfit: number;
       salesTax?: number;
     }>(url);
   }

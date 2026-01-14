@@ -1,8 +1,8 @@
-import {Component, HostListener, OnInit} from '@angular/core';
+import {Component, inject, OnInit, signal, ChangeDetectionStrategy} from '@angular/core';
 import {UserService} from '../../services/user.service';
 import {take} from 'rxjs';
 import {MatTableModule} from '@angular/material/table';
-import {NgForOf, NgIf} from '@angular/common';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginatorModule} from '@angular/material/paginator';
@@ -15,7 +15,7 @@ import {SalesService} from '../../services/sales.service';
 import {ProductService} from '../../services/product.service';
 import {Product} from '../../models/product';
 import {SaleCardComponent} from '../sale-card/sale-card.component';
-import {CreateSaleDialogComponent} from '../create-sale-dialog/create-sale-dialog.component';
+import {CreateSaleFlowDialogComponent} from '../create-sale-flow-dialog/create-sale-flow-dialog.component';
 import {FeatureFlagService} from '../../services/feature-flag.service';
 import {TourService} from '../../services/tour.service';
 import {
@@ -28,46 +28,64 @@ import {
 
 @Component({
   selector: 'app-sales',
-  imports: [MatTableModule, NgForOf, NgIf, FormsModule, MatInputModule, MatPaginatorModule, MatIcon, MatIconButton, SaleCardComponent, MatDateRangeInput, MatDatepickerToggle, MatDateRangePicker, MatEndDate, MatStartDate],
+  imports: [
+    MatTableModule,
+    CommonModule,
+    FormsModule,
+    MatInputModule,
+    MatPaginatorModule,
+    MatIcon,
+    MatIconButton,
+    SaleCardComponent,
+    MatDateRangeInput,
+    MatDatepickerToggle,
+    MatDateRangePicker,
+    MatEndDate,
+    MatStartDate
+  ],
   templateUrl: './sales.component.html',
-  styleUrl: './sales.component.scss'
+  styleUrl: './sales.component.scss',
+  host: {
+    '(window:resize)': 'onResize()'
+  },
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesComponent implements OnInit {
-  public salesData: Sale[] = [];
-  saleItemCounts: { [bundleId: string]: number } = {};
-  searchQuery: string = '';
-  totalPages: number = 0;
+  public userService = inject(UserService);
+  public salesService = inject(SalesService);
+  public productService = inject(ProductService);
+  public dialog = inject(MatDialog);
+  private router = inject(Router);
+  private featureFlagService = inject(FeatureFlagService);
+  private tourService = inject(TourService);
+
+  salesData = signal<Sale[]>([]);
+  saleItemCounts = signal<{ [bundleId: string]: number }>({});
+  searchQuery = signal<string>('');
+  totalPages = signal<number>(0);
 
   // New properties for filtering and sorting
-  sortBy: string = 'date_desc';
-  dateFilter: string = 'all';
-  itemsFilter: string = 'all';
-  minProducts: number = 0;
-  missingCosts: boolean = false;
-  startDate?: Date;
-  endDate?: Date;
+  sortBy = signal<string>('date_desc');
+  dateFilter = signal<string>('all');
+  itemsFilter = signal<string>('all');
+  minProducts = signal<number>(0);
+  missingCosts = signal<boolean>(false);
+  startDate = signal<Date | undefined>(undefined);
+  endDate = signal<Date | undefined>(undefined);
 
   Math = Math; // Make Math available to the template
 
-  isLoading: boolean = false;
-  totalRows = 7;
-  pageSize = 32;
-  currentPage = 1;// Default value
-  experimentalFeaturesEnabled: boolean = false;
+  isLoading = signal<boolean>(false);
+  totalRows = signal<number>(0);
+  pageSize = signal<number>(32);
+  currentPage = signal<number>(1);
+  experimentalFeaturesEnabled = signal<boolean>(false);
 
-  constructor(
-    public userService: UserService,
-    public salesService: SalesService,
-    public productService: ProductService,
-    public dialog: MatDialog,
-    private router: Router,
-    private featureFlagService: FeatureFlagService,
-    private tourService: TourService
-  ) {
+  constructor() {
     // Initialize experimental features state
-    this.experimentalFeaturesEnabled = this.featureFlagService.getExperimentalFeaturesEnabled();
+    this.experimentalFeaturesEnabled.set(this.featureFlagService.getExperimentalFeaturesEnabled());
     this.featureFlagService.isExperimentalFeaturesEnabled().subscribe(enabled => {
-      this.experimentalFeaturesEnabled = enabled;
+      this.experimentalFeaturesEnabled.set(enabled);
     });
   }
 
@@ -82,36 +100,36 @@ export class SalesComponent implements OnInit {
 
   // Navigation methods
   goToFirstPage(): void {
-    if (this.currentPage !== 1) {
-      this.currentPage = 1;
+    if (this.currentPage() !== 1) {
+      this.currentPage.set(1);
       this.loadData();
     }
   }
 
   goToPreviousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
       this.loadData();
     }
   }
 
   goToNextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
       this.loadData();
     }
   }
 
   goToLastPage(): void {
-    if (this.currentPage !== this.totalPages) {
-      this.currentPage = this.totalPages;
+    if (this.currentPage() !== this.totalPages()) {
+      this.currentPage.set(this.totalPages());
       this.loadData();
     }
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-      this.currentPage = page;
+    if (page >= 1 && page <= this.totalPages() && page !== this.currentPage()) {
+      this.currentPage.set(page);
       this.loadData();
     }
   }
@@ -121,43 +139,45 @@ export class SalesComponent implements OnInit {
   }
 
   loadData() {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     // Convert itemsFilter to minProducts
-    if (this.itemsFilter === 'multiple') {
-      this.minProducts = 2; // At least 2 products for multiple items
-    } else if (this.itemsFilter === 'single') {
-      this.minProducts = 1; // Exactly 1 product for single item
+    if (this.itemsFilter() === 'multiple') {
+      this.minProducts.set(2); // At least 2 products for multiple items
+    } else if (this.itemsFilter() === 'single') {
+      this.minProducts.set(1); // Exactly 1 product for single item
     } else {
-      this.minProducts = 0; // No minimum for 'all'
+      this.minProducts.set(0); // No minimum for 'all'
     }
 
-    const startDateString = this.startDate ? new Date(this.startDate.setHours(0, 0, 0, 0)).toISOString() : undefined;
-    const endDateString = this.endDate ? new Date(this.endDate.setHours(23, 59, 59, 999)).toISOString() : undefined;
+    const startDateValue = this.startDate();
+    const endDateValue = this.endDate();
+    const startDateString = startDateValue ? new Date(new Date(startDateValue).setHours(0, 0, 0, 0)).toISOString() : undefined;
+    const endDateString = endDateValue ? new Date(new Date(endDateValue).setHours(23, 59, 59, 999)).toISOString() : undefined;
 
     // Pass filters to the service
     this.salesService.getSales(
-      this.pageSize,
-      this.currentPage,
-      this.searchQuery,
-      this.dateFilter,
-      this.sortBy,
-      this.minProducts,
-      this.missingCosts,
+      this.pageSize(),
+      this.currentPage(),
+      this.searchQuery(),
+      this.dateFilter(),
+      this.sortBy(),
+      this.minProducts(),
+      this.missingCosts(),
       startDateString,
       endDateString
     ).pipe(take(1)).subscribe({
       next: (paginatedSales) => {
-        this.salesData = paginatedSales.items;
-        this.totalRows = paginatedSales.meta.totalItems;
-        this.totalPages = paginatedSales.meta.totalPages;
+        this.salesData.set(paginatedSales.items);
+        this.totalRows.set(paginatedSales.meta.totalItems);
+        this.totalPages.set(paginatedSales.meta.totalPages);
         this.loadSaleItemCounts();
 
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (error) => {
         console.error(error);
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
@@ -166,52 +186,50 @@ export class SalesComponent implements OnInit {
    * Apply all filters and reload data
    */
   applyFilters() {
-    this.currentPage = 1; // Reset to first page when filters change
-    if (this.startDate && this.endDate) {
-      this.dateFilter = 'custom';
-    } else if (!this.startDate && !this.endDate) {
-      this.dateFilter = 'all';
+    this.currentPage.set(1); // Reset to first page when filters change
+    if (this.startDate() && this.endDate()) {
+      this.dateFilter.set('custom');
+    } else if (!this.startDate() && !this.endDate()) {
+      this.dateFilter.set('all');
     }
     this.loadData();
   }
 
   loadSaleItemCounts(): void {
-    this.salesData.forEach(sale => {
+    this.salesData().forEach(sale => {
       this.productService.getProductsBySale(sale.id).subscribe({
         next: (products: Product[]) => {
-          this.saleItemCounts[sale.id] = products.length;
+          this.saleItemCounts.update(counts => ({...counts, [sale.id]: products.length}));
         },
         error: (error) => {
           console.error(`Error fetching sales for bundle ${sale.id}:`, error);
-          this.saleItemCounts[sale.id] = 0;
+          this.saleItemCounts.update(counts => ({...counts, [sale.id]: 0}));
         }
       });
     });
   }
 
   onSearch(query: string) {
-    this.searchQuery = query;
-    this.currentPage = 1; // Reset to first page when search changes
+    this.searchQuery.set(query);
+    this.currentPage.set(1); // Reset to first page when search changes
     this.loadData(); // This will update totalRows from the pagination response
   }
 
   /**
    * Listen for window resize events to update product display
    */
-  @HostListener('window:resize')
   onResize() {
-    // Force change detection to update the product display
-    // This is needed because the product limits depend on screen size
-    // and we need to re-evaluate them when the screen size changes
-    this.salesData = [...this.salesData];
+    // Force change detection logic if needed
   }
 
   /**
-   * Opens a dialog to create a new sale
+   * Opens a dialog to create a new sale using the multi-stage flow
    */
   createSale(): void {
-    const dialogRef = this.dialog.open(CreateSaleDialogComponent, {
-      width: '600px'
+    const dialogRef = this.dialog.open(CreateSaleFlowDialogComponent, {
+      width: '900px', // Larger width for the multi-stage flow
+      maxWidth: '95vw',
+      panelClass: 'create-sale-dialog'
     });
 
     dialogRef.afterClosed().subscribe(result => {
