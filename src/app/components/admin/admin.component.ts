@@ -91,10 +91,12 @@ export class AdminComponent implements OnInit {
   loadStats(): void {
     this.adminService.getSystemStats().subscribe({
       next: (stats) => {
+        console.log('Admin stats received:', stats);
         this.stats = stats;
       },
       error: (error) => {
         console.error('Error loading system stats:', error);
+        this.notificationService.error('Failed to load system stats. Check console for details.');
       }
     });
   }
@@ -111,6 +113,7 @@ export class AdminComponent implements OnInit {
     this.loading = true;
     this.adminService.getAllUsers(page, limit).subscribe({
       next: (response) => {
+        console.log('Admin users received:', response);
         this.users = response.users;
         this.totalUsers = response.total;
         this.pageSize = response.limit;
