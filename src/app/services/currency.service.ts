@@ -57,6 +57,12 @@ export class CurrencyService {
     });
   }
 
+  public getCurrencyCode(): string {
+    const symbol = this.getCurrencySymbol();
+    const option = this.getCurrencyBySymbol(symbol);
+    return option ? option.code : 'GBP';
+  }
+
   public getCurrencySymbol(): string {
     return this.currencySubject.getValue();
   }

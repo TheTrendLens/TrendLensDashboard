@@ -36,6 +36,19 @@ export interface QueuedJob {
   queue: string;
 }
 
+export interface SystemStats {
+  totalUsers: number;
+  totalSales: number;
+  totalRevenue: number;
+  activeSubscriptions: number;
+  totalListings: number;
+  recentSignups: {
+    id: string;
+    email: string;
+    signup_date: Date;
+  }[];
+}
+
 const endpoint = `${environment.backend.baseURL}/api/admin`;
 
 @Injectable({
@@ -50,6 +63,13 @@ export class AdminService {
    */
   getHealth(): Observable<any> {
     return this.http.get(`${environment.backend.baseURL}/health`);
+  }
+
+  /**
+   * Get system statistics
+   */
+  getSystemStats(): Observable<SystemStats> {
+    return this.http.get<SystemStats>(`${endpoint}/stats`);
   }
 
   /**

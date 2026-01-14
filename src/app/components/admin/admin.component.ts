@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { AdminService, UserAdminInfo, PaginatedUserAdminInfo, QueuedJob } from '../../services/admin.service';
+import { AdminService, UserAdminInfo, PaginatedUserAdminInfo, QueuedJob, SystemStats } from '../../services/admin.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { DatePipe, NgIf, NgForOf, JsonPipe } from '@angular/common';
+import { DatePipe, NgIf, NgForOf, JsonPipe, CurrencyPipe, UpperCasePipe, DecimalPipe, NgClass } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatCardModule } from '@angular/material/card';
 import { NotificationService } from '../../services/notification.service';
+import { CurrencyService } from '../../services/currency.service';
 
 @Component({
   selector: 'app-admin',
@@ -23,10 +25,14 @@ import { NotificationService } from '../../services/notification.service';
     DatePipe,
     NgIf,
     NgForOf,
-    JsonPipe,
+    CurrencyPipe,
+    UpperCasePipe,
+    DecimalPipe,
+    NgClass,
     MatDialogModule,
     MatTooltipModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatCardModule
   ],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.css']
@@ -35,6 +41,7 @@ export class AdminComponent implements OnInit {
   users: UserAdminInfo[] = [];
   jobs: QueuedJob[] = [];
   healthStatus: any = null;
+  stats: SystemStats | null = null;
 
   displayedColumns: string[] = [
     'email',
@@ -70,6 +77,7 @@ export class AdminComponent implements OnInit {
   constructor(
     private adminService: AdminService,
     private notificationService: NotificationService,
+    public currencyService: CurrencyService,
     private dialog: MatDialog
   ) { }
 
@@ -77,6 +85,26 @@ export class AdminComponent implements OnInit {
     this.loadUsers();
     this.loadJobs();
     this.loadHealth();
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    this.adminService.getSystemStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (error) => {
+        console.error('Error loading system stats:', error);
+      }
+    });
+  }
+
+  loadUserDetail(userId: string): void {
+    // For now, we'll just find the user in the existing list if they are there,
+    // or we could navigate to a detailed view if we had one.
+    // As a simple enhancement, we'll just log it and maybe show a toast.
+    this.notificationService.info(`Viewing details for user ${userId}`);
+    // Future enhancement: navigate to user detail page or open a dialog
   }
 
   loadUsers(page: number = 1, limit: number = this.pageSize): void {

@@ -15,6 +15,67 @@
   </div>
 
   <mat-tab-group>
+    <mat-tab label="Overview">
+      <div class="mt-6" *ngIf="stats">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-subtitle>Total Users</mat-card-subtitle>
+              <mat-card-title>{{stats.totalUsers | number}}</mat-card-title>
+            </mat-card-header>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-subtitle>Active Subscriptions</mat-card-subtitle>
+              <mat-card-title>{{stats.activeSubscriptions | number}}</mat-card-title>
+            </mat-card-header>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-subtitle>Total Sales</mat-card-subtitle>
+              <mat-card-title>{{stats.totalSales | number}}</mat-card-title>
+            </mat-card-header>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-card-subtitle>Total Revenue</mat-card-subtitle>
+              <mat-card-title>{{stats.totalRevenue | currency:currencyService.getCurrencyCode()}}</mat-card-title>
+            </mat-card-header>
+          </mat-card>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h2 class="text-lg font-semibold mb-4">Recent Signups</h2>
+            <div class="space-y-4">
+              <div *ngFor="let user of stats.recentSignups" class="flex items-center justify-between border-b pb-2">
+                <div>
+                  <div class="font-medium text-gray-900">{{user.email}}</div>
+                  <div class="text-xs text-gray-500">{{user.signup_date | date:'medium'}}</div>
+                </div>
+                <button mat-button color="primary" (click)="loadUserDetail(user.id)">View</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h2 class="text-lg font-semibold mb-4">Quick Links</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button mat-stroked-button color="primary" (click)="loadStats()">
+                <mat-icon>refresh</mat-icon> Refresh Stats
+              </button>
+              <button mat-stroked-button color="primary" (click)="loadHealth()">
+                <mat-icon>health_and_safety</mat-icon> Check Health
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
     <mat-tab label="User Management">
       <div class="mt-4">
         <div class="loading-container" *ngIf="loading">
