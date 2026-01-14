@@ -1,7 +1,7 @@
 import {Component, OnInit, QueryList, ViewChildren} from '@angular/core';
 import {take} from 'rxjs';
 import { UserService } from '../../services/user.service';
-import {NgClass, NgForOf, CurrencyPipe} from '@angular/common';
+import {NgClass, NgForOf, CurrencyPipe, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {BaseChartDirective} from 'ng2-charts';
 import {Chart, ChartData, ChartOptions, registerables, TooltipItem} from 'chart.js';
@@ -16,6 +16,7 @@ Chart.register(TrendlineLinearPlugin);
   selector: 'app-stat-cards',
   imports: [
     NgForOf,
+    NgIf,
     FormsModule,
     NgClass,
     BaseChartDirective,

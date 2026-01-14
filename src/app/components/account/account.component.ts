@@ -19,7 +19,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ChangePasswordComponent],
+  imports: [CommonModule, FormsModule, ChangePasswordComponent],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css'
 })
