@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import {HomeComponent} from './components/home/home.component';
-import {LoginComponent} from './components/login/login.component';
 import {DashboardLayoutComponent} from './components/dashboard-layout/dashboard-layout.component';
 import {
   AuthGuard,
@@ -8,28 +6,11 @@ import {
   redirectLoggedInTo,
   redirectUnauthorizedTo
 } from '@angular/fire/auth-guard';
-import {SignupComponent} from './components/signup/signup.component';
-import {VerifyEmailComponent} from './components/verify-email/verify-email.component';
-import {SignupFlowComponent} from './components/signup-flow/signup-flow.component';
 import {map, of, switchMap} from 'rxjs';
-import {CheckoutComponent} from './components/checkout/checkout.component';
-import { OnsiteCheckoutComponent } from './components/onsite-checkout/onsite-checkout.component';
 import {inject} from '@angular/core';
 import {StripeService} from './services/stripe.service';
-import {SignupCompleteComponent} from './components/signup-complete/signup-complete.component';
-import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
-import {ResetPasswordComponent} from './components/reset-password/reset-password.component';
-import {AuthActionComponent} from './components/auth-action/auth-action.component';
-import {AccountComponent} from './components/account/account.component';
-import {SalesComponent} from './components/sales/sales.component';
-import {SaleDetailComponent} from './components/sale-detail/sale-detail.component';
-import {AnalyticsComponent} from './components/analytics/analytics.component';
-import {AdminComponent} from './components/admin/admin.component';
 import {AdminGuard} from './utils/admin.guard';
 import {SubscriptionGuard} from './utils/subscription.guard';
-import {ListingsComponent} from './components/listings/listings.component';
-// import {FeatureAccessGuard} from './utils/feature-access.guard';
-import {SalesUploadComponent} from './components/sales-upload/sales-upload.component';
 const redirectLoggedInToDashboard: AuthPipeGenerator = () => redirectLoggedInTo(['home']);
 const authGuardPipe: AuthPipeGenerator = (next, state) => switchMap((user) => {
   return of(user).pipe(
@@ -109,22 +90,50 @@ const createCheckoutResolver = () => ({
 });
 
 export const routes: Routes = [
-    createAuthRoute('login', LoginComponent, true),
-    createAuthRoute('forgot-password', ForgotPasswordComponent, true),
-    {path: 'reset-password', component: ResetPasswordComponent},
-    {path: 'auth-action', component: AuthActionComponent},
+    {
+        path: 'login',
+        loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent),
+        ...AUTH_GUARD_CONFIG.redirectLoggedIn
+    },
+    {
+        path: 'forgot-password',
+        loadComponent: () => import('./components/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+        ...AUTH_GUARD_CONFIG.redirectLoggedIn
+    },
+    {
+        path: 'reset-password',
+        loadComponent: () => import('./components/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+    },
+    {
+        path: 'auth-action',
+        loadComponent: () => import('./components/auth-action/auth-action.component').then(m => m.AuthActionComponent)
+    },
 
     {
         path: 'signup',
-        component: SignupFlowComponent,
+        loadComponent: () => import('./components/signup-flow/signup-flow.component').then(m => m.SignupFlowComponent),
         children: [
-            createAuthRoute('', SignupComponent, true),
-            createAuthRoute('verify-email', VerifyEmailComponent),
             {
-                ...createAuthRoute('checkout', CheckoutComponent),
+                path: '',
+                loadComponent: () => import('./components/signup/signup.component').then(m => m.SignupComponent),
+                ...AUTH_GUARD_CONFIG.redirectLoggedIn
+            },
+            {
+                path: 'verify-email',
+                loadComponent: () => import('./components/verify-email/verify-email.component').then(m => m.VerifyEmailComponent),
+                ...AUTH_GUARD_CONFIG.requireAuth
+            },
+            {
+                path: 'checkout',
+                loadComponent: () => import('./components/checkout/checkout.component').then(m => m.CheckoutComponent),
+                ...AUTH_GUARD_CONFIG.requireAuth,
                 resolve: createCheckoutResolver()
             },
-            createAuthRoute('complete', SignupCompleteComponent)
+            {
+                path: 'complete',
+                loadComponent: () => import('./components/signup-complete/signup-complete.component').then(m => m.SignupCompleteComponent),
+                ...AUTH_GUARD_CONFIG.requireAuth
+            }
         ]
     },
 
@@ -133,17 +142,44 @@ export const routes: Routes = [
         component: DashboardLayoutComponent,
         ...AUTH_GUARD_CONFIG.requireAuth,
         children: [
-            createProtectedRoute('home', HomeComponent),
-            {path: 'listings', component: ListingsComponent, canActivate: [AdminGuard]},
-            createProtectedRoute('sales', SalesComponent),
-            createProtectedRoute('sales/:id', SaleDetailComponent),
-            // Allow all authenticated users to navigate to Analytics. The page itself will handle upgrade gating.
-            createProtectedRoute('analytics', AnalyticsComponent),
-            // New on-site checkout flow (keeps users on our site)
-            createProtectedRoute('checkout', OnsiteCheckoutComponent),
-            createProtectedRoute('sales-upload', SalesUploadComponent),
-            {path: 'account', component: AccountComponent},
-            {path: 'admin', component: AdminComponent, canActivate: [AdminGuard]}
+            {
+                path: 'home',
+                loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent)
+            },
+            {
+                path: 'listings',
+                loadComponent: () => import('./components/listings/listings.component').then(m => m.ListingsComponent),
+                canActivate: [AdminGuard]
+            },
+            {
+                path: 'sales',
+                loadComponent: () => import('./components/sales/sales.component').then(m => m.SalesComponent)
+            },
+            {
+                path: 'sales/:id',
+                loadComponent: () => import('./components/sale-detail/sale-detail.component').then(m => m.SaleDetailComponent)
+            },
+            {
+                path: 'analytics',
+                loadComponent: () => import('./components/analytics/analytics.component').then(m => m.AnalyticsComponent)
+            },
+            {
+                path: 'checkout',
+                loadComponent: () => import('./components/onsite-checkout/onsite-checkout.component').then(m => m.OnsiteCheckoutComponent)
+            },
+            {
+                path: 'sales-upload',
+                loadComponent: () => import('./components/sales-upload/sales-upload.component').then(m => m.SalesUploadComponent)
+            },
+            {
+                path: 'account',
+                loadComponent: () => import('./components/account/account.component').then(m => m.AccountComponent)
+            },
+            {
+                path: 'admin',
+                loadComponent: () => import('./components/admin/admin.component').then(m => m.AdminComponent),
+                canActivate: [AdminGuard]
+            }
         ]
     },
 
