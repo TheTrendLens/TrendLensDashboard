@@ -249,6 +249,12 @@ export class SaleCardComponent implements AfterViewInit {
 
     if (!product) return;
 
+    // Ensure the product has the sale reference as required by the backend
+    if (!product.sale && this.sale) {
+      // @ts-ignore
+      product.sale = { id: this.sale.id };
+    }
+
     this.productService.update(product).subscribe({
       next: (updatedProduct) => {
         // Find and update the product in the local array
