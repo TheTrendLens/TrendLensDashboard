@@ -150,7 +150,9 @@ export class BrandChartComponent implements OnInit, OnChanges, OnDestroy {
     this.analyticsData.brands.forEach(item => {
       const profitMargin = item.profitMargin !== undefined ? item.profitMargin.toFixed(1) : 'N/A';
       const avgTurnover = item.averageTurnover !== undefined ? item.averageTurnover.toFixed(1) : 'N/A';
-      csvContent += `${item.brand},${item.count},${item.revenue},${item.profit || 0},${profitMargin},${avgTurnover}\n`;
+      const revenue = item.revenue !== undefined ? item.revenue.toFixed(2) : '0.00';
+      const profit = item.profit !== undefined ? item.profit.toFixed(2) : '0.00';
+      csvContent += `${item.brand},${item.count},${revenue},${profit},${profitMargin},${avgTurnover}\n`;
     });
 
     // Create a temporary link element

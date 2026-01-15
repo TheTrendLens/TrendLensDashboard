@@ -418,7 +418,9 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
 
     // Add data rows
     this.analyticsData.timeSeries.forEach(item => {
-      csvContent += `${item.date},${item.count},${item.revenue},${item.profit}\n`;
+      const revenue = item.revenue !== undefined ? item.revenue.toFixed(2) : '0.00';
+      const profit = item.profit !== undefined ? item.profit.toFixed(2) : '0.00';
+      csvContent += `${item.date},${item.count},${revenue},${profit}\n`;
     });
 
     // Create a temporary link element
