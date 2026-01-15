@@ -260,25 +260,25 @@
     <!-- Total Revenue Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Revenue</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalRevenue | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
     </div>
 
     <!-- Total Fees Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Costs</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalFees | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalFees | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
     </div>
 
     <!-- Total Profit Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Total Profit</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.totalProfit | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
     </div>
 
     <!-- Average Sale Price Card -->
     <div class="bg-white rounded-lg shadow p-4">
       <h3 class="text-sm font-medium text-gray-500">Average Sale Price</h3>
-      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+      <p class="text-2xl font-bold text-gray-900">{{ analyticsData.summary.averageSalePrice | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
     </div>
 
     <!-- Average Inventory Turnover Card -->
@@ -352,11 +352,11 @@
           <div class="mt-2 flex justify-between">
             <div>
               <p class="text-xs text-gray-500">Current</p>
-              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalRevenue | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-gray-500">Previous</p>
-              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalRevenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalRevenue | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
           </div>
         </div>
@@ -385,11 +385,11 @@
           <div class="mt-2 flex justify-between">
             <div>
               <p class="text-xs text-gray-500">Current</p>
-              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.totalProfit | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-gray-500">Previous</p>
-              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalProfit | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.totalProfit | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
           </div>
         </div>
@@ -418,11 +418,11 @@
           <div class="mt-2 flex justify-between">
             <div>
               <p class="text-xs text-gray-500">Current</p>
-              <p class="text-lg font-semibold">{{ comparisonData.current.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.current.summary.averageSalePrice | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-gray-500">Previous</p>
-              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.averageSalePrice | currency:getCurrencyCode():'symbol':'1.0-0' }}</p>
+              <p class="text-lg font-semibold">{{ comparisonData.previous.summary.averageSalePrice | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</p>
             </div>
           </div>
         </div>
@@ -495,8 +495,8 @@
           <tr *ngFor="let item of analyticsData?.salesVelocity">
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.range }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.count }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</td>
           </tr>
         </tbody>
       </table>
@@ -536,8 +536,8 @@
           <tr *ngFor="let item of analyticsData?.pricePoints">
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.priceRange }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.count }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.revenue | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.profit | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.averageTurnover?.toFixed(1) }} days</td>
           </tr>
         </tbody>
@@ -569,8 +569,8 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let month of getMonthlyForecast()">
                 <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ month.month }}</td>
-                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.revenue | currency:getCurrencyCode():'symbol':'1.0-0' }}</td>
-                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.profit | currency:getCurrencyCode():'symbol':'1.0-0' }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.revenue | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ month.profit | currency:getCurrencyCode():getCurrencySymbol():'1.0-0' }}</td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                   <span [ngClass]="{'text-green-600': month.trend > 0, 'text-red-600': month.trend < 0, 'text-gray-500': month.trend === 0}">
                     {{ month.trend > 0 ? '↑' : (month.trend < 0 ? '↓' : '→') }}

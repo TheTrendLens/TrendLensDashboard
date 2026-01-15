@@ -15,8 +15,11 @@ interface CurrencyOption {
 })
 export class CurrencyService {
   private readonly STORAGE_KEY = 'currency';
+  private readonly STORAGE_KEY_CODE = 'currencyCode';
   private currencySubject = new BehaviorSubject<string>('£');
+  private currencyCodeSubject = new BehaviorSubject<string>('GBP');
   public currency$ = this.currencySubject.asObservable();
+  public currencyCode$ = this.currencyCodeSubject.asObservable();
 
   public readonly currencyOptions: CurrencyOption[] = [
     { code: 'GBP', symbol: '£', name: 'British Pound (£)' },
@@ -37,30 +40,44 @@ export class CurrencyService {
   private initCurrency(): void {
     // First try to get from localStorage
     const storedCurrency = localStorage.getItem(this.STORAGE_KEY);
+    const storedCurrencyCode = localStorage.getItem(this.STORAGE_KEY_CODE);
     if (storedCurrency) {
       this.currencySubject.next(storedCurrency);
+    }
+    if (storedCurrencyCode) {
+      this.currencyCodeSubject.next(storedCurrencyCode);
     }
 
     // Then try to get from user object using the UserService
     const currentUser = this.userService.getCurrentUser();
-    if (currentUser && currentUser.currencySymbol) {
-      this.currencySubject.next(currentUser.currencySymbol);
-      localStorage.setItem(this.STORAGE_KEY, currentUser.currencySymbol);
+    if (currentUser) {
+      if (currentUser.currencySymbol) {
+        this.currencySubject.next(currentUser.currencySymbol);
+        localStorage.setItem(this.STORAGE_KEY, currentUser.currencySymbol);
+      }
+      if (currentUser.currency) {
+        this.currencyCodeSubject.next(currentUser.currency);
+        localStorage.setItem(this.STORAGE_KEY_CODE, currentUser.currency);
+      }
     }
 
     // Subscribe to user changes to keep currency in sync
     this.userService.currentUser$.subscribe(user => {
-      if (user && user.currencySymbol) {
-        this.currencySubject.next(user.currencySymbol);
-        localStorage.setItem(this.STORAGE_KEY, user.currencySymbol);
+      if (user) {
+        if (user.currencySymbol) {
+          this.currencySubject.next(user.currencySymbol);
+          localStorage.setItem(this.STORAGE_KEY, user.currencySymbol);
+        }
+        if (user.currency) {
+          this.currencyCodeSubject.next(user.currency);
+          localStorage.setItem(this.STORAGE_KEY_CODE, user.currency);
+        }
       }
     });
   }
 
   public getCurrencyCode(): string {
-    const symbol = this.getCurrencySymbol();
-    const option = this.getCurrencyBySymbol(symbol);
-    return option ? option.code : 'GBP';
+    return this.currencyCodeSubject.getValue();
   }
 
   public getCurrencySymbol(): string {
@@ -76,9 +93,11 @@ export class CurrencyService {
 
     // Update local storage
     localStorage.setItem(this.STORAGE_KEY, currencyOption.symbol);
+    localStorage.setItem(this.STORAGE_KEY_CODE, currencyOption.code);
 
-    // Update the subject
+    // Update the subjects
     this.currencySubject.next(currencyOption.symbol);
+    this.currencyCodeSubject.next(currencyOption.code);
 
     // Update the user in the database
     // The UserService.updateCurrency method will handle updating the BehaviorSubject and localStorage

@@ -599,10 +599,11 @@ export class AnalyticsComponent implements OnInit {
    * This is used by the CurrencyPipe in the template
    */
   getCurrencyCode(): string {
-    const currencySymbol = this.currencyService.getCurrencySymbol();
-    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
+    return this.currencyService.getCurrencyCode();
+  }
 
-    return currencyOption?.code || 'GBP';
+  getCurrencySymbol(): string {
+    return this.currencyService.getCurrencySymbol();
   }
 
   /**

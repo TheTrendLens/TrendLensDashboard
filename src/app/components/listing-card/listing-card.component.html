@@ -42,7 +42,7 @@
       <div class="flex flex-col items-center text-center">
         <span class="font-medium text-gray-500">Listed Price</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
-          {{ listing.listed_price | currency:getCurrencyCode():'symbol':'1.2-2' }}
+          {{ listing.listed_price | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}
         </span>
       </div>
 
@@ -50,7 +50,7 @@
         <span class="font-medium text-gray-500">Item Cost</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
           <div class="flex items-center justify-between">
-            <p *ngIf="!editingItemCost" class="text-sm font-medium">{{ listing.item_cost | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <p *ngIf="!editingItemCost" class="text-sm font-medium">{{ listing.item_cost | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
             <input *ngIf="editingItemCost"
                    type="number"
                    step="0.01"

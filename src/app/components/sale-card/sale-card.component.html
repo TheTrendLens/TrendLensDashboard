@@ -40,7 +40,7 @@
         <p class="text-xs text-gray-500">Item Cost</p>
         <ul *ngFor="let product of getLimitedProducts(sale.products, saleCard); let i = index">
           <div class="flex items-center justify-between">
-            <p *ngIf="!editingItemCost[product.id] && !isMassEditMode" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <p *ngIf="!editingItemCost[product.id] && !isMassEditMode" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
             <input *ngIf="editingItemCost[product.id] || isMassEditMode"
                    type="number"
                    step="0.01"
@@ -81,8 +81,8 @@
       <div>
         <p class="text-xs text-gray-500">Listed Price</p>
         <ul *ngFor="let product of getLimitedProducts(sale.products, saleCard); let i = index">
-          <p #productRow *ngIf="i === 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
-          <p *ngIf="i > 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+          <p #productRow *ngIf="i === 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
+          <p *ngIf="i > 0" class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
         </ul>
         <p *ngIf="hasMoreProducts(sale.products, saleCard)" class="text-sm font-medium text-gray-500">...</p>
       </div>
@@ -96,14 +96,14 @@
       <div class="flex flex-col items-center text-center">
         <span class="font-medium text-gray-500">Revenue</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
-          {{ sale.total | currency:getCurrencyCode():'symbol':'1.2-2' }}
+          {{ sale.total | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}
         </span>
       </div>
 
       <div class="flex flex-col items-center text-center">
         <span class="font-medium text-gray-500">Profit</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
-          {{ sale.total - calculateCosts(sale) | currency:getCurrencyCode():'symbol':'1.2-2' }}
+          {{ sale.total - calculateCosts(sale) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}
         </span>
       </div>
 
@@ -111,7 +111,7 @@
         <span class="font-medium text-gray-500">Postage Cost</span>
         <span class="font-semibold text-gray-900 truncate max-w-full">
           <div class="flex items-center justify-between">
-            <p *ngIf="!editingPostage && !isMassEditMode" class="text-sm font-medium">{{ sale.seller_postage_cost | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <p *ngIf="!editingPostage && !isMassEditMode" class="text-sm font-medium">{{ sale.seller_postage_cost | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
             <input *ngIf="editingPostage || isMassEditMode"
                    type="number"
                    step="0.01"

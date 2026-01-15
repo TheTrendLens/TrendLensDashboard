@@ -22,7 +22,7 @@
           <p class="ml-16 truncate text-sm font-medium text-gray-500">Revenue</p>
         </dt>
         <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-          <p class="text-2xl font-semibold text-gray-900">{{ sale.total | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ sale.total | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
         </dd>
       </div>
 
@@ -37,7 +37,7 @@
           <p class="ml-16 truncate text-sm font-medium text-gray-500">Profit</p>
         </dt>
         <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-          <p class="text-2xl font-semibold text-gray-900">{{ totalProfit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ totalProfit | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
         </dd>
       </div>
 
@@ -67,7 +67,7 @@
           <p class="ml-16 truncate text-sm font-medium text-gray-500">Platform Fees</p>
         </dt>
         <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-          <p class="text-2xl font-semibold text-gray-900">{{ sale.platform_fee | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ sale.platform_fee | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
         </dd>
       </div>
 
@@ -82,7 +82,7 @@
           <p class="ml-16 truncate text-sm font-medium text-gray-500">Payment Fees</p>
         </dt>
         <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-          <p class="text-2xl font-semibold text-gray-900">{{ sale.payment_fee | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ sale.payment_fee | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
         </dd>
       </div>
 
@@ -98,7 +98,7 @@
         </dt>
         <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
           <div class="flex items-center">
-            <p class="text-2xl font-semibold text-gray-900" *ngIf="!editingPostage">{{ sale.seller_postage_cost || 0 | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+            <p class="text-2xl font-semibold text-gray-900" *ngIf="!editingPostage">{{ sale.seller_postage_cost || 0 | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
             <input *ngIf="editingPostage" type="number" step="0.01" [(ngModel)]="sale.seller_postage_cost" (keyup.enter)="savePostage()" #postageCostInput class="text-2xl font-semibold text-gray-900 border-b border-gray-300 focus:outline-none focus:border-brand-400 w-32">
             <button *ngIf="!editingPostage" (click)="startEditingPostage()" class="ml-2 text-gray-500 hover:text-brand-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -168,7 +168,7 @@
             </div>
             <div>
               <p class="text-xs text-gray-500">Listed Price</p>
-              <p class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+              <p class="text-sm font-medium">{{ getValue(product, {key: 'listing', nestedKey: 'listed_price'}) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
             </div>
           </div>
 
@@ -181,7 +181,7 @@
             <div>
               <p class="text-xs text-gray-500">Item Cost</p>
               <div class="flex items-center">
-                <p *ngIf="!editingItemCost[product.id]" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+                <p *ngIf="!editingItemCost[product.id]" class="text-sm font-medium">{{ getValue(product, {key: 'item_cost'}) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
                 <input *ngIf="editingItemCost[product.id]" type="number" step="0.01" [(ngModel)]="product.item_cost" (keyup.enter)="saveItemCost(product)" #itemCostInput class="text-sm font-medium border-b border-gray-300 focus:outline-none focus:border-brand-400 w-20">
                 <button *ngIf="!editingItemCost[product.id]" (click)="startEditingItemCost(product.id)" class="ml-2 text-gray-500 hover:text-brand-500">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

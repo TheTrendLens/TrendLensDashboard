@@ -98,9 +98,11 @@ export class SaleCardComponent implements AfterViewInit {
    * This is used by the CurrencyPipe in the template
    */
   getCurrencyCode(): string {
-    const currencySymbol = this.currencyService.getCurrencySymbol();
-    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
-    return currencyOption?.code || 'GBP';
+    return this.currencyService.getCurrencyCode();
+  }
+
+  getCurrencySymbol(): string {
+    return this.currencyService.getCurrencySymbol();
   }
 
   getValue(element: any, col: any): any {

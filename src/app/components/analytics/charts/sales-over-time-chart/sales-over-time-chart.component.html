@@ -66,7 +66,7 @@
       <div>
         <p class="text-xs text-gray-500">Projected Revenue</p>
         <p class="text-lg font-semibold text-gray-900">
-          {{ getTotalForecastValue(forecastData.revenue) | currency:getCurrencyCode():'symbol':'1.2-2' }}
+          {{ getTotalForecastValue(forecastData.revenue) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}
         </p>
         <p class="text-xs text-gray-500">
           <span [ngClass]="{'text-green-600': getForecastTrend(forecastData.revenue) > 0, 'text-red-600': getForecastTrend(forecastData.revenue) < 0}">
@@ -77,7 +77,7 @@
       <div>
         <p class="text-xs text-gray-500">Projected Profit</p>
         <p class="text-lg font-semibold text-gray-900">
-          {{ getTotalForecastValue(forecastData.profit) | currency:getCurrencyCode():'symbol':'1.2-2' }}
+          {{ getTotalForecastValue(forecastData.profit) | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}
         </p>
         <p class="text-xs text-gray-500">
           <span [ngClass]="{'text-green-600': getForecastTrend(forecastData.profit) > 0, 'text-red-600': getForecastTrend(forecastData.profit) < 0}">

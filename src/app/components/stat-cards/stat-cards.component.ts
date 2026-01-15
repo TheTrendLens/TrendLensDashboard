@@ -461,8 +461,10 @@ export class StatCardsComponent implements OnInit {
    * This is used by the CurrencyPipe in the template
    */
   getCurrencyCode(): string {
-    const currencySymbol = this.currencyService.getCurrencySymbol();
-    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
-    return currencyOption?.code || 'GBP';
+    return this.currencyService.getCurrencyCode();
+  }
+
+  getCurrencySymbol(): string {
+    return this.currencyService.getCurrencySymbol();
   }
 }

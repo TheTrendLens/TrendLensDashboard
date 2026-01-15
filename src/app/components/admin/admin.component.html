@@ -42,7 +42,7 @@
           <mat-card class="stat-card">
             <mat-card-header>
               <mat-card-subtitle>Total Revenue</mat-card-subtitle>
-              <mat-card-title>{{stats.totalRevenue | currency:currencyService.getCurrencyCode()}}</mat-card-title>
+              <mat-card-title>{{stats.totalRevenue | currency:currencyService.getCurrencyCode():currencyService.getCurrencySymbol()}}</mat-card-title>
             </mat-card-header>
           </mat-card>
         </div>

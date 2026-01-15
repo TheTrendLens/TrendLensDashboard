@@ -445,8 +445,10 @@ export class SalesOverTimeChartComponent implements OnInit, OnChanges, OnDestroy
    * Gets the current currency code from the CurrencyService
    */
   getCurrencyCode(): string {
-    const currencySymbol = this.currencyService.getCurrencySymbol();
-    const currencyOption = this.currencyService.getCurrencyBySymbol(currencySymbol);
-    return currencyOption?.code || 'GBP';
+    return this.currencyService.getCurrencyCode();
+  }
+
+  getCurrencySymbol(): string {
+    return this.currencyService.getCurrencySymbol();
   }
 }

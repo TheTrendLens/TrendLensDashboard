@@ -40,7 +40,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Profit</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.profit | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics.profit | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
       </dd>
     </div>
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
@@ -53,7 +53,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Revenue</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.revenue | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics.revenue | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
       </dd>
     </div>
     <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 shadow sm:px-6 sm:pt-6">
@@ -66,7 +66,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Costs</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.costs | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics.costs | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
       </dd>
     </div>
     <!-- Sales Tax (conditional) -->
@@ -80,7 +80,7 @@
         <p class="ml-16 truncate text-sm font-medium text-gray-500">Sales Tax</p>
       </dt>
       <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
-        <p class="text-2xl font-semibold text-gray-900">{{ metrics.salesTax | currency:getCurrencyCode():'symbol':'1.2-2' }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ metrics.salesTax | currency:getCurrencyCode():getCurrencySymbol():'1.2-2' }}</p>
       </dd>
     </div>
   </dl>
