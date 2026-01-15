@@ -51,6 +51,7 @@
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.11.30",
     "@types/papaparse": "^5.3.16",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
     "dotenv": "^17.2.3",
     "jasmine-core": "~5.5.0",
