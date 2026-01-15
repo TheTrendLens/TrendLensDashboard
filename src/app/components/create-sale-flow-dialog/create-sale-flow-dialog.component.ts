@@ -24,6 +24,7 @@ import {MatNativeDateModule} from '@angular/material/core';
 import {CommonModule, CurrencyPipe, DatePipe} from '@angular/common';
 import {AddListingDialogComponent} from '../add-listing-dialog/add-listing-dialog.component';
 import {MatIcon} from '@angular/material/icon';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-create-sale-flow-dialog',
@@ -202,6 +203,7 @@ export class CreateSaleFlowDialogComponent implements OnInit {
         const itemProducts: Product[] = [];
         for (let i = 0; i < item.quantity; i++) {
           itemProducts.push({
+            id: uuidv4(),
             listing: item.listing,
             size: item.size,
             item_cost: item.listing.item_cost || 0,
