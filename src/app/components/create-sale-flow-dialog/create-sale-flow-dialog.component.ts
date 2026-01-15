@@ -202,7 +202,6 @@ export class CreateSaleFlowDialogComponent implements OnInit {
         const itemProducts: Product[] = [];
         for (let i = 0; i < item.quantity; i++) {
           itemProducts.push({
-            id: '', // Temporary ID, backend will generate
             listing: item.listing,
             size: item.size,
             item_cost: item.listing.item_cost || 0,

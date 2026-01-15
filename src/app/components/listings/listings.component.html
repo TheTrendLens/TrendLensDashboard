@@ -11,18 +11,21 @@
         type="text"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
         placeholder="Search by slug, brand, category, etc."
-        [(ngModel)]="searchQuery"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
         (keyup.enter)="onSearch(searchQuery())">
     </div>
 
     <!-- Create Listing Button -->
     <div class="flex space-x-2">
-      <button *ngIf="experimentalFeaturesEnabled"
-        (click)="createListing()"
-        class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
-        <mat-icon class="mr-1">add</mat-icon>
-        Create Listing
-      </button>
+      @if (experimentalFeaturesEnabled()) {
+        <button
+          (click)="createListing()"
+          class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition flex items-center">
+          <mat-icon class="mr-1">add</mat-icon>
+          Create Listing
+        </button>
+      }
     </div>
   </div>
 
@@ -33,8 +36,8 @@
       <select
         id="dateFilter"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="dateFilter"
-        (change)="applyFilters()">
+        [ngModel]="dateFilter()"
+        (ngModelChange)="dateFilter.set($event); applyFilters()">
         <option value="all">All Time</option>
         <option value="today">Today</option>
         <option value="week">This Week</option>
@@ -49,8 +52,8 @@
       <select
         id="sortBy"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="sortBy"
-        (change)="applyFilters()">
+        [ngModel]="sortBy()"
+        (ngModelChange)="sortBy.set($event); applyFilters()">
         <option value="date_desc">Date (Newest First)</option>
         <option value="date_asc">Date (Oldest First)</option>
         <option value="price_desc">Price (High to Low)</option>
@@ -68,10 +71,12 @@
       <select
         id="categoryFilter"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5"
-        [(ngModel)]="categoryFilter"
-        (change)="applyFilters()">
+        [ngModel]="categoryFilter()"
+        (ngModelChange)="categoryFilter.set($event); applyFilters()">
         <option value="all">All Categories</option>
-        <option *ngFor="let category of categories()" [value]="category">{{ category }}</option>
+        @for (category of categories(); track category) {
+          <option [value]="category">{{ category }}</option>
+        }
       </select>
     </div>
   </div>
@@ -89,26 +94,28 @@
 <!-- Card Grid with Create Card and Listing Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 3xl:grid-cols-6 gap-4 w-full">
   <!-- Create New Listing Card -->
-  <div
-    class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col items-center justify-center w-full hover:bg-gray-50"
-    *ngIf="experimentalFeaturesEnabled"
-    (click)="createListing()">
-    <div class="text-center">
-      <div class="flex justify-center">
-        <mat-icon class="text-brand-500 text-5xl">add_circle</mat-icon>
+  @if (experimentalFeaturesEnabled()) {
+    <div
+      class="relative overflow-hidden rounded-lg bg-white shadow cursor-pointer aspect-square flex flex-col items-center justify-center w-full hover:bg-gray-50"
+      (click)="createListing()">
+      <div class="text-center">
+        <div class="flex justify-center">
+          <mat-icon class="text-brand-500 text-5xl">add_circle</mat-icon>
+        </div>
+        <p class="mt-2 text-lg font-medium text-brand-500">Create New Listing</p>
       </div>
-      <p class="mt-2 text-lg font-medium text-brand-500">Create New Listing</p>
     </div>
-  </div>
+  }
 
   <!-- Listing Cards -->
-  <app-listing-card
-    *ngFor="let listing of listingsData()"
-    [listing]="listing"
-    [canEdit]="true"
-    (cardClick)="navigateToListing($event)"
-    (listingDeleted)="loadData()">
-  </app-listing-card>
+  @for (listing of listingsData(); track listing.id) {
+    <app-listing-card
+      [listing]="listing"
+      [canEdit]="true"
+      (cardClick)="navigateToListing($event)"
+      (listingDeleted)="loadData()">
+    </app-listing-card>
+  }
 </div>
 
 <!-- Pagination Arrows -->
@@ -123,7 +130,7 @@
   </button>
   <button
     mat-icon-button
-    [disabled]="currentPage >= totalPages"
+    [disabled]="currentPage() >= totalPages()"
     (click)="goToNextPage()"
     class="flex items-center justify-center"
     aria-label="Next page">

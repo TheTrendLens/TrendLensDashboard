@@ -1,214 +1,376 @@
-<div class="bg-white rounded-lg shadow-xl overflow-hidden max-w-4xl w-full mx-auto">
-  <!-- Header -->
-  <div class="bg-brand-500 text-white p-4 flex justify-between items-center">
-    <h2 class="text-xl font-semibold">{{ isEdit() ? 'Edit Sale' : 'Create New Sale' }}</h2>
-    <div class="flex items-center space-x-2 text-sm">
-      <span [class.font-bold]="step() === 1" [class.opacity-50]="step() !== 1">1. Details</span>
-      <mat-icon class="text-xs">chevron_right</mat-icon>
-      <span [class.font-bold]="step() === 2" [class.opacity-50]="step() !== 2">2. Products</span>
-      <mat-icon class="text-xs">chevron_right</mat-icon>
-      <span [class.font-bold]="step() === 3" [class.opacity-50]="step() !== 3">3. Review</span>
+<div class="flex flex-col h-full max-h-[90vh] bg-gray-50 rounded-xl overflow-hidden shadow-2xl border border-gray-200">
+  <!-- Modern Header -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-brand-100 rounded-lg text-brand-600">
+        <mat-icon>{{ isEdit() ? 'edit' : 'add_shopping_cart' }}</mat-icon>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900 tracking-tight">
+        {{ isEdit() ? 'Edit Sale' : 'Create New Sale' }}
+      </h2>
     </div>
-  </div>
 
-  <mat-dialog-content class="p-6">
+    <!-- Stepper Indicator -->
+    <nav class="hidden sm:flex items-center space-x-4">
+      @for (s of [1, 2, 3]; track s) {
+        <div class="flex items-center">
+          <div [class]="'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 ' +
+                        (step() === s ? 'bg-brand-600 border-brand-600 text-white shadow-lg' :
+                         step() > s ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-300 text-gray-400')">
+            @if (step() > s) {
+              <mat-icon class="text-sm">check</mat-icon>
+            } @else {
+              <span class="text-sm font-bold">{{ s }}</span>
+            }
+          </div>
+          @if (s < 3) {
+            <div [class]="'w-8 h-0.5 mx-2 transition-colors duration-300 ' + (step() > s ? 'bg-green-500' : 'bg-gray-200')"></div>
+          }
+        </div>
+      }
+    </nav>
+
+    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="flex-1 overflow-y-auto p-0 !m-0 bg-gray-50">
     <!-- Step 1: Basic Details -->
     @if (step() === 1) {
-      <div >
-        <form [formGroup]="saleForm" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Buyer</mat-label>
-              <input matInput formControlName="buyer" placeholder="Buyer Username">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Date Sold</mat-label>
-              <input matInput [matDatepicker]="picker" formControlName="date_sold">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
+      <div class="p-8 max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
+          <div class="flex items-center space-x-2 border-b border-gray-100 pb-4">
+            <mat-icon class="text-brand-500">assignment</mat-icon>
+            <h3 class="font-bold text-gray-800">Basic Information</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Total Revenue</mat-label>
-              <span matPrefix>£&nbsp;</span>
-              <input matInput type="number" formControlName="total" step="0.01">
-            </mat-form-field>
+          <form [formGroup]="saleForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Buyer Name/Username</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Buyer</mat-label>
+                  <input matInput formControlName="buyer" placeholder="e.g. John Doe">
+                  <mat-icon matSuffix class="text-gray-400">person</mat-icon>
+                </mat-form-field>
+              </div>
 
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Platform Fee</mat-label>
-              <span matPrefix>£&nbsp;</span>
-              <input matInput type="number" formControlName="platform_fee" step="0.01">
-            </mat-form-field>
+              <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Date of Sale</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Date Sold</mat-label>
+                  <input matInput [matDatepicker]="picker" formControlName="date_sold">
+                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+              </div>
+            </div>
 
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Payment Fee</mat-label>
-              <span matPrefix>£&nbsp;</span>
-              <input matInput type="number" formControlName="payment_fee" step="0.01">
-            </mat-form-field>
-          </div>
+            <div class="space-y-4">
+              <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Financial Breakdown</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Total Revenue</mat-label>
+                  <span matPrefix class="text-gray-500">£&nbsp;</span>
+                  <input matInput type="number" formControlName="total" step="0.01">
+                </mat-form-field>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Postage Cost</mat-label>
-              <span matPrefix>£&nbsp;</span>
-              <input matInput type="number" formControlName="seller_postage_cost" step="0.01">
-            </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Platform Fee</mat-label>
+                  <span matPrefix class="text-gray-500">£&nbsp;</span>
+                  <input matInput type="number" formControlName="platform_fee" step="0.01">
+                </mat-form-field>
 
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Boosting Fee</mat-label>
-              <span matPrefix>£&nbsp;</span>
-              <input matInput type="number" formControlName="boosting_fee" step="0.01">
-            </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Payment Fee</mat-label>
+                  <span matPrefix class="text-gray-500">£&nbsp;</span>
+                  <input matInput type="number" formControlName="payment_fee" step="0.01">
+                </mat-form-field>
+              </div>
 
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Payment Type</mat-label>
-              <input matInput formControlName="payment_type" placeholder="e.g. PayPal, Depop Balance">
-            </mat-form-field>
-          </div>
-        </form>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Postage Cost</mat-label>
+                  <span matPrefix class="text-gray-500">£&nbsp;</span>
+                  <input matInput type="number" formControlName="seller_postage_cost" step="0.01">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Boosting Fee</mat-label>
+                  <span matPrefix class="text-gray-500">£&nbsp;</span>
+                  <input matInput type="number" formControlName="boosting_fee" step="0.01">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Payment Method</mat-label>
+                  <input matInput formControlName="payment_type" placeholder="PayPal, Depop, etc.">
+                  <mat-icon matSuffix class="text-gray-400">payments</mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+          </form>
+        </section>
       </div>
     }
 
     <!-- Step 2: Product Selection -->
     @if (step() === 2) {
-      <div class="h-[500px] flex flex-col">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium">Add Products to Sale</h3>
-          <button mat-flat-button color="accent" (click)="createNewListing()">
-            <mat-icon>add</mat-icon> Create New Listing
-          </button>
-        </div>
+      <div class="h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+        <div class="flex-1 flex overflow-hidden">
+          <!-- Left Sidebar: Search & Browse -->
+          <aside class="w-[45%] bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">Inventory</h3>
+                <button (click)="createNewListing()" class="text-brand-600 hover:text-brand-700 text-sm font-bold flex items-center space-x-1 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors">
+                  <mat-icon class="!w-5 !h-5 !text-[20px]">add</mat-icon>
+                  <span>New Listing</span>
+                </button>
+              </div>
 
-        <div class="flex flex-1 overflow-hidden gap-4">
-          <!-- Left: Search & Available Listings -->
-          <div class="w-1/2 flex flex-col border rounded-lg p-3">
-            <mat-form-field appearance="outline" class="w-full mb-2">
-              <mat-label>Search Listings</mat-label>
-              <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearchChange()" placeholder="Search by name or category">
-              <mat-icon matSuffix>search</mat-icon>
-            </mat-form-field>
+              <div class="relative">
+                <input [ngModel]="searchQuery()"
+                       (ngModelChange)="searchQuery.set($event); onSearchChange()"
+                       placeholder="Search products..."
+                       class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+              </div>
+            </div>
 
-            <div class="flex-1 overflow-y-auto space-y-2">
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
               @if (isLoadingListings()) {
-                <div class="flex justify-center p-4">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                <div class="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div class="w-10 h-10 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+                  <p class="text-gray-500 text-sm font-medium">Loading items...</p>
                 </div>
-              }
-
-              @for (listing of availableListings(); track listing.id) {
-                <div (click)="addListing(listing)"
-                     class="p-3 border rounded hover:bg-gray-50 cursor-pointer transition-colors group">
-                  <div class="flex justify-between">
-                    <span class="font-medium text-sm">{{listing.slug}}</span>
-                    <span class="text-brand-600 font-bold text-sm">{{listing.listed_price | currency:'GBP'}}</span>
+              } @else {
+                @for (listing of availableListings(); track listing.id) {
+                  <div (click)="addListing(listing)"
+                       class="group p-4 bg-white border border-gray-200 rounded-xl hover:border-brand-400 hover:shadow-md cursor-pointer transition-all duration-200 active:scale-[0.98]">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-bold text-gray-900 group-hover:text-brand-600 transition-colors leading-tight">
+                        {{listing.slug}}
+                      </h4>
+                      <span class="text-brand-600 font-extrabold">{{listing.listed_price | currency:'GBP'}}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-md capitalize">
+                        {{listing.category}}
+                      </span>
+                      <div class="flex items-center space-x-3 text-xs text-gray-500">
+                        <span class="flex items-center">
+                          <mat-icon class="!w-4 !h-4 !text-[16px] mr-1 text-gray-400">inventory_2</mat-icon>
+                          {{listing.quantity}} in stock
+                        </span>
+                      </div>
+                    </div>
+                    <div class="hidden group-hover:flex items-center justify-center mt-3 text-brand-600 font-bold text-xs uppercase tracking-tighter">
+                      <mat-icon class="!w-4 !h-4 !text-[16px] mr-1">add_circle</mat-icon>
+                      Add to Sale
+                    </div>
                   </div>
-                  <div class="text-xs text-gray-500 mt-1 flex justify-between">
-                    <span>{{listing.category}}</span>
-                    <span>Stock: {{listing.quantity}}</span>
+                } @empty {
+                  <div class="text-center py-12 text-gray-400">
+                    <mat-icon class="text-4xl mb-2 opacity-20">search_off</mat-icon>
+                    <p class="text-sm">No items found.</p>
                   </div>
-                  <div class="hidden group-hover:block text-[10px] text-brand-500 text-right mt-1 font-semibold">+ Add to Sale</div>
-                </div>
+                }
               }
             </div>
-          </div>
+          </aside>
 
-          <!-- Right: Selected Products -->
-          <div class="w-1/2 flex flex-col border rounded-lg p-3 bg-gray-50">
-            <h4 class="text-sm font-semibold mb-3 border-b pb-2">Selected Products ({{selectedListings().length}})</h4>
+          <!-- Right Content: Selected Items -->
+          <main class="flex-1 bg-gray-50 p-6 flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                Basket
+                <span class="ml-2 px-2.5 py-0.5 bg-brand-600 text-white text-xs font-bold rounded-full">
+                  {{selectedListings().length}}
+                </span>
+              </h3>
+              @if (selectedListings().length > 0) {
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  Customise each item below
+                </span>
+              }
+            </div>
 
-            <div class="flex-1 overflow-y-auto space-y-3">
+            <div class="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
               @for (item of selectedListings(); track item.listing.id) {
-                <div class="bg-white p-3 rounded shadow-sm border">
-                  <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                      <div class="font-medium text-sm">{{item.listing.slug}}</div>
-                      <div class="text-xs text-gray-500">{{item.listing.category}}</div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 relative group animate-in zoom-in-95 duration-200">
+                  <button (click)="removeListing(item.listing.id)"
+                          class="absolute -top-2 -right-2 w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+                    <mat-icon class="!w-5 !h-5 !text-[20px]">delete</mat-icon>
+                  </button>
+
+                  <div class="flex justify-between items-start mb-4">
+                    <div>
+                      <h4 class="font-bold text-gray-900 leading-tight">{{item.listing.slug}}</h4>
+                      <p class="text-xs text-gray-500 font-medium capitalize">{{item.listing.category}}</p>
                     </div>
-                    <button mat-icon-button color="warn" (click)="removeListing(item.listing.id)">
-                      <mat-icon class="scale-75">delete</mat-icon>
-                    </button>
+                    <div class="text-right">
+                      <p class="text-sm font-bold text-gray-900">{{item.listing.item_cost | currency:'GBP'}}</p>
+                      <p class="text-[10px] text-gray-400 uppercase font-bold">Cost each</p>
+                    </div>
                   </div>
 
-                  <div class="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="text-[10px] uppercase font-bold text-gray-400">Size</label>
-                      <input type="text" [(ngModel)]="item.size"
-                             class="w-full text-xs border rounded p-1 focus:ring-1 focus:ring-brand-500 outline-none">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Size</label>
+                      <div class="relative">
+                        <input type="text" [(ngModel)]="item.size"
+                               class="w-full pl-3 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                      </div>
                     </div>
-                    <div>
-                      <label class="text-[10px] uppercase font-bold text-gray-400">Qty</label>
-                      <input type="number" [(ngModel)]="item.quantity" min="1" [max]="item.listing.quantity"
-                             class="w-full text-xs border rounded p-1 focus:ring-1 focus:ring-brand-500 outline-none">
+                    <div class="space-y-1">
+                      <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Quantity</label>
+                      <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-1">
+                        <button (click)="item.quantity > 1 ? item.quantity = item.quantity - 1 : null"
+                                class="p-1 text-gray-400 hover:text-brand-600 transition-colors">
+                          <mat-icon class="!w-5 !h-5 !text-[20px]">remove_circle_outline</mat-icon>
+                        </button>
+                        <input type="number" [(ngModel)]="item.quantity" min="1" [max]="item.listing.quantity"
+                               class="w-full bg-transparent text-center text-sm font-bold border-none outline-none py-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                        <button (click)="item.quantity < item.listing.quantity ? item.quantity = item.quantity + 1 : null"
+                                class="p-1 text-gray-400 hover:text-brand-600 transition-colors">
+                          <mat-icon class="!w-5 !h-5 !text-[20px]">add_circle_outline</mat-icon>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              }
-
-              @if (selectedListings().length === 0) {
-                <div class="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
-                  <mat-icon class="text-4xl mb-2 opacity-20">inventory_2</mat-icon>
-                  <p>No products added yet.</p>
-                  <p class="text-xs">Click a listing on the left to add.</p>
+              } @empty {
+                <div class="h-full flex flex-col items-center justify-center text-center px-12">
+                  <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <mat-icon class="text-5xl text-gray-300">shopping_cart_checkout</mat-icon>
+                  </div>
+                  <h4 class="text-lg font-bold text-gray-800 mb-1">Your basket is empty</h4>
+                  <p class="text-sm text-gray-500 max-w-xs">Select items from your inventory on the left to add them to this sale.</p>
                 </div>
               }
             </div>
-          </div>
+          </main>
         </div>
       </div>
     }
 
     <!-- Step 3: Review -->
     @if (step() === 3) {
-      <div >
-        <div class="space-y-6">
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Sale Summary</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div class="text-xs text-gray-500">Buyer</div>
-                <div class="font-medium">{{saleForm.value.buyer}}</div>
+      <div class="p-8 max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-300 space-y-8">
+        <!-- Review Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 space-y-6">
+            <!-- Order Details -->
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center space-x-2">
+                <mat-icon class="text-brand-500">receipt_long</mat-icon>
+                <h3 class="font-bold text-gray-800 uppercase tracking-tight text-sm">Order Overview</h3>
               </div>
-              <div>
-                <div class="text-xs text-gray-500">Date</div>
-                <div class="font-medium">{{saleForm.value.date_sold | date:'shortDate'}}</div>
+              <div class="p-6 grid grid-cols-2 gap-y-6 gap-x-12">
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Buyer</p>
+                  <p class="font-bold text-gray-900 truncate">{{saleForm.value.buyer}}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date</p>
+                  <p class="font-bold text-gray-900">{{saleForm.value.date_sold | date:'mediumDate'}}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payment Type</p>
+                  <p class="font-bold text-gray-900">{{saleForm.value.payment_type || 'Not specified'}}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Items</p>
+                  <p class="font-bold text-gray-900">{{selectedListings().length}} unique listings</p>
+                </div>
               </div>
-              <div>
-                <div class="text-xs text-gray-500">Revenue</div>
-                <div class="font-bold text-brand-600">{{saleForm.value.total | currency:'GBP'}}</div>
+            </section>
+
+            <!-- Product Table -->
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center space-x-2">
+                <mat-icon class="text-brand-500">inventory</mat-icon>
+                <h3 class="font-bold text-gray-800 uppercase tracking-tight text-sm">Products Included</h3>
               </div>
-              <div>
-                <div class="text-xs text-gray-500">Items</div>
-                <div class="font-medium">{{selectedListings().length}} unique items</div>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50/50 text-[10px] uppercase font-bold text-gray-400">
+                    <tr>
+                      <th class="px-6 py-3 text-left">Item Details</th>
+                      <th class="px-6 py-3 text-center">Qty</th>
+                      <th class="px-6 py-3 text-right">Item Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    @for (item of selectedListings(); track item.listing.id) {
+                      <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                          <div class="font-bold text-gray-900 text-sm">{{item.listing.slug}}</div>
+                          <div class="text-[10px] font-bold text-gray-400 uppercase">Size: {{item.size}}</div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                          <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800 text-xs font-bold">
+                            {{item.quantity}}
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900 text-sm">
+                          {{item.listing.item_cost | currency:'GBP'}}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
-            </div>
+            </section>
           </div>
 
-          <div>
-            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Products</h3>
-            <div class="border rounded-lg overflow-hidden">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50 text-[10px] uppercase font-bold text-gray-500">
-                  <tr>
-                    <th class="px-4 py-2 text-left">Item</th>
-                    <th class="px-4 py-2 text-left">Size</th>
-                    <th class="px-4 py-2 text-center">Qty</th>
-                    <th class="px-4 py-2 text-right">Cost</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 text-sm">
-                  @for (item of selectedListings(); track item.listing.id) {
-                    <tr>
-                      <td class="px-4 py-2">{{item.listing.slug}}</td>
-                      <td class="px-4 py-2">{{item.size}}</td>
-                      <td class="px-4 py-2 text-center">{{item.quantity}}</td>
-                      <td class="px-4 py-2 text-right">{{item.listing.item_cost | currency:'GBP'}}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
+          <!-- Financial Summary Sidebar -->
+          <div class="space-y-6">
+            <section class="bg-brand-600 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative">
+              <div class="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+              <h3 class="font-bold uppercase tracking-widest text-[10px] opacity-80 mb-6 flex items-center">
+                <mat-icon class="!w-4 !h-4 !text-[16px] mr-2">analytics</mat-icon>
+                Profit Analysis
+              </h3>
+
+              <div class="space-y-4">
+                <div class="flex justify-between items-end border-b border-white/10 pb-4 mb-4">
+                  <span class="text-sm font-medium opacity-90">Revenue</span>
+                  <span class="text-2xl font-black">{{saleForm.value.total | currency:'GBP'}}</span>
+                </div>
+
+                <div class="space-y-2 mb-6">
+                  <div class="flex justify-between text-xs font-bold text-white/70">
+                    <span>Platform Fees</span>
+                    <span>-{{saleForm.value.platform_fee | currency:'GBP'}}</span>
+                  </div>
+                  <div class="flex justify-between text-xs font-bold text-white/70">
+                    <span>Payment Fees</span>
+                    <span>-{{saleForm.value.payment_fee | currency:'GBP'}}</span>
+                  </div>
+                  <div class="flex justify-between text-xs font-bold text-white/70">
+                    <span>Postage Cost</span>
+                    <span>-{{saleForm.value.seller_postage_cost | currency:'GBP'}}</span>
+                  </div>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-white/20">
+                  <div class="flex justify-between items-center bg-white/10 rounded-xl p-4">
+                    <span class="text-xs font-black uppercase tracking-widest">Est. Profit</span>
+                    <span class="text-xl font-black">
+                      {{ (saleForm.value.total - saleForm.value.platform_fee - saleForm.value.payment_fee - saleForm.value.seller_postage_cost) | currency:'GBP' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start space-x-3">
+              <mat-icon class="text-yellow-600">info_outline</mat-icon>
+              <p class="text-xs text-yellow-800 font-medium leading-relaxed">
+                Review all details before saving. This will update inventory stock levels immediately.
+              </p>
             </div>
           </div>
         </div>
@@ -216,29 +378,40 @@
     }
   </mat-dialog-content>
 
-  <mat-dialog-actions class="bg-gray-50 px-6 py-4 flex justify-between">
+  <!-- Clean Action Footer -->
+  <footer class="bg-white border-t border-gray-200 px-8 py-5 flex justify-between items-center shrink-0">
     <div>
       @if (step() === 1) {
-        <button mat-button (click)="onCancel()">Cancel</button>
-      }
-      @if (step() > 1) {
-        <button mat-button (click)="prevStep()">Back</button>
+        <button mat-button (click)="onCancel()" class="!rounded-xl text-gray-500 font-bold hover:bg-gray-50 px-6 py-2">
+          Discard
+        </button>
+      } @else {
+        <button mat-button (click)="prevStep()" class="!rounded-xl text-brand-600 font-extrabold flex items-center space-x-2 px-6 py-2 hover:bg-brand-50">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_back</mat-icon>
+          <span>Back</span>
+        </button>
       }
     </div>
-    <div class="space-x-2">
+
+    <div class="flex items-center space-x-4">
+      <span class="hidden sm:block text-xs font-bold text-gray-400 uppercase tracking-widest">
+        Step {{ step() }} of 3
+      </span>
+
       @if (step() < 3) {
-        <button mat-flat-button color="primary"
-                (click)="nextStep()"
-                [disabled]="step() === 1 && saleForm.invalid || step() === 2 && selectedListings().length === 0">
-          Next
+        <button (click)="nextStep()"
+                [disabled]="(step() === 1 && saleForm.invalid) || (step() === 2 && selectedListings().length === 0)"
+                class="bg-brand-600 text-white rounded-xl font-black py-3 px-10 shadow-lg hover:bg-brand-700 hover:shadow-brand-200/50 disabled:opacity-50 disabled:shadow-none transition-all duration-300 flex items-center space-x-2">
+          <span>{{ step() === 1 ? 'Next: Add Products' : 'Next: Final Review' }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </button>
-      }
-      @if (step() === 3) {
-        <button mat-flat-button color="primary"
-                (click)="onSave()">
-          Save Sale
+      } @else {
+        <button (click)="onSave()"
+                class="bg-green-600 text-white rounded-xl font-black py-3 px-12 shadow-lg hover:bg-green-700 hover:shadow-green-200/50 transition-all duration-300 flex items-center space-x-2">
+          <mat-icon>check_circle</mat-icon>
+          <span>Complete Sale</span>
         </button>
       }
     </div>
-  </mat-dialog-actions>
+  </footer>
 </div>
