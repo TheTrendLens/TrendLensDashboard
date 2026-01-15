@@ -34,7 +34,6 @@ import {MatIcon} from '@angular/material/icon';
     MatFormField,
     ReactiveFormsModule,
     MatDialogContent,
-    MatDialogTitle,
     MatLabel,
     MatDialogActions,
     MatButton,
@@ -118,14 +117,7 @@ export class CreateSaleFlowDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.userService.get().pipe(take(1)).subscribe({
-      next: (user) => {
-        this.currentUser.set(user);
-      },
-      error: (error) => {
-        console.error('Error getting current user:', error);
-      }
-    });
+    this.currentUser.set(this.userService.getCurrentUser());
 
     this.loadListings();
   }
@@ -206,13 +198,15 @@ export class CreateSaleFlowDialogComponent implements OnInit {
         return;
       }
 
-      const products: Partial<Product>[] = this.selectedListings().flatMap(item => {
-        const itemProducts = [];
+      const products: Product[] = this.selectedListings().flatMap(item => {
+        const itemProducts: Product[] = [];
         for (let i = 0; i < item.quantity; i++) {
           itemProducts.push({
+            id: '', // Temporary ID, backend will generate
             listing: item.listing,
             size: item.size,
-            item_cost: item.listing.item_cost
+            item_cost: item.listing.item_cost || 0,
+            sale: null as any // Will be linked on the backend
           });
         }
         return itemProducts;
@@ -221,8 +215,8 @@ export class CreateSaleFlowDialogComponent implements OnInit {
       const sale: Partial<Sale> = {
         ...this.saleForm.value,
         time_sold: this.isEdit() && this.data.sale.time_sold ? this.data.sale.time_sold : new Date().toTimeString().split(' ')[0],
-        total_fee: +this.saleForm.value.platform_fee + +this.saleForm.value.payment_fee + +this.saleForm.value.boosting_fee,
-        products: products as Product[],
+        total_fee: Number(this.saleForm.value.platform_fee) + Number(this.saleForm.value.payment_fee) + Number(this.saleForm.value.boosting_fee),
+        products: products,
         user: user
       };
 

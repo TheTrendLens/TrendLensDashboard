@@ -12,7 +12,7 @@
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5"
         placeholder="Search by slug, brand, category, etc."
         [(ngModel)]="searchQuery"
-        (keyup.enter)="onSearch(searchQuery)">
+        (keyup.enter)="onSearch(searchQuery())">
     </div>
 
     <!-- Create Listing Button -->
@@ -71,7 +71,7 @@
         [(ngModel)]="categoryFilter"
         (change)="applyFilters()">
         <option value="all">All Categories</option>
-        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        <option *ngFor="let category of categories()" [value]="category">{{ category }}</option>
       </select>
     </div>
   </div>
@@ -80,9 +80,9 @@
 <!-- Pagination Info -->
 <div class="flex justify-between items-center mb-6">
   <div class="text-sm text-gray-700">
-    Showing <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> to
-    <span class="font-medium">{{ Math.min(currentPage * pageSize, totalRows) }}</span> of
-    <span class="font-medium">{{ totalRows }}</span> listings
+    Showing <span class="font-medium">{{ (currentPage() - 1) * pageSize() + 1 }}</span> to
+    <span class="font-medium">{{ Math.min(currentPage() * pageSize(), totalRows()) }}</span> of
+    <span class="font-medium">{{ totalRows() }}</span> listings
   </div>
 </div>
 
@@ -103,7 +103,7 @@
 
   <!-- Listing Cards -->
   <app-listing-card
-    *ngFor="let listing of listingsData"
+    *ngFor="let listing of listingsData()"
     [listing]="listing"
     [canEdit]="true"
     (cardClick)="navigateToListing($event)"
@@ -115,7 +115,7 @@
 <div class="flex justify-center mt-6 space-x-4">
   <button
     mat-icon-button
-    [disabled]="currentPage === 1"
+    [disabled]="currentPage() === 1"
     (click)="goToPreviousPage()"
     class="flex items-center justify-center"
     aria-label="Previous page">

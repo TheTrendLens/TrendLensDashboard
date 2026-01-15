@@ -23,9 +23,6 @@ import {MatButton, MatIconButton} from '@angular/material/button';
     FormsModule,
     DatePipe,
     CurrencyPipe,
-    MatIcon,
-    MatButton,
-    MatIconButton,
     RouterModule
   ],
   templateUrl: './sale-detail.component.html',
