@@ -11,4 +11,5 @@ export interface Listing {
   user?:        any;
   userId?:      string;
   isEdit?:      boolean;
+  source?:      string;
 }

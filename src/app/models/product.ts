@@ -7,4 +7,5 @@ export interface Product {
   sale: Sale;
   item_cost: number;
   size: string;
+  quantity: number;
 }

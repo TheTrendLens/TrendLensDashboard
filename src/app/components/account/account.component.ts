@@ -15,6 +15,7 @@ import { QuickBooksService } from '../../services/quickbooks.service';
 import { UpgradeService } from '../../services/upgrade.service';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { EbayService } from '../../services/ebay.service';
 
 @Component({
   selector: 'app-account',
@@ -62,8 +63,19 @@ export class AccountComponent implements OnInit, OnDestroy {
   quickBooksTokenExpiresIn: number | null = null;
   quickBooksStatusMessage: string | null = null;
 
+  // eBay integration
+  isEbayConnected: boolean = false;
+  isEbayLoading: boolean = false;
+  isEbaySyncing: boolean = false;
+  ebayUserId: string | null = null;
+  isEbayTokenValid: boolean = false;
+  ebayTokenExpiresIn: number | null = null;
+  ebayStatusMessage: string | null = null;
+  ebayLastSyncAt: string | null = null;
+
   // Timer for refreshing QuickBooks token status
   private tokenStatusRefreshInterval: any;
+  private ebayTokenStatusRefreshInterval: any;
 
   // Services via inject() where appropriate
   readonly upgradeService = inject(UpgradeService);
@@ -80,7 +92,8 @@ export class AccountComponent implements OnInit, OnDestroy {
     public themeService: ThemeService,
     private userService: UserService,
     public featureFlagService: FeatureFlagService,
-    private quickBooksService: QuickBooksService
+    private quickBooksService: QuickBooksService,
+    private ebayService: EbayService,
   ) {
     const user = this.authService.getSignedInUser();
     if (user && user.email) {
@@ -144,6 +157,9 @@ export class AccountComponent implements OnInit, OnDestroy {
     // Determine subscription status initially
     this.checkSubscriptionStatus();
     this.loadSubscriptionManagementData();
+
+    this.checkEbayConnectionStatus();
+    this.startEbayTokenStatusRefresh();
   }
 
   onOpenUpgrade(): void {
@@ -411,6 +427,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Clean up the refresh interval when component is destroyed
     // this.stopTokenStatusRefresh();
+    this.stopEbayTokenStatusRefresh();
   }
 
   /**
@@ -643,5 +660,155 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.checkQuickBooksConnectionStatus();
       }
     });
+  }
+
+  checkEbayConnectionStatus(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isEbayLoading = true;
+    this.ebayService.getConnectionStatus(user.uid).subscribe({
+      next: (response) => {
+        this.isEbayConnected = response.connected;
+        this.ebayUserId = response.marketplaceUserId;
+        this.ebayLastSyncAt = response.lastSyncAt;
+        this.isEbayTokenValid = response.valid || false;
+        this.ebayTokenExpiresIn = response.expiresIn || null;
+        this.ebayStatusMessage = response.message || null;
+
+        console.log('eBay connection status:', response);
+        this.isEbayLoading = false;
+      },
+      error: (error) => {
+        console.error('Error checking eBay connection status:', error);
+        this.isEbayLoading = false;
+        this.isEbayTokenValid = false;
+        this.ebayTokenExpiresIn = null;
+        this.ebayStatusMessage = `Error: ${error.message}`;
+      }
+    });
+  }
+
+  connectToEbay(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    this.isEbayLoading = true;
+    this.isEbayTokenValid = false;
+    this.ebayTokenExpiresIn = null;
+    this.ebayStatusMessage = 'Connecting to eBay...';
+
+    // Redirect to eBay authorization page
+    this.ebayService.connectToEbay(user.uid);
+  }
+
+  syncEbaySales(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    if (!this.isEbayConnected || !this.isEbayTokenValid) {
+      console.error('Cannot sync sales: eBay token is invalid or missing');
+      this.checkEbayConnectionStatus();
+      return;
+    }
+
+    this.isEbaySyncing = true;
+    this.ebayService.syncSales(user.uid).subscribe({
+      next: (syncJob) => {
+        console.log('eBay sync initiated:', syncJob);
+
+        // Poll for sync job completion
+        this.pollSyncJobStatus(syncJob.id);
+      },
+      error: (error) => {
+        console.error('Error syncing eBay sales:', error);
+        this.isEbaySyncing = false;
+        this.checkEbayConnectionStatus();
+      }
+    });
+  }
+
+  private pollSyncJobStatus(jobId: string): void {
+    const pollInterval = setInterval(() => {
+      this.ebayService.getSyncJob(jobId).subscribe({
+        next: (syncJob) => {
+          if (syncJob.status === 'completed') {
+            clearInterval(pollInterval);
+            this.isEbaySyncing = false;
+            console.log(`eBay sync completed: ${syncJob.recordsProcessed} records processed`);
+            alert(`eBay sync completed! Imported ${syncJob.recordsProcessed} sales.`);
+            this.checkEbayConnectionStatus();
+          } else if (syncJob.status === 'failed') {
+            clearInterval(pollInterval);
+            this.isEbaySyncing = false;
+            console.error('eBay sync failed:', syncJob.errorMessage);
+            alert(`eBay sync failed: ${syncJob.errorMessage}`);
+          }
+          // If still processing or pending, continue polling
+        },
+        error: (error) => {
+          clearInterval(pollInterval);
+          this.isEbaySyncing = false;
+          console.error('Error polling sync job status:', error);
+        }
+      });
+    }, 3000); // Poll every 3 seconds
+  }
+
+  disconnectEbay(): void {
+    const user = this.authService.getSignedInUser();
+    if (!user) {
+      console.error('No user is signed in');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to disconnect your eBay account?')) {
+      return;
+    }
+
+    this.isEbayLoading = true;
+    this.ebayService.disconnect(user.uid).subscribe({
+      next: (response) => {
+        console.log('eBay account disconnected:', response);
+        this.isEbayConnected = false;
+        this.ebayUserId = null;
+        this.ebayLastSyncAt = null;
+        this.isEbayTokenValid = false;
+        this.ebayTokenExpiresIn = null;
+        this.ebayStatusMessage = 'Disconnected';
+        this.isEbayLoading = false;
+        alert('eBay account disconnected successfully');
+      },
+      error: (error) => {
+        console.error('Error disconnecting eBay account:', error);
+        this.isEbayLoading = false;
+        alert('Failed to disconnect eBay account. Please try again.');
+      }
+    });
+  }
+
+  startEbayTokenStatusRefresh(): void {
+    this.stopEbayTokenStatusRefresh();
+
+    this.ebayTokenStatusRefreshInterval = setInterval(() => {
+      console.log('Refreshing eBay token status...');
+      this.checkEbayConnectionStatus();
+    }, 300000); // 5 minutes
+  }
+
+  stopEbayTokenStatusRefresh(): void {
+    if (this.ebayTokenStatusRefreshInterval) {
+      clearInterval(this.ebayTokenStatusRefreshInterval);
+      this.ebayTokenStatusRefreshInterval = null;
+    }
   }
 }

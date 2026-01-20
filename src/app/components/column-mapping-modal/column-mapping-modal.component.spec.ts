@@ -5,17 +5,18 @@ import { FormsModule } from '@angular/forms';
 
 describe('ColumnMappingModalComponent', () => {
   let component: ColumnMappingModalComponent;
+  let fixture: any;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CommonModule, FormsModule, ColumnMappingModalComponent],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(ColumnMappingModalComponent);
+    fixture = TestBed.createComponent(ColumnMappingModalComponent);
     component = fixture.componentInstance;
     // Provide basic inputs
-    component.csvColumns.set(['Sales ID', 'Date of sale', 'Time sold', 'Buyer', 'Description', 'Date listed']);
-    component.sampleRows.set([
+    fixture.componentRef.setInput('csvColumns', ['Sales ID', 'Date of sale', 'Time sold', 'Buyer', 'Description', 'Date listed']);
+    fixture.componentRef.setInput('sampleRows', [
       {
         'Sales ID': 'A-1',
         'Date of sale': '01/02/2025',
@@ -78,6 +79,7 @@ describe('ColumnMappingModalComponent', () => {
     component.columnMappings.set([
       { csvColumn: 'Date of sale', dbField: 'date_sold', category: 'sale' },
     ]);
+    fixture.detectChanges();
     component.saveCurrentAsProfile('My Profile');
 
     // Reload from storage and apply

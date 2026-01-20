@@ -172,11 +172,15 @@
             </div>
           </div>
 
-          <!-- Size -->
-          <div class="grid grid-cols-2 gap-2 mb-3">
+          <!-- Size & Quantity -->
+          <div class="grid grid-cols-3 gap-2 mb-3">
             <div>
               <p class="text-xs text-gray-500">Size</p>
               <p class="text-sm font-medium">{{ getValue(product, {key: 'size'}) }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Quantity</p>
+              <p class="text-sm font-medium">{{ product.quantity || 1 }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-500">Item Cost</p>

@@ -277,6 +277,106 @@
           </div>
         </div>
 
+        <!-- eBay Integration Section -->
+        <div class="setting-section">
+          <h3 class="section-title">eBay Integration</h3>
+
+          <div class="integration-card">
+            <!-- Connection Status Badge -->
+            <div class="status-header">
+              <span class="integration-label">Status:</span>
+              <span class="status-badge" [ngClass]="isEbayConnected ? 'status-connected' : 'status-disconnected'">
+        {{ isEbayConnected ? 'Connected' : 'Not Connected' }}
+      </span>
+            </div>
+
+            <!-- Not Connected State -->
+            <div *ngIf="!isEbayConnected" class="integration-body">
+              <p class="integration-description">
+                Connect your eBay seller account to automatically import completed sales data.
+                No more manual CSV uploads!
+              </p>
+
+              <button
+                (click)="connectToEbay()"
+                [disabled]="isEbayLoading"
+                class="btn btn-primary">
+                <span *ngIf="!isEbayLoading">Connect eBay Account</span>
+                <span *ngIf="isEbayLoading">Connecting...</span>
+              </button>
+
+              <p class="integration-note">
+                <small>You'll be redirected to eBay to authorize TrendLens to access your sales data.</small>
+              </p>
+            </div>
+
+            <!-- Connected State -->
+            <div *ngIf="isEbayConnected" class="integration-body">
+              <div class="connection-details">
+                <div class="detail-row" *ngIf="ebayUserId">
+                  <span class="detail-label">eBay User ID:</span>
+                  <span class="detail-value">{{ ebayUserId }}</span>
+                </div>
+
+                <div class="detail-row" *ngIf="ebayLastSyncAt">
+                  <span class="detail-label">Last Sync:</span>
+                  <span class="detail-value">{{ ebayLastSyncAt | date:'short' }}</span>
+                </div>
+
+                <div class="detail-row" *ngIf="!ebayLastSyncAt">
+                  <span class="detail-label">Last Sync:</span>
+                  <span class="detail-value">Never</span>
+                </div>
+
+                <div class="detail-row" *ngIf="ebayTokenExpiresIn !== null">
+                  <span class="detail-label">Token Status:</span>
+                  <span class="detail-value" [ngClass]="isEbayTokenValid ? 'text-success' : 'text-danger'">
+            {{ isEbayTokenValid ? 'Valid' : 'Expired' }}
+                    <span *ngIf="isEbayTokenValid && ebayTokenExpiresIn > 0">
+              (expires in {{ (ebayTokenExpiresIn / 3600).toFixed(0) }} hours)
+            </span>
+          </span>
+                </div>
+
+                <div class="detail-row" *ngIf="ebayStatusMessage">
+          <span class="status-message" [ngClass]="isEbayTokenValid ? 'text-success' : 'text-warning'">
+            {{ ebayStatusMessage }}
+          </span>
+                </div>
+              </div>
+
+              <div class="integration-actions">
+                <button
+                  (click)="syncEbaySales()"
+                  [disabled]="isEbaySyncing || !isEbayTokenValid || isEbayLoading"
+                  class="btn btn-primary">
+                  <span *ngIf="!isEbaySyncing">Sync Sales Now</span>
+                  <span *ngIf="isEbaySyncing">Syncing...</span>
+                </button>
+
+                <button
+                  (click)="disconnectEbay()"
+                  [disabled]="isEbayLoading || isEbaySyncing"
+                  class="btn btn-secondary">
+                  Disconnect
+                </button>
+              </div>
+
+              <p class="integration-note">
+                <small>
+                  Sales from the last 90 days will be imported automatically.
+                  You can manually sync at any time to get the latest data.
+                </small>
+              </p>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="isEbayLoading && !isEbaySyncing" class="loading-state">
+              <p>Loading eBay connection status...</p>
+            </div>
+          </div>
+        </div>
+
 <!--        <div class="mb-8">-->
 <!--          <h2 class="text-lg font-medium text-gray-900">QuickBooks Integration</h2>-->
 <!--          <div class="mt-4 bg-white px-6 py-5 shadow sm:rounded-lg sm:px-8">-->

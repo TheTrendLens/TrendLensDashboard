@@ -113,10 +113,12 @@ export class SaleDetailComponent implements OnInit {
     }
   }
   get totalItemCosts(): number {
-    return this.products.reduce((sum, sale) => {
-      const itemCost = sale.item_cost;
+    return this.products.reduce((sum, product) => {
+      const itemCost = product.item_cost;
+      const quantity = product.quantity || 1;
       if (itemCost === null) return sum;
-      return sum + (typeof itemCost === 'string' ? parseFloat(itemCost) : itemCost);
+      const cost = typeof itemCost === 'string' ? parseFloat(itemCost) : itemCost;
+      return sum + (cost * quantity);
     }, 0);
   }
 
