@@ -61,6 +61,7 @@ export class AddProductDialogComponent implements OnInit {
     this.productForm = formBuilder.group({
       listing: ['', Validators.required],
       size: ['', Validators.required],
+      quantity: [1, [Validators.required, Validators.min(1)]],
       item_cost: [0, [Validators.required, Validators.min(0)]]
     });
   }
@@ -99,7 +100,8 @@ export class AddProductDialogComponent implements OnInit {
 
   openAddListingDialog(): void {
     const dialogRef = this.dialog.open(AddListingDialogComponent, {
-      width: '600px'
+      width: '600px',
+      data: { isManual: true }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -130,6 +132,7 @@ export class AddProductDialogComponent implements OnInit {
         saleId: this.data.saleId,
         listingId: this.productForm.value.listing,
         size: this.productForm.value.size,
+        quantity: this.productForm.value.quantity,
         itemCost: this.productForm.value.item_cost,
         option: this.selectedOption
       };

@@ -53,14 +53,14 @@ export class AddListingDialogComponent implements OnInit {
   ) {
     // Initialize form
     this.listingForm = formBuilder.group({
-      slug: [{value: '', disabled: true}, [Validators.required]],
-      date_listed: [{value: new Date(), disabled: true}, Validators.required],
-      brand: [{value: '', disabled: true}],
-      category: [{value: '', disabled: true}, Validators.required],
-      listed_price: [{value: 0, disabled: true}, [Validators.required, Validators.min(0)]],
+      slug: [{ value: '', disabled: data?.isManual ? false : true }, [Validators.required]],
+      date_listed: [{ value: new Date(), disabled: data?.isManual ? false : true }, Validators.required],
+      brand: [{ value: '', disabled: data?.isManual ? false : true }],
+      category: [{ value: '', disabled: data?.isManual ? false : true }, Validators.required],
+      listed_price: [{ value: 0, disabled: data?.isManual ? false : true }, [Validators.required, Validators.min(0)]],
       item_cost: [0, [Validators.min(0)]],
       quantity: [1, [Validators.required, Validators.min(0)]],
-      description: [{value: '', disabled: true}, Validators.required],
+      description: [{ value: '', disabled: data?.isManual ? false : true }, Validators.required],
     });
 
     // Check if we're in edit mode

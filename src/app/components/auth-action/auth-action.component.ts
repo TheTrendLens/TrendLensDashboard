@@ -58,6 +58,27 @@ export class AuthActionComponent implements OnInit {
       this.errorMessage = 'Invalid action mode.';
       this.isVerifying = false;
     }
+
+    const ebayConnected = this.route.snapshot.queryParamMap.get('ebay_connected');
+    const ebayError = this.route.snapshot.queryParamMap.get('ebay_error');
+
+    if (ebayConnected === 'true') {
+      // Show success message
+      console.log('eBay connected successfully!');
+      // Optionally show a toast/notification
+      // this.notificationService.success('eBay account connected successfully!');
+
+      // Redirect to account page (clean URL)
+      this.router.navigate(['/account']);
+    } else if (ebayError) {
+      // Show error message
+      console.error('eBay connection error:', ebayError);
+      // Optionally show error toast
+      // this.notificationService.error(`eBay connection failed: ${ebayError}`);
+
+      // Redirect to account page
+      this.router.navigate(['/account']);
+    }
   }
 
   private handlePasswordReset() {

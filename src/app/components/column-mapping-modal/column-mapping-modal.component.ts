@@ -134,7 +134,8 @@ export class ColumnMappingModalComponent implements OnInit {
       label: 'Product Fields',
       fields: [
         { value: 'size', label: 'Size', category: 'product', required: true },
-        { value: 'product_item_cost', label: 'Product Item Cost', category: 'product', required: false }
+        { value: 'product_item_cost', label: 'Product Item Cost', category: 'product', required: false },
+        { value: 'quantity', label: 'Quantity', category: 'product', required: false }
       ]
     }
   ];
@@ -165,6 +166,7 @@ export class ColumnMappingModalComponent implements OnInit {
     'date of listing': 'date_listed',
     // product
     'size': 'size',
+    'quantity': 'quantity'
   };
   private normalizeName(value: string): string {
     // lower-case, remove punctuation, collapse whitespace/underscores/dashes

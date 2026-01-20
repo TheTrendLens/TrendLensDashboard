@@ -405,7 +405,8 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
         const product: NewProductDto = {
           listing: listing,
           item_cost: productItemCost,
-          size: size
+          size: size,
+          quantity: this.sanitizeFloatValue(getMappedValue('quantity', row) || '1')
         };
 
         sale.products.push(product);
@@ -487,14 +488,15 @@ export class SalesUploadComponent implements OnInit, OnDestroy {
           description: row['Description'],
           item_cost: row['Item cost'] ? this.sanitizeFloatValue(row['Item cost']) : null,
           listed_price: this.sanitizeFloatValue(row['Item price']),
-          quantity: 0,
+          quantity: this.sanitizeFloatValue(row['Quantity'] || '1'),
           source: 'CSV Import',
         }
 
         const product: NewProductDto = {
           listing: listing,
           item_cost: row['Item cost'] ? this.sanitizeFloatValue(row['Item cost']) : null,
-          size: row['Size'] || 'One size'
+          size: row['Size'] || 'One size',
+          quantity: this.sanitizeFloatValue(row['Quantity'] || '1')
         }
 
         sale.products.push(product);

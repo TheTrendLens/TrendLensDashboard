@@ -41,10 +41,14 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-4">
         <mat-form-field>
           <mat-label>Size</mat-label>
           <input matInput placeholder="Size" formControlName="size" required>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Quantity</mat-label>
+          <input matInput type="number" placeholder="Quantity" formControlName="quantity" required>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Item Cost</mat-label>

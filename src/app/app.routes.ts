@@ -164,6 +164,19 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/analytics/analytics.component').then(m => m.AnalyticsComponent)
             },
             {
+                path: 'ebay',
+                children: [
+                    {
+                        path: '',
+                        loadComponent: () => import('./components/ebay-dashboard/ebay-dashboard.component').then(m => m.EbayDashboardComponent)
+                    },
+                    {
+                        path: 'listings',
+                        loadComponent: () => import('./components/ebay-listing-analysis/ebay-listing-analysis.component').then(m => m.EbayListingAnalysisComponent)
+                    }
+                ]
+            },
+            {
                 path: 'checkout',
                 loadComponent: () => import('./components/onsite-checkout/onsite-checkout.component').then(m => m.OnsiteCheckoutComponent)
             },
